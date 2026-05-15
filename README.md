@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mavericks Website
 
-## Getting Started
+Replacement website for [mcneilmavericks.org](https://mcneilmavericks.org) — McNeil Mavericks Football Booster Club. Cutting over from SportsEngine before the 2026-07-31 renewal.
 
-First, run the development server:
+The day-by-day build plan lives at [`../ClaudeAiFiles/build_plan.md`](../ClaudeAiFiles/build_plan.md). Spec is in `../ClaudeAiFiles/{content_map,admin_scope,schema}.md`.
+
+## Stack
+
+- **Framework**: Next.js 16 (App Router) + TypeScript (strict)
+- **Styling**: Tailwind CSS v4 + shadcn/ui (base-nova style, neutral)
+- **Backend**: Supabase (Postgres + Auth + Storage + RLS)
+- **Payments**: Stripe Checkout (guest checkout, no public user accounts)
+- **Email**: Cloudflare Email Routing (Phase 1); Resend deferred to Phase 2
+- **Hosting**: Vercel (auto-deploy from `main`)
+- **Tooling**: ESLint (next + prettier compat), Prettier (+ tailwind plugin)
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in Supabase + Stripe keys
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Scripts:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command                | What it does                             |
+| ---------------------- | ---------------------------------------- |
+| `npm run dev`          | Start the dev server on :3000            |
+| `npm run build`        | Production build                         |
+| `npm run start`        | Run the production build locally         |
+| `npm run lint`         | ESLint                                   |
+| `npm run lint:fix`     | ESLint with `--fix`                      |
+| `npm run format`       | Prettier write across the repo           |
+| `npm run format:check` | Prettier check (no writes)               |
+| `npm run typecheck`    | `tsc --noEmit` against the whole project |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment variables
 
-## Learn More
+All env vars are listed in [`.env.example`](./.env.example). Copy that file to `.env.local` for local dev and populate values from:
 
-To learn more about Next.js, take a look at the following resources:
+- **Supabase** → Project Settings → API (URL, anon key, service role key)
+- **Stripe** → Developers → API keys (test mode until Step 15); webhook signing secret from the webhook endpoint config
+- **Resend** → API Keys (Phase 2 only; leave blank for now)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+In Vercel, set the same vars under Project Settings → Environment Variables. Use separate values for Preview vs Production (especially Stripe — test keys in Preview, live keys in Production).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Anything prefixed with `NEXT_PUBLIC_` is exposed to the browser bundle. `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `RESEND_API_KEY` are server-only — never reference them from client components.
 
-## Deploy on Vercel
+## Folder layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+  (public)/    public-facing routes (home, about, news, events, sponsors, ...)
+  (admin)/     admin shell + CRUD pages (auth-gated)
+  api/         API routes (Stripe webhook, contact form, membership create, ...)
+components/
+  ui/          shadcn/ui primitives
+lib/
+  supabase/    server + browser Supabase clients
+db/
+  migrations/  ordered SQL migration files (001_*.sql, 002_*.sql, ...)
+  seed/        seed data (membership tiers, sponsorship tiers, board, committees)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Build plan
+
+The full 20-step Phase 1 plan is in [`../ClaudeAiFiles/build_plan.md`](../ClaudeAiFiles/build_plan.md). This repo is the output of Step 1.
