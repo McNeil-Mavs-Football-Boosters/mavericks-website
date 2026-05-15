@@ -472,6 +472,24 @@ GRANT SELECT ON public_members TO anon, authenticated;
 -- Default: RLS enabled on every table. No policies = no access (deny by default).
 -- Then add policies explicitly.
 
+-- -----------------------------------------------------------------------------
+-- Base role grants (must precede RLS — RLS filters rows, but only after the
+-- role has a table-level privilege at all. Supabase's table UI auto-grants
+-- these; raw SQL doesn't, so we do it here. service_role bypasses RLS entirely
+-- and is auto-granted at the Supabase level.)
+-- -----------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+
+-- Future tables created in this schema inherit the same defaults.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+
+
 -- =============================================================================
 -- Public content tables — full policy set
 -- =============================================================================
