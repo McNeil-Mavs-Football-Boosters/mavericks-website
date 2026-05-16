@@ -1,65 +1,120 @@
 import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+import { Button } from "@/components/ui/button";
+import { createServerClient } from "@/lib/supabase/server";
+import type { SiteSettings } from "@/lib/types";
+
+export const revalidate = 60;
+
+type HeroFields = Pick<
+  SiteSettings,
+  | "hero_image_url"
+  | "hero_headline"
+  | "hero_subhead"
+  | "primary_cta_label"
+  | "primary_cta_url"
+>;
+
+const HERO_DEFAULTS: HeroFields = {
+  hero_image_url: null,
+  hero_headline: "McNeil Mavericks Football Booster Club",
+  hero_subhead: null,
+  primary_cta_label: "Join the Club",
+  primary_cta_url: "/join",
+};
+
+async function loadHero(): Promise<HeroFields> {
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select(
+        "hero_image_url, hero_headline, hero_subhead, primary_cta_label, primary_cta_url",
+      )
+      .eq("id", 1)
+      .single<HeroFields>();
+    if (error || !data) return HERO_DEFAULTS;
+    return {
+      hero_image_url: data.hero_image_url ?? null,
+      hero_headline: data.hero_headline || HERO_DEFAULTS.hero_headline,
+      hero_subhead: data.hero_subhead ?? null,
+      primary_cta_label:
+        data.primary_cta_label || HERO_DEFAULTS.primary_cta_label,
+      primary_cta_url: data.primary_cta_url || HERO_DEFAULTS.primary_cta_url,
+    };
+  } catch {
+    return HERO_DEFAULTS;
+  }
+}
+
+export default async function Home() {
+  const hero = await loadHero();
+  const hasHeroImage = Boolean(hero.hero_image_url);
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex w-full max-w-3xl flex-1 flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl leading-10 font-semibold tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <>
+      <section
+        className={`relative isolate w-full min-h-[60vh] md:min-h-[70vh] flex items-center justify-center text-center text-white ${
+          hasHeroImage ? "" : "bg-mavs-green"
+        }`}
+      >
+        {hasHeroImage && hero.hero_image_url ? (
+          <>
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src={hero.hero_image_url}
+              alt=""
+              fill
+              priority
+              className="object-cover -z-10"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div
+              className="absolute inset-0 -z-10 bg-black/50"
+              aria-hidden="true"
+            />
+          </>
+        ) : null}
+
+        <div className="mx-auto max-w-3xl px-6 py-24">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            {hero.hero_headline}
+          </h1>
+          {hero.hero_subhead ? (
+            <p className="mt-4 text-lg sm:text-xl text-white/90">
+              {hero.hero_subhead}
+            </p>
+          ) : null}
+          <div className="mt-8 flex justify-center">
+            <Button
+              size="lg"
+              nativeButton={false}
+              className="bg-white text-mavs-green hover:bg-white/90"
+              render={<Link href={hero.primary_cta_url} />}
+            >
+              {hero.primary_cta_label}
+            </Button>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-6 py-16">
+        <p className="text-base leading-7 text-foreground">
+          The McNeil Maverick Football Booster Club is a parent-run 501(c)(3)
+          supporting the football program at McNeil High School in Austin,
+          Texas. We fundraise, organize events, recognize seniors, and back the
+          coaching staff so the team can focus on football. Every Mavs family
+          is welcome — whether you can give a dollar, a few hours, or a
+          season.
+        </p>
+        <p className="mt-4">
+          <Link
+            href="/about"
+            className="text-mavs-green font-medium hover:underline"
+          >
+            Learn more about the booster club →
+          </Link>
+        </p>
+      </section>
+    </>
   );
 }

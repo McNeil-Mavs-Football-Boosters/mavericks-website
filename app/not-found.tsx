@@ -1,0 +1,22 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Page not found",
+};
+
+export default function NotFound() {
+  return (
+    <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Page not found.</h1>
+      <p className="text-muted-foreground mb-8">
+        We couldn&apos;t find the page you were looking for. Try one of these instead:
+      </p>
+      <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-mavs-green font-medium">
+        <li><Link href="/" className="hover:underline">Home</Link></li>
+        <li><Link href="/about" className="hover:underline">About</Link></li>
+        <li><Link href="/contact" className="hover:underline">Contact</Link></li>
+      </ul>
+    </div>
+  );
+}
