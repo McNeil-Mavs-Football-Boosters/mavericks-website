@@ -90,6 +90,9 @@ const FALLBACK_SETTINGS: SiteSettings = {
   alias_secretary: null,
   alias_webmaster: null,
   alias_sponsorship: null,
+  current_year: "2026-27",
+  maxpreps_team_url: null,
+  freshman_has_blue: false,
   last_edited_by: null,
   updated_at: "",
 };
