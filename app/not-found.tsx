@@ -5,6 +5,8 @@ export const metadata: Metadata = {
   title: "Page not found",
 };
 
+export const revalidate = 60;
+
 export default function NotFound() {
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
