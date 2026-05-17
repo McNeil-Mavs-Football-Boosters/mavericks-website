@@ -68,7 +68,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-border">
-      <div className="px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+      <div className="flex h-16 items-center gap-6">
         <Link href="/" className="font-semibold text-mavs-green">
           <span className="hidden md:inline">McNeil Mavericks Football</span>
           <span className="inline md:hidden">Mavs Football</span>
@@ -148,7 +148,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
         <button
           type="button"
           aria-label="Open menu"
-          className="lg:hidden inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-green"
+          className="lg:hidden ml-auto inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-green"
           onClick={() => setMobileOpen(true)}
         >
           <Menu className="h-6 w-6" />
