@@ -36,6 +36,26 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+export interface Game {
+  id: string;
+  year: string;
+  team_level: "varsity" | "jv" | "freshman";
+  team_designation: string | null;
+  opponent: string;
+  opponent_url: string | null;
+  game_date: string;
+  location: string | null;
+  location_url: string | null;
+  home_or_away: "home" | "away" | "neutral";
+  our_score: number | null;
+  their_score: number | null;
+  result_status: "scheduled" | "final" | "cancelled" | "postponed" | "tbd";
+  watch_url: string | null;
+  maxpreps_game_url: string | null;
+  notes: string | null;
+  featured: boolean;
+}
+
 export interface BoardMember {
   id: string;
   name: string;
