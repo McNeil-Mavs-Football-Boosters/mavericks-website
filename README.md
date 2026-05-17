@@ -106,6 +106,7 @@ Current buckets:
 | `event-images` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
 | `sponsor-logos` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
 | `board-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
+| `site-images` | 10 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
 | `documents` | 50 MB | Any | `009_storage_policies.sql` |
 | `coach-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `026_coach_photos_storage_policies.sql` |
 
