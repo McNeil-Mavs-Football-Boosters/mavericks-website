@@ -21,7 +21,7 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-05-17)
 
-**Steps 1–4c Commit B slices 1–3 + freshman-designation fix shipped.** Schedule routes are in (empty-state for games, markdown/empty-state for practice). Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
+**Steps 1–4c Commit B slices 1–4 + Deliverable E shipped.** Every `/schedule/*` URL renders real data per spec (games table on game routes, markdown/empty-state on practice). `/resources` renders the 6-row seed grouped by section. Print supported on every schedule route. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
 | Step | Status | Notes |
 |---|---|---|
@@ -35,11 +35,13 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 | **4c Commit B slice 2. Practice routes** | ✅ done | `de846d5`. react-markdown + remark-gfm for practice body |
 | **4c Commit B slice 3. Freshman games designation route** | ✅ done | `7bf7ec3` |
 | **4c Commit B fix. Designation conditional on `freshman_has_blue`** | ✅ done | `b5dd67b` games-page; `2422f0f` practice-page "Green & Blue" + spec § 5 paragraph |
-| 4c Commit B next. Games table render (replace empty state with `games` query) | ⏳ pending | needs seed game rows; nothing in `games` table yet |
-| Deliverable C. Roster routes (`/roster`, `/roster/[level]`, `/roster/freshman/[designation]`) | ⏳ pending | spec § 6 |
-| Deliverable D. Coaches (`/coaches`) | ⏳ pending | spec § 7 |
-| Deliverable E. Resources (`/resources`) | ⏳ pending | spec § 8 |
-| Print stylesheets (schedule + roster) | ⏳ pending | spec § 9 "Print" |
+| **4c Commit B slice 4 Part 1. Test seed migration 027** | ✅ done | `26c6322`. 9 throwaway rows for 2026-27 (varsity 5, jv 2, freshman/Green 2) |
+| **4c Commit B slice 4 Part 2. Games table render** | ✅ done | `94ecb6b`. Desktop 7-col table + mobile cards + home tint + result cells + lib/queries/games.ts |
+| **4c Commit B slice 4 Part 3. Print support (schedule)** | ✅ done | `4ce0afd`. PrintButton + PrintFooter + global header/footer print:hidden + @page margin |
+| **4c Commit B fix. Opponent link new tab + MaxPreps convention + migration 028 real URLs** | ✅ done | `c2b398a` + `14d33c7` + `9d32ada` |
+| **4c Commit B Deliverable E. `/resources`** | ✅ done | `32400b1`. resource_links grouped by section, icon mapping, empty state, /resources/[catchall] → 404 |
+| Deliverable C. Roster routes (`/roster`, `/roster/[level]`, `/roster/freshman/[designation]`) | ⏳ pending | spec § 6. Print support for roster also pending (spec § 9). |
+| Deliverable D. Coaches (`/coaches`) | ⏳ pending | spec § 7. No print. |
 | 5. Public collection routes (expanded) | pending | news/sponsors + /boosters/* |
 | 6–20 | pending | See `specs/build_plan_v2.md` |
 
@@ -67,6 +69,30 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - Spec edits to `commit_b_spec_v2.md` § 5 (no version bump, in-place clarifications): "Freshman designation in user-facing copy" paragraph (game pages); "Freshman practice title when `freshman_has_blue = true`" paragraph (practice title = "Freshman Green & Blue Practice Schedule" when flag is on).
 - Manual `freshman_has_blue` toggle acceptance test ran via psql, blue=true verified end-to-end (titles flipped, /freshman/blue 200d), reverted to false.
 - Next: games table render — seed `games` rows for 2026-27 (need a roster decision: real data vs scrimmage stubs?), then replace empty-state cards with a real table. Or jump to roster routes (Deliverable C). Or coaches (Deliverable D). Or resources (Deliverable E). All four are independent.
+
+## Build progress 2026-05-17 — slice 4 + Deliverable E (extended session)
+
+Continuation of the same calendar day. Two more bundles shipped after the original 2026-05-17 entry.
+
+**Slice 4 (games table render + print).** Shipped in three parts plus a follow-up batch, with the parallel-subagent pattern (one agent for data/pages, one for components):
+
+- `26c6322` — **Migration 027.** 9 throwaway test rows in `games` for `year='2026-27'`: 5 varsity (W/L/scheduled/cancelled/tbd, one with Homecoming notes, one with watch_url, one with opponent_url + location_url), 2 jv (final win, scheduled), 2 freshman with `team_designation='Green'`. Cleanup path: `DELETE FROM games WHERE year='2026-27';` once admin CRUD lands (Step 7b/13).
+- `94ecb6b` — **Part 2 games render.** `lib/queries/games.ts` (`getGamesForTeam({ year, level, designation })` with strict NULL match for varsity/jv and `eq` for freshman Green/Blue, ORDER BY `game_date ASC`); `components/schedule/games-table.tsx` (desktop 7-col, `hidden md:block`, Notes as a colSpan=7 subtitle row, subtle `bg-mavs-green/5` home tint, HOME/AWAY/NEUTRAL badge); `components/schedule/game-card.tsx` (mobile, `block md:hidden`, `space-y-3` wrapper in the page so cards aren't flush); `components/schedule/result-cell.tsx` (W=green, L/T=foreground, em-dash for scheduled, Cancelled/Postponed pill, TBD, defensive em-dash when final but a score is null). Both pages (varsity/jv + freshman) keep the existing title + MaxPreps subhead + freshman designation gating.
+- `4ce0afd` — **Part 3 print.** `components/schedule/print-button.tsx` (client, lucide Printer, `print:hidden` self, `window.print()` onClick); `components/schedule/print-footer.tsx` (client, `hidden print:block`, populates `window.location.href` + formatted date on mount). Global `print:hidden` on `<header>` and `<footer>` wrappers and on the `<GamePracticeToggle>` wrapper. `print:block` on the games-table wrapper to force the table at print width regardless of viewport. All tints stripped on print; all colored emphasis → `print:text-black`. Watch icon `print:hidden`. Empty-state copy stays on print (so a no-data page isn't blank) but the empty-state MaxPreps action button is `print:hidden`. Practice markdown body neutralizes link colors via `print:[&_a]:text-black print:[&_a]:no-underline`. `@media print { @page { margin: 0.5in } }` appended to `globals.css`.
+- `c2b398a` — **Opponent link new tab.** Both `games-table.tsx` and `game-card.tsx` add `target="_blank"` + `rel="noopener noreferrer"` to the opponent link.
+- `14d33c7` — **Migration 028.** Replaces the `roundrockfootball.example.com` placeholder from 027 with the real Round Rock Dragons MaxPreps team page (`https://www.maxpreps.com/tx/round-rock/round-rock-dragons/football/`). Verified via WebSearch. `example_com_urls = 0` across all 9 rows.
+- `9d32ada` — **Spec § 5 clarification.** Per-row Opponent bullet now specifies the new-tab behavior and notes the admin convention: `opponent_url` is the opponent's MaxPreps team page; admin label will read "Opponent MaxPreps URL" when CRUD ships.
+
+**Deliverable E `/resources`.** Shipped in one bundle, also via two parallel subagents:
+
+- `32400b1` — `lib/queries/resource-links.ts` (active=true, ORDER BY section, sort_order; logs + returns `[]` on error); `lib/resource-icons.ts` (`iconForHint(hint)` → ExternalLink/FileText/ClipboardList/Play; unknown/null → ExternalLink); `components/resources/resource-section.tsx` (heading + `<ul>` of items; returns `null` for empty links array so empty sections vanish); `components/resources/resource-item.tsx` (icon + `LinkWrapper` that uses `next/link` for `/`-prefixed URLs and a plain `<a target="_blank" rel="noopener noreferrer">` for everything else, per spec § 8); `app/resources/page.tsx` (title "Forms & Links", subhead, groups rows by section in code, renders the five sections in hardcoded enum order, empty-state card with literal `boosters@mcneilmavericks.org`, **`export const dynamic = "force-dynamic"`** because /resources has no params and was prerendering statically — spec § 9 requires per-request render); `app/resources/[catchall]/page.tsx` (unconditional `notFound()`).
+- Renders the 6 existing seed rows (Aktivate, UIL, RRISD under Registration & Forms; HUDL, SportsYou under Communications; Kelly Reeves under Stadiums & Directions). Resources + Other sections render no heading because they have zero rows. SportsYou URL is the addendum-corrected `sportsyou.com`, not `#`. Anon role sees all 6 rows (RLS sanity).
+
+**Other notes.**
+- The full-context spec read says "force-dynamic is needed when a Commit B page lacks `params`." Worth remembering for Deliverable D (`/coaches`) and any future paramless data page.
+- `followups.md` entry on "service-role vs anon-key" expanded 2026-05-17 to enumerate every public read page affected (home, /about, /boosters, /contact, /schedule/games/*, /schedule/practice/*, future /roster, /coaches, /resources). Anon RLS verified directly via psql `SET LOCAL ROLE anon` for both `games` (9 rows) and `resource_links` (6 rows). The wiring fix is deferred to admin work; not blocking Commit B.
+- Migration **027 + 028 are throwaway test seeds** for `games`. Admin CRUD will replace them entirely. Cleanup: `DELETE FROM games WHERE year = '2026-27';`.
+- Next: Deliverable C (roster) and/or D (coaches). Both independent of each other and of E. Roster also gets print per spec § 9; coaches does not.
 
 ## The pivot (2026-05-16)
 
@@ -117,19 +143,27 @@ Spec docs evolve as a chain of addenda rather than rewrites. Read in order if yo
 - React deps: `react-hook-form`, `@hookform/resolvers`, `zod`, `resend`, `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `lucide-react`
 - **Lucide v1.x dropped brand glyphs** (trademark reasons). Inline SVGs in `components/layout/Footer.tsx` provide Facebook/Instagram/Youtube icons. If we add X/Twitter (anticipated in schema v2), keep inlining or add a brand-icon dep.
 
-## What's live as of Commit B slice 3 + fix (`2422f0f`)
+## What's live as of Commit B Deliverable E (`32400b1`)
 
 Adds to the Step 4b inventory below:
 
+**Schedule (`/schedule/*`):**
 - `/schedule` → 308 redirect to `/schedule/games/varsity`.
-- `/schedule/games/varsity`, `/schedule/games/jv` — page header (title + "Live scores and stats →" MaxPreps subhead) + Game/Practice pill toggle + empty-state card with MaxPreps button. No `games` query yet.
-- `/schedule/games/freshman/green` — empty-state card. Title and copy include "Green" only when `site_settings.freshman_has_blue = true`; just "Freshman" when false. Matches header dropdown convention.
-- `/schedule/games/freshman/blue` — 200 only when `freshman_has_blue = true`, else 404.
+- `/schedule/games/varsity`, `/schedule/games/jv` — page header (title + "Live scores and stats →" MaxPreps subhead) + on-page Game/Practice toggle + **real games table** (seeded by migration 027, 5 varsity rows / 2 jv rows). Per-row: date "Fri, Sep 4", opponent (link to MaxPreps opens new tab when `opponent_url` set), location (link opens new tab when `location_url` set), HOME/AWAY/NEUTRAL badge, time "7:30pm" (America/Chicago), Result column (W/L/T for finals, em-dash for scheduled, Cancelled/Postponed pill, TBD), Watch icon when `watch_url` set, Homecoming-style notes as a small subtitle row spanning all columns. Subtle `bg-mavs-green/5` tint on home rows. Below 768px the table collapses to cards (same data, `block md:hidden` wrapper with `space-y-3`).
+- `/schedule/games/freshman/green` — real games table for `team_designation='Green'` (2 seeded rows). Title and empty-state copy include "Green" only when `site_settings.freshman_has_blue = true`; plain "Freshman" otherwise.
+- `/schedule/games/freshman/blue` — 200 (with a games-table render for `team_designation='Blue'`) only when `freshman_has_blue = true`, else 404. No blue rows seeded today; flag is `false`.
 - `/schedule/games/varsity/*`, `/schedule/games/jv/*`, `/schedule/games/freshman/anything-else` — 404.
-- `/schedule/practice/varsity`, `/schedule/practice/jv`, `/schedule/practice/freshman` — queries `practice_schedules` for current year + level + active. Renders markdown body when non-empty, `source_note` in empty-state card otherwise. Freshman practice title becomes "Freshman Green & Blue Practice Schedule" when `freshman_has_blue = true`; plain "Freshman" otherwise.
+- `/schedule/practice/varsity`, `/schedule/practice/jv`, `/schedule/practice/freshman` — queries `practice_schedules` for current year + level + active. Renders markdown body when non-empty, `source_note` in empty-state card otherwise (current seed has empty body + `source_note='Awaiting practice schedule from coaching staff'`). Freshman practice title becomes "Freshman Green & Blue Practice Schedule" when `freshman_has_blue = true`; plain "Freshman" otherwise.
 - `/schedule/practice/*/anything` — 404.
+- **Print on every `/schedule/*` route.** Print button visible in the page header; Cmd-P or button click triggers `window.print()`. Header, footer, Game/Practice toggle, MaxPreps subhead, mobile cards, Watch icon all `print:hidden`. Table is `print:block` so the 7-column layout renders on paper regardless of viewport. Tints stripped, colored emphasis → `print:text-black`, badges become black-bordered. Print footer shows URL + formatted print date. Page margin `0.5in`. Empty-state copy stays on print so a no-data page isn't blank; only the MaxPreps action button inside the empty-state is hidden.
 
-**Schedule layout** (`app/schedule/layout.tsx`) is a server component that primes `getSiteSettingsCore()` and renders the `<GamePracticeToggle>` above `{children}`. The toggle is a client component using `usePathname()`; on freshman game pages the Game button always links to `/schedule/games/freshman/green` (drops the designation per spec § 5 line 202 for the Practice link). On `notFound()` inside `/schedule/*`, the schedule layout is unmounted and the root layout's `not-found.tsx` is rendered — header and footer still appear, but the toggle does not. Not a spec requirement to fix; revisit if it becomes a UX issue.
+**Schedule layout** (`app/schedule/layout.tsx`) is a server component that primes `getSiteSettingsCore()` and renders the `<GamePracticeToggle>` above `{children}`. The toggle is a client component using `usePathname()`; on freshman game pages the Game button always links to `/schedule/games/freshman/green` (drops the designation per spec § 5 line 202 for the Practice link). The toggle wrapper has `print:hidden`. On `notFound()` inside `/schedule/*`, the schedule layout is unmounted and the root layout's `not-found.tsx` is rendered — header and footer still appear, but the toggle does not. Not a spec requirement to fix; revisit if it becomes a UX issue.
+
+**Resources (`/resources`):**
+- `/resources` — title "Forms & Links", subhead, 3 section headings rendered for the seeded data (Registration & Forms, Communications, Stadiums & Directions); empty sections (Resources, Other) render nothing. Each row: lucide icon (per `icon_hint`, defaults to ExternalLink), label as link (new tab + `rel="noopener noreferrer"` for non-`/` URLs), optional description below. SportsYou row uses the addendum-corrected `https://www.sportsyou.com/`. Empty-state card with `boosters@mcneilmavericks.org` copy renders if the entire table is ever empty.
+- `/resources/*` — 404.
+- `export const dynamic = "force-dynamic"` on the page so the build doesn't prerender it statically (Next 16 default-statics paramless pages with DB queries — spec § 9 requires per-request render).
+- No print support (per spec § 9).
 
 ## What's live as of Step 4b (commit 58b6577)
 
