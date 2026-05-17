@@ -1,4 +1,6 @@
+import { Fragment } from "react";
 import Link from "next/link";
+
 import { createServerClient } from "@/lib/supabase/server";
 import type { SiteSettings } from "@/lib/types";
 
@@ -112,104 +114,69 @@ async function loadSettings(): Promise<SiteSettings> {
   }
 }
 
+const SITE_LINKS: { href: string; label: string }[] = [
+  { href: "/", label: "Home" },
+  { href: "/schedule", label: "Schedule" },
+  { href: "/boosters", label: "Boosters" },
+  { href: "/sponsors", label: "Sponsors" },
+  { href: "/boosters/donate", label: "Donate" },
+  { href: "/about", label: "About" },
+  { href: "/privacy", label: "Privacy" },
+];
+
 export async function Footer() {
   const settings = await loadSettings();
 
   return (
-    <footer className="border-t border-border bg-muted/30 mt-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="border-t border-border bg-muted/30 mt-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-xs leading-snug">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-start">
+          {/* Address (left) */}
           <div>
             <p className="font-semibold text-foreground">
               {settings.display_name}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-muted-foreground">
               Supporting Mavericks football since 2009.
             </p>
             {settings.mailing_address ? (
-              <address className="not-italic text-sm text-muted-foreground mt-3 whitespace-pre-line">
+              <address className="not-italic text-muted-foreground whitespace-pre-line mt-1">
                 {settings.mailing_address}
               </address>
             ) : null}
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">Site</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
+          {/* Site links (center) */}
+          <nav aria-label="Footer site links" className="md:text-center">
+            {SITE_LINKS.map((link, i) => (
+              <Fragment key={link.href}>
                 <Link
-                  href="/"
+                  href={link.href}
                   className="text-muted-foreground hover:text-mavs-green"
                 >
-                  Home
+                  {link.label}
                 </Link>
-              </li>
-              <li>
-                <Link
-                  href="/schedule"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  Schedule
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/boosters"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  Boosters
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/sponsors"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  Sponsors
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/boosters/donate"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  Donate
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  Privacy
-                </Link>
-              </li>
-            </ul>
-          </div>
+                {i < SITE_LINKS.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="mx-2 text-muted-foreground/60"
+                  >
+                    ·
+                  </span>
+                ) : null}
+              </Fragment>
+            ))}
+          </nav>
 
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">
-              Connect
-            </h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href={`mailto:${settings.primary_contact_email}`}
-                  className="text-muted-foreground hover:text-mavs-green"
-                >
-                  {settings.primary_contact_email}
-                </a>
-              </li>
-            </ul>
-            <div className="mt-4 flex items-center gap-3">
+          {/* Connect (right) */}
+          <div className="md:text-right">
+            <a
+              href={`mailto:${settings.primary_contact_email}`}
+              className="text-muted-foreground hover:text-mavs-green"
+            >
+              {settings.primary_contact_email}
+            </a>
+            <div className="mt-1 flex items-center gap-3 md:justify-end">
               {settings.facebook_boosters_url ? (
                 <a
                   href={settings.facebook_boosters_url}
@@ -218,7 +185,7 @@ export async function Footer() {
                   aria-label="Facebook"
                   className="text-muted-foreground hover:text-mavs-green transition-colors"
                 >
-                  <Facebook className="h-5 w-5" />
+                  <Facebook className="h-4 w-4" />
                 </a>
               ) : null}
               {settings.instagram_url ? (
@@ -229,7 +196,7 @@ export async function Footer() {
                   aria-label="Instagram"
                   className="text-muted-foreground hover:text-mavs-green transition-colors"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <Instagram className="h-4 w-4" />
                 </a>
               ) : null}
               {settings.youtube_url ? (
@@ -240,22 +207,16 @@ export async function Footer() {
                   aria-label="YouTube"
                   className="text-muted-foreground hover:text-mavs-green transition-colors"
                 >
-                  <Youtube className="h-5 w-5" />
+                  <Youtube className="h-4 w-4" />
                 </a>
               ) : null}
             </div>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {settings.school_affiliation_disclaimer}
-          </p>
-        </div>
-
-        <p className="mt-6 text-xs text-muted-foreground">
-          © 2026 McNeil Maverick Football Booster Club · 501(c)(3) · EIN
-          26-4231242
+        <p className="mt-4 pt-4 border-t border-border text-muted-foreground">
+          {settings.school_affiliation_disclaimer} © 2026 McNeil Maverick
+          Football Booster Club · 501(c)(3) · EIN 26-4231242.
         </p>
       </div>
     </footer>
