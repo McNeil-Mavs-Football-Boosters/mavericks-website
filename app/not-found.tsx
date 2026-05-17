@@ -5,7 +5,11 @@ export const metadata: Metadata = {
   title: "Page not found",
 };
 
-export const revalidate = 60;
+// Force dynamic rendering so unmatched routes (e.g. /schedule/games/varsity
+// before the page is built) re-read site_settings on every request. ISR's
+// revalidate=60 was getting bypassed for catch-all 404 fallback URLs because
+// Vercel's edge cache keys them outside of the route's revalidation cycle.
+export const dynamic = "force-dynamic";
 
 export default function NotFound() {
   return (
