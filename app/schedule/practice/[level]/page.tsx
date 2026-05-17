@@ -25,7 +25,12 @@ export default async function PracticeSchedulePage({
   const levelTitle = LEVEL_TITLES[level];
   if (!levelTitle) notFound();
 
-  const { current_year } = await getSiteSettingsCore();
+  const { current_year, freshman_has_blue } = await getSiteSettingsCore();
+
+  const teamLabel =
+    level === "freshman" && freshman_has_blue
+      ? "Freshman Green & Blue"
+      : levelTitle;
 
   const supabase = createServerClient();
   const { data } = await supabase
@@ -44,7 +49,7 @@ export default async function PracticeSchedulePage({
     <section>
       <header className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {current_year} {levelTitle} Practice Schedule
+          {current_year} {teamLabel} Practice Schedule
         </h1>
       </header>
 

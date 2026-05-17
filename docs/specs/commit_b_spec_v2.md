@@ -273,6 +273,8 @@ LIMIT 1;
 
 No table. Practice is a markdown blob, not structured rows.
 
+**Freshman practice title when `freshman_has_blue = true`.** Practice is a single shared row across Green and Blue (no `team_designation` column on `practice_schedules`). On `/schedule/practice/freshman`, when the flag is true, the page title reads "{year} Freshman Green & Blue Practice Schedule" to signal the shared scope. When the flag is false, the title stays "{year} Freshman Practice Schedule." Varsity and JV practice titles are unchanged in both modes.
+
 ### Edge cases
 
 - `freshman_has_blue` is toggled from true to false while a visitor has `/schedule/games/freshman/blue` open: behavior on next nav is 404; current page render is whatever the user last loaded. Acceptable.
