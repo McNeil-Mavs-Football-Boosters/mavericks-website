@@ -18,7 +18,6 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Second super_admin account for Carol with 2FA + recovery codes.
 - [ ] Institutional super_admin accounts (president@, webmaster@) wired through Cloudflare Email Routing to personal inboxes.
 - [ ] Mobile QA pass: open every public route on iPhone, fix anything broken. Step 14 territory.
-- [ ] Audit all Storage buckets — confirm MIME and size restrictions match the spec for each. sponsor-logos and event-images are spec'd as image buckets (5MB, png/jpeg/webp) but currently show "Any" and 50MB. news-images may also need tightening. documents should keep "Any" and a larger limit.
 
 ## Spec drift to consolidate post-launch
 - [ ] Collapse the v2 doc trail (site_pivot + addendum, schema_v2 + 3 addenda, content_map_v2 + 2 addenda, admin_scope_v2, build_plan_v2) into clean canonical docs. Per build_plan_v2 "Post-Step-20" section.
