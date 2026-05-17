@@ -96,7 +96,7 @@ export default async function BoostersPage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+    <div className="py-12">
       <header className="mb-12 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           McNeil Maverick Football Booster Club

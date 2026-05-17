@@ -68,7 +68,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-border">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
         <Link href="/" className="font-semibold text-mavs-green">
           <span className="hidden md:inline">McNeil Mavericks Football</span>
           <span className="inline md:hidden">Mavs Football</span>
