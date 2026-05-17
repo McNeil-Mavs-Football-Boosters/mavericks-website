@@ -56,6 +56,22 @@ export interface Game {
   featured: boolean;
 }
 
+export interface ResourceLink {
+  id: string;
+  section:
+    | "registration_forms"
+    | "communications"
+    | "resources"
+    | "stadiums"
+    | "other";
+  label: string;
+  url: string;
+  description: string | null;
+  icon_hint: string | null;
+  sort_order: number;
+  active: boolean;
+}
+
 export interface BoardMember {
   id: string;
   name: string;
