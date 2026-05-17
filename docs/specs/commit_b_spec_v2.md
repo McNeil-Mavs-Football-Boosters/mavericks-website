@@ -249,6 +249,8 @@ Notes:
 
 **Empty state:** card showing "[Level] [designation if any] game schedule coming soon. Check MaxPreps for current details." with a MaxPreps button.
 
+**Freshman designation in user-facing copy.** Page titles and empty-state copy on `/schedule/games/freshman/[designation]` only include the designation word ("Green" or "Blue") when `site_settings.freshman_has_blue = true`. When the flag is false, the title reads "{year} Freshman Game Schedule" and the empty-state copy reads "Freshman game schedule coming soon..." with no "Green." URL routing is unchanged (`/freshman/green` always renders, `/freshman/blue` 404s when the flag is false). This matches the header dropdown convention from § 4.5 line 107: the Green substructure is invisible to users when there is no Blue.
+
 **Mobile (<768px):** tables collapse to cards. Each card = matchup, date, time, location, home/away badge, result, watch icon. Do not attempt to fit the 7-column table on a 375px viewport.
 
 ### Practice rendering

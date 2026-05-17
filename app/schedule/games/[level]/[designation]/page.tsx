@@ -24,11 +24,16 @@ export default async function FreshmanGameSchedulePage({
 
   if (designation === "blue" && !freshman_has_blue) notFound();
 
+  const showDesignation = freshman_has_blue;
+  const teamLabel = showDesignation
+    ? `Freshman ${designationTitle}`
+    : "Freshman";
+
   return (
     <section>
       <header className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {current_year} Freshman {designationTitle} Game Schedule
+          {current_year} {teamLabel} Game Schedule
         </h1>
         {maxpreps_team_url ? (
           <p className="mt-2 text-sm">
@@ -46,8 +51,8 @@ export default async function FreshmanGameSchedulePage({
 
       <div className="rounded-lg border border-border bg-white p-8 text-center">
         <p className="text-foreground">
-          Freshman {designationTitle} game schedule coming soon. Check MaxPreps
-          for current details.
+          {teamLabel} game schedule coming soon. Check MaxPreps for current
+          details.
         </p>
         {maxpreps_team_url ? (
           <div className="mt-6">
