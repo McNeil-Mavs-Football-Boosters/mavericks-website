@@ -63,6 +63,54 @@ db/
   seed/        seed data (membership tiers, sponsorship tiers, board, committees)
 ```
 
+## Database migrations
+
+All schema changes live in `db/migrations/`, numbered sequentially. Files are applied in numeric order. The full chain through migration 026 is bundled in `db/apply_all.sql` for fresh-DB rebuilds.
+
+### Apply a single migration
+
+Requires `psql` on PATH (`brew install libpq && brew link --force libpq` on macOS) and `SUPABASE_DB_URL` set in `.env.local` (the Session pooler URI from Supabase → Connect, with the DB password substituted in and any `&` URL-encoded as `%26`).
+
+```bash
+set -a && source .env.local && set +a
+psql "$SUPABASE_DB_URL" -f db/migrations/0XX_name.sql
+```
+
+### Rebuild from scratch
+
+```bash
+set -a && source .env.local && set +a
+psql "$SUPABASE_DB_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+psql "$SUPABASE_DB_URL" -f db/apply_all.sql
+```
+
+Storage buckets are not created by SQL — they must be set up via Supabase Studio (see next section).
+
+### Verification queries
+
+Each migration in this project was applied with a paired verification query. The verify pattern is documented in commit messages on `main`.
+
+## Supabase Storage buckets
+
+Buckets are created manually in Supabase Studio (Storage → New bucket). Each image bucket should be configured as:
+
+- Public bucket: on
+- Restrict file size: 5 MB
+- Restrict MIME types: `image/png, image/jpeg, image/webp`
+
+Current buckets:
+
+| Bucket | Size limit | MIME types | RLS policies migration |
+|---|---|---|---|
+| `news-images` | 50 MB | Any | `009_storage_policies.sql` |
+| `event-images` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
+| `sponsor-logos` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
+| `board-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
+| `documents` | 50 MB | Any | `009_storage_policies.sql` |
+| `coach-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `026_coach_photos_storage_policies.sql` |
+
+RLS policies on `storage.objects` are SQL-managed via migrations. Bucket settings (public, size, MIME) are Studio-managed.
+
 ## Build plan
 
 The full 20-step Phase 1 plan is in [`../ClaudeAiFiles/build_plan.md`](../ClaudeAiFiles/build_plan.md). This repo is the output of Step 1.
