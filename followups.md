@@ -3,6 +3,7 @@
 Items surfaced during the Phase 1 build that aren't blocking the current step but need attention before launch or in early Phase 2. Append-only. Mark items done when resolved.
 
 ## Security
+- [ ] Public pages currently use createServerClient (service role) which bypasses RLS. Switch to anon client before any admin pages land. Affects: every page in app/(public)/. Not blocking Commit B.
 - [ ] Rotate Supabase anon key (exposed in chat 2026-05-16 during 4c setup). Studio → Settings → API → rotate, then update .env.local and Vercel env vars.
 - [ ] Rotate Supabase service_role key (briefly in chat during original Steps 1-3 setup). Same process.
 - [ ] Verify .env.local is gitignored and has never been committed (git log --all --full-history -- .env.local should return nothing).
@@ -23,6 +24,10 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 ## Spec drift to consolidate post-launch
 - [ ] Collapse the v2 doc trail (site_pivot + addendum, schema_v2 + 3 addenda, content_map_v2 + 2 addenda, admin_scope_v2, build_plan_v2) into clean canonical docs. Per build_plan_v2 "Post-Step-20" section.
 - [ ] Update CLAUDE.md to reflect Phase 1 completion state once cutover is done.
+
+## Privacy / display preferences
+- [ ] Anonymous donor option: donors must be able to choose "Anonymous" so their name does not appear on any public donor list/recognition. Needs flag on the donation record (and form UI) plus enforcement on whatever public surface renders donors.
+- [ ] Member name-hide flag: members should be able to opt out of having their name displayed publicly. They are still a member of record, but no public surface (member lists, recognition, etc.) renders their identifying info. Needs flag on the member record (and signup/membership-edit UI) plus enforcement on every public query that touches members.
 
 ## Phase 2 / deferred
 - [ ] Bulk player import (paste mode primary, CSV upload optional). Spec'd in conversation 2026-05-16; folded into Step 7b admin rosters CRUD.

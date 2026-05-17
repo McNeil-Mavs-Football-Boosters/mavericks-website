@@ -10,12 +10,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
 import type { SiteSettings } from "@/lib/types";
 
 export const revalidate = 60;
-
-const CURRENT_YEAR = "2026-27";
 
 type HeroFields = Pick<
   SiteSettings,
@@ -97,6 +96,7 @@ function mergeHero(data: Partial<HeroFields> | null | undefined): HeroFields {
 
 async function loadHome(): Promise<HomeData> {
   try {
+    const { current_year } = await getSiteSettingsCore();
     const supabase = createServerClient();
     const nowIso = new Date().toISOString();
 
@@ -127,7 +127,7 @@ async function loadHome(): Promise<HomeData> {
         .from("sponsors")
         .select("id, name, logo_url, website_url")
         .eq("active", true)
-        .eq("year", CURRENT_YEAR)
+        .eq("year", current_year)
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true })
         .returns<SponsorTile[]>(),
@@ -145,21 +145,25 @@ async function loadHome(): Promise<HomeData> {
   }
 }
 
-const QUICK_LINKS: Array<{
+function buildQuickLinks(currentYear: string): Array<{
   label: string;
   href: string;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
-}> = [
-  { label: "Join the Club", href: "/boosters/join", Icon: UserPlus },
-  { label: "Sponsor the Team", href: "/boosters/sponsor", Icon: Handshake },
-  { label: "Make a Donation", href: "/boosters/donate", Icon: HeartHandshake },
-  { label: "Volunteer", href: "/boosters/volunteer", Icon: HandHelping },
-  { label: `${CURRENT_YEAR} Schedule`, href: "/schedule", Icon: CalendarDays },
-  { label: `${CURRENT_YEAR} Roster`, href: "/roster", Icon: Users },
-];
+}> {
+  return [
+    { label: "Join the Club", href: "/boosters/join", Icon: UserPlus },
+    { label: "Sponsor the Team", href: "/boosters/sponsor", Icon: Handshake },
+    { label: "Make a Donation", href: "/boosters/donate", Icon: HeartHandshake },
+    { label: "Volunteer", href: "/boosters/volunteer", Icon: HandHelping },
+    { label: `${currentYear} Schedule`, href: "/schedule", Icon: CalendarDays },
+    { label: `${currentYear} Roster`, href: "/roster", Icon: Users },
+  ];
+}
 
 export default async function Home() {
+  const { current_year } = await getSiteSettingsCore();
   const { hero, news, events, sponsors } = await loadHome();
+  const quickLinks = buildQuickLinks(current_year);
   const hasHeroImage = Boolean(hero.hero_image_url);
 
   return (
@@ -213,7 +217,7 @@ export default async function Home() {
             Get Involved
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {QUICK_LINKS.map(({ label, href, Icon }) => (
+            {quickLinks.map(({ label, href, Icon }) => (
               <Link
                 key={href}
                 href={href}

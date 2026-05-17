@@ -6,6 +6,7 @@ import {
   UserPlus,
 } from "lucide-react";
 
+import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
 import type { BoardMember, SiteSettings } from "@/lib/types";
 
@@ -34,7 +35,7 @@ function initialsFor(name: string): string {
     .join("");
 }
 
-async function loadPageData(): Promise<{
+async function loadPageData(currentYear: string): Promise<{
   settings: Pick<
     SiteSettings,
     "legal_name" | "ein" | "primary_contact_email" | "mailing_address"
@@ -58,7 +59,7 @@ async function loadPageData(): Promise<{
         .from("board_members")
         .select("*")
         .eq("active", true)
-        .eq("year", "2026-27")
+        .eq("year", currentYear)
         .order("sort_order", { ascending: true })
         .returns<BoardMember[]>(),
     ]);
@@ -84,7 +85,8 @@ async function loadPageData(): Promise<{
 }
 
 export default async function BoostersPage() {
-  const { settings, boardMembers } = await loadPageData();
+  const { current_year: currentYear } = await getSiteSettingsCore();
+  const { settings, boardMembers } = await loadPageData(currentYear);
   const legalName = settings.legal_name;
   const ein = settings.ein;
   const primaryContactEmail = settings.primary_contact_email;
@@ -198,7 +200,7 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-6">2026-27 Board</h2>
+        <h2 className="text-xl font-semibold mb-6">{currentYear} Board</h2>
         {boardMembers.length === 0 ? (
           <p className="text-muted-foreground">
             Board roster will be posted soon.
