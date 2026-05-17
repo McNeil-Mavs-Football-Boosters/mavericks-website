@@ -70,7 +70,10 @@ const FALLBACK_SETTINGS: SiteSettings = {
   primary_contact_email: "boosters@mcneilmavericks.org",
   school_affiliation_disclaimer:
     "This website is maintained by the McNeil Maverick Football Booster Club and is not a part of McNeil High School or Round Rock ISD. Neither McNeil High School nor Round Rock ISD is responsible for the content or opinions within this website.",
-  facebook_group_url: null,
+  facebook_football_url: null,
+  facebook_boosters_url: null,
+  x_football_url: null,
+  x_boosters_url: null,
   instagram_url: null,
   youtube_url: null,
   hero_image_url: null,
@@ -204,9 +207,9 @@ export async function Footer() {
               </li>
             </ul>
             <div className="mt-4 flex items-center gap-3">
-              {settings.facebook_group_url ? (
+              {settings.facebook_boosters_url ? (
                 <a
-                  href={settings.facebook_group_url}
+                  href={settings.facebook_boosters_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"

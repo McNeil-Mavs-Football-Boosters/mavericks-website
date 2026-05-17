@@ -9,7 +9,10 @@ export interface SiteSettings {
   mailing_address: string | null;
   primary_contact_email: string;
   school_affiliation_disclaimer: string;
-  facebook_group_url: string | null;
+  facebook_football_url: string | null;
+  facebook_boosters_url: string | null;
+  x_football_url: string | null;
+  x_boosters_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
   hero_image_url: string | null;
