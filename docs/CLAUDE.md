@@ -4,9 +4,24 @@ Replacement website for `mcneilmavericks.org`. **The site is the McNeil Maverick
 
 Booster club running info (officer roster, meeting cadence, contact info) lives at `~/Projects/BoosterClub/`.
 
-## Status (2026-05-16)
+## Reaching Jeremy mid-task
 
-**Steps 1–4c Commit A shipped (migrations 011-026 applied). Step 4c Commit B is next.** Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
+When you need Jeremy's input or sign-off to proceed, use **`jv-ask`** — not `jv-notify`. They look similar but behave very differently:
+
+- **`jv-ask -s "claude-code (mavs-website)" "<question>"`** — blocks for up to 20 min; prints Jeremy's Slack reply to stdout (exit 0) or exits 2 on timeout. **Use this whenever your next step depends on his answer.** Examples: "ok to apply migration X?", "verify the staging page and reply 'go' for Part 2", "should I revert the flag?". Read the stdout and act on it. On exit 2 (timeout), stop or pick a conservative default — don't assume yes.
+- **`jv-notify -s "claude-code (mavs-website)" "<update>"`** — fire-and-forget. Use only for status updates that don't need a reply ("Part 1 shipped, moving to Part 2", "DB rotated, done"). If you append "reply X for next step" to a notify, Jeremy can't actually relay back — Slack has no channel to reach you. That phrasing implies `jv-ask`.
+
+Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regardless, use `jv-notify`.
+
+**Why this matters for steering:** between `jv-notify` checkpoints you are *unsteerable from Slack*. Jeremy's Slack replies have no return path to you — they go to the JV Assistant bot's normal Claude handler, which has no idea you exist. If Jeremy needs to stop or redirect you mid-task, he has to type in this CLI window directly. So:
+
+- **If a checkpoint genuinely needs Jeremy's input before you proceed, use `jv-ask`.** That's the only way Slack can steer you.
+- **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
+- Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
+
+## Status (2026-05-17)
+
+**Steps 1–4c Commit B slices 1–3 + freshman-designation fix shipped.** Schedule routes are in (empty-state for games, markdown/empty-state for practice). Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
 | Step | Status | Notes |
 |---|---|---|
@@ -15,9 +30,17 @@ Booster club running info (officer roster, meeting cadence, contact info) lives 
 | 3. Schema applied (v1) | ✅ done | 10 migrations under `mavericks-website/db/migrations/` |
 | 4. Public layout + 5 static routes | ✅ done | shipped before the pivot; superseded by 4b for header/home/about |
 | 4b. Football-first IA reshape | ✅ done | commit `58b6577`. Header, home, /boosters, /about, /contact rewritten |
-| **4c Commit A. Apply schema v2 migrations** | ✅ done | migrations 011-026; `3eb95c1` through `ff9feaf`. Adds games, rosters, players, coaches, resource_links, practice_schedules, sponsorship_inquiries + site_settings columns + coach-photos storage policies |
-| 4c Commit B. Code-side schema integration | ⏳ next | current_year code swap; new public routes for /schedule, /roster, /coaches, /resources. No admin CRUD yet |
-| 5. Public collection routes (expanded) | pending | schedule/roster/coaches/news/sponsors/resources + /boosters/* |
+| **4c Commit A. Apply schema v2 migrations** | ✅ done | migrations 011-026; `3eb95c1` through `ff9feaf` |
+| **4c Commit B slice 1. Schedule layout + games/[level] + Game/Practice toggle** | ✅ done | `aa2fa0b` |
+| **4c Commit B slice 2. Practice routes** | ✅ done | `de846d5`. react-markdown + remark-gfm for practice body |
+| **4c Commit B slice 3. Freshman games designation route** | ✅ done | `7bf7ec3` |
+| **4c Commit B fix. Designation conditional on `freshman_has_blue`** | ✅ done | `b5dd67b` games-page; `2422f0f` practice-page "Green & Blue" + spec § 5 paragraph |
+| 4c Commit B next. Games table render (replace empty state with `games` query) | ⏳ pending | needs seed game rows; nothing in `games` table yet |
+| Deliverable C. Roster routes (`/roster`, `/roster/[level]`, `/roster/freshman/[designation]`) | ⏳ pending | spec § 6 |
+| Deliverable D. Coaches (`/coaches`) | ⏳ pending | spec § 7 |
+| Deliverable E. Resources (`/resources`) | ⏳ pending | spec § 8 |
+| Print stylesheets (schedule + roster) | ⏳ pending | spec § 9 "Print" |
+| 5. Public collection routes (expanded) | pending | news/sponsors + /boosters/* |
 | 6–20 | pending | See `specs/build_plan_v2.md` |
 
 **Staging URL** (no SSO wall as of Step 4b push): `https://mavericks-website-jeremy-vest-s-projects.vercel.app`. Stable alias; per-deployment URLs follow the `mavericks-website-<hash>-jeremy-vest-s-projects.vercel.app` pattern. Per the prior CLAUDE.md, Deployment Protection was set to ON — Step 4b smoke tests returned 200 across the board, so the protection may have been disabled at some point. Re-check before assuming.
@@ -35,6 +58,15 @@ Booster club running info (officer roster, meeting cadence, contact info) lives 
 - Seed: rosters stubs, Wallin + Hale on coaches, 6 resource_links, practice schedule stubs, mailing_address, freshman_has_blue=false.
 - followups.md created and maintained (18 open items including: rotate Supabase anon and service_role keys; investigate news-images Studio policy anomaly; verify Kelly Reeves address; SE Tier 1 capture; mobile QA pass; seed 2025 varsity game results for June 2 board demo).
 - Next: Step 4c Commit B — current_year code swap + new public routes for /schedule, /roster, /coaches, /resources. No admin CRUD yet. Estimated 2-3 evenings.
+
+## Build progress 2026-05-17 (end of session)
+
+- Commit B slices 1-3 + designation fix shipped. Every `/schedule/*` URL in spec § 5 route map now renders or 404s per spec, except the actual games table render (empty-state card for now).
+- Files added: `app/schedule/layout.tsx` (server, renders Game/Practice toggle + children); `components/schedule/game-practice-toggle.tsx` (client, `usePathname`-driven, drops freshman designation on Practice link per spec § 5 line 202); `app/schedule/games/[level]/page.tsx` (varsity/jv); `app/schedule/games/[level]/[designation]/page.tsx` (freshman; reads `freshman_has_blue` to gate blue + omit designation from copy when flag is false); `app/schedule/practice/[level]/page.tsx` (varsity/jv/freshman, markdown body or empty-state); `app/schedule/practice/[level]/[catchall]/page.tsx` (404).
+- Deps added: `react-markdown`, `remark-gfm` for runtime markdown render.
+- Spec edits to `commit_b_spec_v2.md` § 5 (no version bump, in-place clarifications): "Freshman designation in user-facing copy" paragraph (game pages); "Freshman practice title when `freshman_has_blue = true`" paragraph (practice title = "Freshman Green & Blue Practice Schedule" when flag is on).
+- Manual `freshman_has_blue` toggle acceptance test ran via psql, blue=true verified end-to-end (titles flipped, /freshman/blue 200d), reverted to false.
+- Next: games table render — seed `games` rows for 2026-27 (need a roster decision: real data vs scrimmage stubs?), then replace empty-state cards with a real table. Or jump to roster routes (Deliverable C). Or coaches (Deliverable D). Or resources (Deliverable E). All four are independent.
 
 ## The pivot (2026-05-16)
 
@@ -84,6 +116,20 @@ Spec docs evolve as a chain of addenda rather than rewrites. Read in order if yo
 - shadcn primitives: `button`, `input`, `label`, `textarea`
 - React deps: `react-hook-form`, `@hookform/resolvers`, `zod`, `resend`, `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `lucide-react`
 - **Lucide v1.x dropped brand glyphs** (trademark reasons). Inline SVGs in `components/layout/Footer.tsx` provide Facebook/Instagram/Youtube icons. If we add X/Twitter (anticipated in schema v2), keep inlining or add a brand-icon dep.
+
+## What's live as of Commit B slice 3 + fix (`2422f0f`)
+
+Adds to the Step 4b inventory below:
+
+- `/schedule` → 308 redirect to `/schedule/games/varsity`.
+- `/schedule/games/varsity`, `/schedule/games/jv` — page header (title + "Live scores and stats →" MaxPreps subhead) + Game/Practice pill toggle + empty-state card with MaxPreps button. No `games` query yet.
+- `/schedule/games/freshman/green` — empty-state card. Title and copy include "Green" only when `site_settings.freshman_has_blue = true`; just "Freshman" when false. Matches header dropdown convention.
+- `/schedule/games/freshman/blue` — 200 only when `freshman_has_blue = true`, else 404.
+- `/schedule/games/varsity/*`, `/schedule/games/jv/*`, `/schedule/games/freshman/anything-else` — 404.
+- `/schedule/practice/varsity`, `/schedule/practice/jv`, `/schedule/practice/freshman` — queries `practice_schedules` for current year + level + active. Renders markdown body when non-empty, `source_note` in empty-state card otherwise. Freshman practice title becomes "Freshman Green & Blue Practice Schedule" when `freshman_has_blue = true`; plain "Freshman" otherwise.
+- `/schedule/practice/*/anything` — 404.
+
+**Schedule layout** (`app/schedule/layout.tsx`) is a server component that primes `getSiteSettingsCore()` and renders the `<GamePracticeToggle>` above `{children}`. The toggle is a client component using `usePathname()`; on freshman game pages the Game button always links to `/schedule/games/freshman/green` (drops the designation per spec § 5 line 202 for the Practice link). On `notFound()` inside `/schedule/*`, the schedule layout is unmounted and the root layout's `not-found.tsx` is rendered — header and footer still appear, but the toggle does not. Not a spec requirement to fix; revisit if it becomes a UX issue.
 
 ## What's live as of Step 4b (commit 58b6577)
 
@@ -160,6 +206,11 @@ These are not blockers but will need attention as Step 4c progresses:
 - **Schema gaps caught during Step 3** (still not in `spec_review.md` — add when convenient):
   - `schema.md` only granted EXECUTE on `current_user_has_role()` and SELECT on `public_members`. Missing all base table grants. Fixed at top of `db/migrations/008_rls.sql`.
   - `service_role` bypasses RLS at the role level (BYPASSRLS) but PostgREST still requires base table privileges. Easy to miss — Supabase's table UI auto-grants this.
-- **Applying further migrations**: `db/apply_all.sql` is the concatenated bundle for one-paste application via Supabase SQL Editor. After any migration edit, regenerate: `for f in db/migrations/0*.sql; do printf '\n-- ===\n-- %s\n-- ===\n\n' "$f"; cat "$f"; done > db/apply_all.sql`. No supabase CLI or psql installed locally.
+- **Applying further migrations / running ad-hoc queries**: `psql` is on PATH (libpq via brew). Apply migrations or run one-off SQL via:
+  ```
+  set -a && source .env.local && set +a
+  psql "$SUPABASE_DB_URL" -f db/migrations/0XX_name.sql
+  ```
+  `SUPABASE_DB_URL` is the Session pooler URI from Supabase Connect, with the password URL-encoded (`&` → `%26`, etc.). **Never echo `$SUPABASE_DB_URL`.** `db/apply_all.sql` remains as the concatenated bundle for one-paste via Supabase SQL Editor when psql is not handy; after any migration edit, regenerate via `for f in db/migrations/0*.sql; do printf '\n-- ===\n-- %s\n-- ===\n\n' "$f"; cat "$f"; done > db/apply_all.sql`.
 - **Stripe should be created last** in the new-account chain so receipts come from a real `treasurer@mcneilmavericks.org` role address.
 - **Migration of 35 existing Google Form signups**: 7 paid rows should go to `payments` with `method = 'other'`, NOT `'stripe'`. See schema.md migration plan and Step 12 of build_plan_v2.md.
