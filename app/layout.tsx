@@ -37,9 +37,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <Header freshmanHasBlue={freshman_has_blue} />
-        <main className="flex-1 w-full mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-          {children}
-        </main>
+        <main className="flex-1">{children}</main>
         <Footer />
       </body>
     </html>
