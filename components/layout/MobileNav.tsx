@@ -4,15 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
 
+import {
+  buildRosterLinks,
+  buildScheduleLinks,
+  type NavLink,
+} from "@/components/layout/teamLinks";
+
 interface MobileNavProps {
   open: boolean;
   onClose: () => void;
+  freshmanHasBlue: boolean;
 }
 
 const TOP_LINK_CLASS =
   "text-lg font-medium py-3 border-b border-border last:border-b-0 text-foreground hover:text-mavs-green";
 
-const BOOSTER_LINKS: { href: string; label: string }[] = [
+const BOOSTER_LINKS: NavLink[] = [
   { href: "/boosters", label: "About the Booster Club" },
   { href: "/boosters/join", label: "Join" },
   { href: "/boosters/members", label: "Members" },
@@ -25,8 +32,12 @@ const BOOSTER_LINKS: { href: string; label: string }[] = [
   { href: "/boosters/donate", label: "Donate" },
 ];
 
-export function MobileNav({ open, onClose }: MobileNavProps) {
-  const [boostersOpen, setBoostersOpen] = useState(false);
+type AccordionName = "schedule" | "roster" | "boosters";
+
+export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
+  const [openAccordion, setOpenAccordion] = useState<AccordionName | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -39,16 +50,17 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Reset Boosters accordion to collapsed when the drawer closes — done in
-    // cleanup so we're not calling setState in the effect body.
     return () => {
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = previousOverflow;
-      setBoostersOpen(false);
+      setOpenAccordion(null);
     };
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const toggle = (name: AccordionName) =>
+    setOpenAccordion((current) => (current === name ? null : name));
 
   return (
     <>
@@ -72,12 +84,23 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
           <Link href="/" onClick={onClose} className={TOP_LINK_CLASS}>
             Home
           </Link>
-          <Link href="/schedule" onClick={onClose} className={TOP_LINK_CLASS}>
-            Schedule
-          </Link>
-          <Link href="/roster" onClick={onClose} className={TOP_LINK_CLASS}>
-            Roster
-          </Link>
+
+          <MobileNavAccordion
+            label="Schedule"
+            links={buildScheduleLinks(freshmanHasBlue)}
+            isOpen={openAccordion === "schedule"}
+            onToggle={() => toggle("schedule")}
+            onItemClick={onClose}
+          />
+
+          <MobileNavAccordion
+            label="Roster"
+            links={buildRosterLinks(freshmanHasBlue)}
+            isOpen={openAccordion === "roster"}
+            onToggle={() => toggle("roster")}
+            onItemClick={onClose}
+          />
+
           <Link href="/coaches" onClick={onClose} className={TOP_LINK_CLASS}>
             Coaches &amp; Trainers
           </Link>
@@ -91,37 +114,63 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
             For Parents &amp; Athletes
           </Link>
 
-          <button
-            type="button"
-            aria-expanded={boostersOpen}
-            onClick={() => setBoostersOpen((v) => !v)}
-            className={`${TOP_LINK_CLASS} flex items-center justify-between w-full text-left`}
-          >
-            <span>Boosters</span>
-            <ChevronDown
-              className={`h-5 w-5 transition-transform ${boostersOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-          {boostersOpen ? (
-            <div className="flex flex-col pl-4 border-b border-border">
-              {BOOSTER_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={onClose}
-                  className="text-base font-medium py-2 text-muted-foreground hover:text-mavs-green"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          ) : null}
+          <MobileNavAccordion
+            label="Boosters"
+            links={BOOSTER_LINKS}
+            isOpen={openAccordion === "boosters"}
+            onToggle={() => toggle("boosters")}
+            onItemClick={onClose}
+          />
 
           <Link href="/about" onClick={onClose} className={TOP_LINK_CLASS}>
             About
           </Link>
         </nav>
       </div>
+    </>
+  );
+}
+
+function MobileNavAccordion({
+  label,
+  links,
+  isOpen,
+  onToggle,
+  onItemClick,
+}: {
+  label: string;
+  links: NavLink[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onItemClick: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        onClick={onToggle}
+        className={`${TOP_LINK_CLASS} flex items-center justify-between w-full text-left`}
+      >
+        <span>{label}</span>
+        <ChevronDown
+          className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+      {isOpen ? (
+        <div className="flex flex-col pl-4 border-b border-border">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onItemClick}
+              className="text-base font-medium py-2 text-muted-foreground hover:text-mavs-green"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }

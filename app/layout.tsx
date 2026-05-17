@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { getSiteSettingsCore } from "@/lib/site-settings";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,18 +24,19 @@ export const metadata: Metadata = {
     "Parent-run 501(c)(3) supporting McNeil High School Mavericks football in Austin, Texas.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { freshman_has_blue } = await getSiteSettingsCore();
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <Header />
+        <Header freshmanHasBlue={freshman_has_blue} />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>
