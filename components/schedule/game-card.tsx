@@ -59,6 +59,8 @@ export function GameCard({ game }: { game: Game }) {
           {game.opponent_url ? (
             <a
               href={game.opponent_url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-mavs-green hover:underline"
             >
               {game.opponent}

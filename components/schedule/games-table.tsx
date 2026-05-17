@@ -81,6 +81,8 @@ export function GamesTable({ games }: { games: Game[] }) {
                       {game.opponent_url ? (
                         <a
                           href={game.opponent_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-mavs-green hover:underline print:text-black print:no-underline"
                         >
                           {game.opponent}
