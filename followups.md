@@ -6,6 +6,7 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Rotate Supabase anon key (exposed in chat 2026-05-16 during 4c setup). Studio → Settings → API → rotate, then update .env.local and Vercel env vars.
 - [ ] Rotate Supabase service_role key (briefly in chat during original Steps 1-3 setup). Same process.
 - [ ] Verify .env.local is gitignored and has never been committed (git log --all --full-history -- .env.local should return nothing).
+- [ ] Investigate news-images Studio policy anomaly: Studio shows 4 policies on news-images while other migration-009 buckets show 0. May indicate Studio-side policies added outside of migrations. Run `SELECT policyname FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND qual::text LIKE '%news-images%'` and reconcile against migration 009's policy array before launch.
 
 ## Pre-cutover content
 - [ ] 2025 varsity game results seeded for June 2 board demo. Add as a separate migration (018c or similar) after 025 lands, before the demo.

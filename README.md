@@ -102,13 +102,13 @@ Current buckets:
 
 | Bucket | Size limit | MIME types | RLS policies migration |
 |---|---|---|---|
-| `news-images` | 50 MB | Any | `009_storage_policies.sql` |
-| `event-images` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
-| `sponsor-logos` | 50 MB | Any (TODO: tighten) | `009_storage_policies.sql` |
+| `news-images` | 10 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
+| `event-images` | 10 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
+| `sponsor-logos` | 10 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
 | `board-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
+| `coach-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `026_coach_photos_storage_policies.sql` |
 | `site-images` | 10 MB | `image/png, image/jpeg, image/webp` | `009_storage_policies.sql` |
 | `documents` | 50 MB | Any | `009_storage_policies.sql` |
-| `coach-photos` | 5 MB | `image/png, image/jpeg, image/webp` | `026_coach_photos_storage_policies.sql` |
 
 RLS policies on `storage.objects` are SQL-managed via migrations. Bucket settings (public, size, MIME) are Studio-managed.
 
