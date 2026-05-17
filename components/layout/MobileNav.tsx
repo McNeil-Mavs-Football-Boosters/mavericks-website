@@ -111,7 +111,7 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
             Sponsors
           </Link>
           <Link href="/resources" onClick={onClose} className={TOP_LINK_CLASS}>
-            For Parents &amp; Athletes
+            Forms &amp; Links
           </Link>
 
           <MobileNavAccordion

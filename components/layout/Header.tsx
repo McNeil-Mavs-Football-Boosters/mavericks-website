@@ -127,7 +127,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             href="/resources"
             className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
           >
-            For Parents &amp; Athletes
+            Forms &amp; Links
           </Link>
 
           <HeaderDropdown
