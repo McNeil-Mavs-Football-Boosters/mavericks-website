@@ -1,11 +1,7 @@
--- AUTO-GENERATED: concatenation of db/migrations/001..010 in order.
--- Paste this whole file into the Supabase SQL Editor and Run.
--- Run on a clean public schema. To re-run: DROP SCHEMA public CASCADE; CREATE SCHEMA public; then re-run.
 
-
--- =====================================================================
+-- ===
 -- db/migrations/001_extensions_and_types.sql
--- =====================================================================
+-- ===
 
 -- Migration 001: Extensions and enum types
 
@@ -25,9 +21,9 @@ CREATE TYPE payment_method_type AS ENUM ('stripe', 'cash', 'check', 'zero_dollar
 CREATE TYPE payment_purpose AS ENUM ('membership', 'donation', 'sponsorship');
 CREATE TYPE payment_status AS ENUM ('pending', 'succeeded', 'failed', 'canceled', 'refunded');
 
--- =====================================================================
+-- ===
 -- db/migrations/002_auth_and_roles.sql
--- =====================================================================
+-- ===
 
 -- Migration 002: Auth and roles (user_roles table + current_user_has_role helper)
 
@@ -63,9 +59,9 @@ GRANT EXECUTE ON FUNCTION current_user_has_role(user_role) TO authenticated;
 -- RLS policies that reference this function execute as the database, not the caller,
 -- so anon-targeted policies still work without anon needing EXECUTE.
 
--- =====================================================================
+-- ===
 -- db/migrations/003_content_tables.sql
--- =====================================================================
+-- ===
 
 -- Migration 003: Content tables (news, events, tiers, sponsors, board, committees, volunteer, documents)
 
@@ -244,9 +240,9 @@ CREATE TABLE documents (
 
 CREATE INDEX idx_documents_type_date ON documents(doc_type, doc_date DESC) WHERE active = true;
 
--- =====================================================================
+-- ===
 -- db/migrations/004_transactional_tables.sql
--- =====================================================================
+-- ===
 
 -- Migration 004: Transactional tables (payments, memberships) + sponsors.payment_id FK
 
@@ -316,9 +312,9 @@ CREATE INDEX idx_memberships_year_paid_active ON memberships(year, paid, active)
 CREATE INDEX idx_memberships_parent_1_email ON memberships(parent_1_email);
 CREATE INDEX idx_memberships_year_list_publicly ON memberships(year, list_publicly) WHERE list_publicly = true;
 
--- =====================================================================
+-- ===
 -- db/migrations/005_settings.sql
--- =====================================================================
+-- ===
 
 -- Migration 005: Settings tables (site_settings singleton)
 
@@ -362,9 +358,9 @@ CREATE TABLE site_settings (
 
 INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 
--- =====================================================================
+-- ===
 -- db/migrations/006_triggers.sql
--- =====================================================================
+-- ===
 
 -- Migration 006: Trigger functions and triggers (touch_updated_at, validate_membership_paid_state)
 
@@ -426,9 +422,9 @@ CREATE TRIGGER validate_membership_paid_state_trigger
   FOR EACH ROW
   EXECUTE FUNCTION validate_membership_paid_state();
 
--- =====================================================================
+-- ===
 -- db/migrations/007_views.sql
--- =====================================================================
+-- ===
 
 -- Migration 007: Views (public_members)
 
@@ -463,9 +459,9 @@ GRANT SELECT ON public_members TO anon, authenticated;
 --   SELECT * FROM public_members WHERE year = '2026-27'
 --   ORDER BY tier_sort_order DESC, parent_1_name;
 
--- =====================================================================
+-- ===
 -- db/migrations/008_rls.sql
--- =====================================================================
+-- ===
 
 -- Migration 008: Row-Level Security (RLS)
 
@@ -762,9 +758,9 @@ CREATE POLICY "Super admins delete roles" ON user_roles
   FOR DELETE TO authenticated
   USING (current_user_has_role('super_admin'));
 
--- =====================================================================
+-- ===
 -- db/migrations/009_storage_policies.sql
--- =====================================================================
+-- ===
 
 -- Migration 009: Storage policies (Supabase Storage)
 
@@ -803,9 +799,9 @@ CREATE POLICY "Content admins delete" ON storage.objects
     AND current_user_has_role('content_admin')
   );
 
--- =====================================================================
+-- ===
 -- db/migrations/010_seed.sql
--- =====================================================================
+-- ===
 
 -- Migration 010: Seed data (run after schema creation, before first deploy)
 
@@ -853,3 +849,435 @@ INSERT INTO committees (name, description, cadence, sort_order) VALUES
   ('Fundraisers', 'Oversee any board-determined fundraisers. Coordinate with Social Media.', 'ongoing', 11);
 
 -- site_settings already inserted via INSERT...ON CONFLICT in the table definition (005_settings.sql)
+
+-- ===
+-- db/migrations/011_football_pivot_types.sql
+-- ===
+
+-- Migration 011: Football pivot enum types
+
+CREATE TYPE team_level AS ENUM ('varsity', 'jv', 'freshman');
+CREATE TYPE home_or_away AS ENUM ('home', 'away', 'neutral');
+CREATE TYPE game_result_status AS ENUM ('scheduled', 'final', 'cancelled', 'postponed', 'tbd');
+CREATE TYPE coach_role_category AS ENUM ('head', 'coordinator', 'position_coach', 'trainer', 'staff');
+CREATE TYPE resource_section AS ENUM ('registration_forms', 'communications', 'resources', 'stadiums', 'other');
+
+-- ===
+-- db/migrations/012_football_pivot_tables.sql
+-- ===
+
+-- Migration 012: Football pivot tables (games, rosters, coaches, resource_links)
+
+CREATE TABLE games (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  year text NOT NULL,                          -- "2026-27"
+  team_level team_level NOT NULL,
+  opponent text NOT NULL,                      -- "Round Rock"
+  opponent_url text,                           -- optional, link to opponent's site
+  game_date timestamptz NOT NULL,              -- kickoff time
+  location text,                               -- "Kelly Reeves Athletic Complex"
+  location_url text,                           -- optional, e.g., Google Maps link
+  home_or_away home_or_away NOT NULL DEFAULT 'home',
+  our_score integer CHECK (our_score IS NULL OR our_score >= 0),
+  their_score integer CHECK (their_score IS NULL OR their_score >= 0),
+  result_status game_result_status NOT NULL DEFAULT 'scheduled',
+  watch_url text,                              -- YouTube, TexanLive, etc.
+  maxpreps_game_url text,                      -- per-game deep link (optional)
+  notes text,                                  -- "Homecoming", "Senior Night", etc.
+  featured boolean NOT NULL DEFAULT false,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_games_year_team_date ON games(year, team_level, game_date);
+CREATE INDEX idx_games_year_date ON games(year, game_date);
+CREATE INDEX idx_games_status_date ON games(result_status, game_date);
+CREATE INDEX idx_games_featured ON games(featured) WHERE featured = true;
+
+CREATE TABLE rosters (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  year text NOT NULL,                          -- "2026-27"
+  team_level team_level NOT NULL,
+  body text NOT NULL DEFAULT '',               -- markdown
+  source_note text,                            -- "Provided by Coach [Name] on YYYY-MM-DD"
+  active boolean NOT NULL DEFAULT true,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (year, team_level)
+);
+
+CREATE INDEX idx_rosters_year_active ON rosters(year, active);
+
+CREATE TABLE coaches (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  year text NOT NULL,                          -- "2026-27"
+  name text NOT NULL,
+  role text NOT NULL,                          -- "Defensive Coordinator"
+  role_category coach_role_category NOT NULL,
+  phone text,
+  email text,
+  photo_url text,
+  bio text,                                    -- markdown
+  sort_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_coaches_year_active_sort ON coaches(year, active, sort_order);
+CREATE INDEX idx_coaches_year_category_sort ON coaches(year, role_category, sort_order);
+
+CREATE TABLE resource_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  section resource_section NOT NULL,
+  label text NOT NULL,                         -- "Aktivate Registration"
+  url text NOT NULL,                           -- external URL or internal path
+  description text,                            -- one-line context shown below the link
+  icon_hint text,                              -- "external", "pdf", "form", "video"
+  sort_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_resource_links_section_active_sort
+  ON resource_links(section, active, sort_order);
+
+-- ===
+-- db/migrations/013_players_table.sql
+-- ===
+
+-- Migration 013: Players table (structured player records per roster)
+
+CREATE TABLE players (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  roster_id uuid NOT NULL REFERENCES rosters(id) ON DELETE CASCADE,
+  jersey_number text,                          -- text, not int (some teams use 00, letters)
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  position text,                               -- "QB", "WR", "OL/DL", or null
+  grade text,                                  -- "Sr.", "Jr.", "So.", "Fr.", or null
+  height text,                                 -- "6'2"", or null
+  weight integer CHECK (weight IS NULL OR weight > 0),
+  sort_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_players_roster ON players(roster_id);
+CREATE INDEX idx_players_roster_sort ON players(roster_id, sort_order);
+CREATE INDEX idx_players_roster_active_sort ON players(roster_id, active, sort_order)
+  WHERE active = true;
+
+CREATE TRIGGER touch_players BEFORE UPDATE ON players
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ===
+-- db/migrations/014_site_settings_additions.sql
+-- ===
+
+-- Migration 014: site_settings additions for football-first home page and footer
+
+ALTER TABLE site_settings
+  ADD COLUMN maxpreps_team_url text DEFAULT 'https://www.maxpreps.com/tx/austin/mcneil-mavericks/football/',
+  ADD COLUMN season_label text,
+  ADD COLUMN season_opener_date timestamptz,
+  ADD COLUMN next_game_override text,
+  ADD COLUMN current_year text NOT NULL DEFAULT '2026-27';
+
+-- ===
+-- db/migrations/015_football_pivot_triggers.sql
+-- ===
+
+-- Migration 015: touch_updated_at triggers for the new football-pivot tables
+
+CREATE TRIGGER touch_games BEFORE UPDATE ON games FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER touch_rosters BEFORE UPDATE ON rosters FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER touch_coaches BEFORE UPDATE ON coaches FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER touch_resource_links BEFORE UPDATE ON resource_links FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ===
+-- db/migrations/016_football_pivot_rls.sql
+-- ===
+
+-- Migration 016: RLS policies for games, rosters, coaches, resource_links
+
+-- games
+ALTER TABLE games ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone reads games" ON games
+  FOR SELECT TO anon
+  USING (true);
+CREATE POLICY "Authenticated read all games" ON games
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins write games" ON games
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins update games" ON games
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins delete games" ON games
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+-- rosters: anon reads only active rows; admins see archive too
+ALTER TABLE rosters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone reads active rosters" ON rosters
+  FOR SELECT TO anon
+  USING (active = true);
+CREATE POLICY "Authenticated read all rosters" ON rosters
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins write rosters" ON rosters
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins update rosters" ON rosters
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins delete rosters" ON rosters
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+-- coaches: anon reads only active rows
+ALTER TABLE coaches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone reads active coaches" ON coaches
+  FOR SELECT TO anon
+  USING (active = true);
+CREATE POLICY "Authenticated read all coaches" ON coaches
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins write coaches" ON coaches
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins update coaches" ON coaches
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins delete coaches" ON coaches
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+-- resource_links: anon reads only active rows
+ALTER TABLE resource_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone reads active resource links" ON resource_links
+  FOR SELECT TO anon
+  USING (active = true);
+CREATE POLICY "Authenticated read all resource links" ON resource_links
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins write resource links" ON resource_links
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins update resource links" ON resource_links
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+CREATE POLICY "Content admins delete resource links" ON resource_links
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+-- ===
+-- db/migrations/017_players_rls.sql
+-- ===
+
+-- Migration 017: RLS policies for players
+
+ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone reads players on active rosters" ON players
+  FOR SELECT TO anon
+  USING (
+    active = true
+    AND EXISTS (
+      SELECT 1 FROM rosters
+      WHERE rosters.id = players.roster_id
+      AND rosters.active = true
+    )
+  );
+
+CREATE POLICY "Authenticated read all players" ON players
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins write players" ON players
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins update players" ON players
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins delete players" ON players
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+-- ===
+-- db/migrations/018_football_pivot_seed.sql
+-- ===
+
+-- Migration 018: Football pivot seed data (rosters stubs, Coach Wallin, resource_links scaffolding)
+
+-- Block 1: rosters — three stubs for 2026-27.
+-- team_designation column does not exist yet (added in 019); freshman 'Green'
+-- designation will be backfilled there.
+INSERT INTO rosters (year, team_level, body, source_note) VALUES
+  ('2026-27', 'varsity',  '', 'Awaiting roster from coaching staff'),
+  ('2026-27', 'jv',       '', 'Awaiting roster from coaching staff'),
+  ('2026-27', 'freshman', '', 'Awaiting roster from coaching staff');
+
+-- Block 2: coaches — Coach Wallin (still on staff, no longer head coach).
+INSERT INTO coaches (year, name, role, role_category, sort_order, active) VALUES
+  ('2026-27', 'Coach Wallin', 'Position Coach', 'position_coach', 10, true);
+
+-- Block 3: resource_links — section scaffolding plus known-good rows.
+-- SportsYou URL/description per schema_v2_addendum.md section 4 (not the original '#').
+INSERT INTO resource_links (section, label, url, description, icon_hint, sort_order) VALUES
+  -- Registration & Forms
+  ('registration_forms', 'Aktivate (Athletic Registration)', 'https://www.aktivate.com/', 'Required online registration for all athletes. Replaces the old RankOne system.', 'external', 1),
+  ('registration_forms', 'UIL Forms', 'https://www.uiltexas.org/athletics/forms', 'University Interscholastic League required forms for participation.', 'external', 2),
+  ('registration_forms', 'RRISD Athletic Forms', 'https://roundrockisd.org/athletics', 'Round Rock ISD athletic department forms and policies.', 'external', 3),
+  -- Communications
+  ('communications', 'HUDL', 'https://www.hudl.com/jointeam', 'Team video and stats platform. Team code provided by coaching staff.', 'external', 1),
+  ('communications', 'SportsYou (Team Messaging)', 'https://www.sportsyou.com/', 'Team messaging app for parents and players. Use the access code from the SportsYou invite page in the SE capture, or contact the booster club at boosters@mcneilmavericks.org.', 'external', 2),
+  -- Stadiums
+  ('stadiums', 'Kelly Reeves Athletic Complex', 'https://maps.google.com/?q=Kelly+Reeves+Athletic+Complex+Round+Rock+TX', 'McNeil home games. 10211 W Parmer Ln, Austin, TX 78717.', 'external', 1);
+
+-- ===
+-- db/migrations/018b_coaches_seed_hale.sql
+-- ===
+
+-- Migration 018b: Seed Michael Hale (Defensive Coordinator) on coaches
+
+INSERT INTO coaches (year, name, role, role_category, email, sort_order, active) VALUES
+  ('2026-27', 'Michael Hale', 'Defensive Coordinator', 'coordinator', 'Michael_Hale@roundrockisd.org', 5, true);
+
+-- ===
+-- db/migrations/019_team_designation.sql
+-- ===
+
+-- Migration 019: Add team_designation to games and rosters; replace rosters uniqueness
+-- with a COALESCE-based unique index (varsity/JV use NULL, freshman uses 'Green'/'Blue').
+
+BEGIN;
+
+ALTER TABLE games ADD COLUMN team_designation text;
+ALTER TABLE rosters ADD COLUMN team_designation text;
+
+ALTER TABLE rosters DROP CONSTRAINT rosters_year_team_level_key;
+
+CREATE UNIQUE INDEX idx_rosters_year_level_designation
+  ON rosters (year, team_level, COALESCE(team_designation, ''));
+
+UPDATE rosters SET team_designation = 'Green'
+  WHERE year = '2026-27' AND team_level = 'freshman';
+
+COMMIT;
+
+-- ===
+-- db/migrations/020_practice_schedules.sql
+-- ===
+
+-- Migration 020: practice_schedules table (shared across freshman Green/Blue — no team_designation)
+
+CREATE TABLE practice_schedules (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  year text NOT NULL,
+  team_level team_level NOT NULL,
+  body text NOT NULL DEFAULT '',
+  source_note text,
+  active boolean NOT NULL DEFAULT true,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (year, team_level)
+);
+
+CREATE INDEX idx_practice_schedules_year_active ON practice_schedules(year, active);
+
+CREATE TRIGGER touch_practice_schedules BEFORE UPDATE ON practice_schedules
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ===
+-- db/migrations/021_practice_schedules_rls.sql
+-- ===
+
+-- Migration 021: RLS policies for practice_schedules (same pattern as rosters)
+
+ALTER TABLE practice_schedules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone reads active practice schedules" ON practice_schedules
+  FOR SELECT TO anon USING (active = true);
+
+CREATE POLICY "Authenticated read all practice schedules" ON practice_schedules
+  FOR SELECT TO authenticated USING (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins write practice schedules" ON practice_schedules
+  FOR INSERT TO authenticated WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins update practice schedules" ON practice_schedules
+  FOR UPDATE TO authenticated USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins delete practice schedules" ON practice_schedules
+  FOR DELETE TO authenticated USING (current_user_has_role('content_admin'));
+
+-- ===
+-- db/migrations/022_sponsorship_inquiries.sql
+-- ===
+
+-- Migration 022: sponsorship_inquiries (type + table + indexes + trigger + RLS).
+-- Anon writes go through a server-side /api/sponsorship/create route using the
+-- service-role key (same pattern as memberships and /api/contact). No anon access here.
+
+CREATE TYPE sponsorship_inquiry_status AS ENUM ('new', 'in_progress', 'closed_won', 'closed_lost');
+
+CREATE TABLE sponsorship_inquiries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_name text NOT NULL,
+  contact_name text NOT NULL,
+  contact_email text NOT NULL,
+  contact_phone text,
+  tier_id uuid REFERENCES sponsorship_tiers(id) ON DELETE SET NULL,
+  message text,
+  logo_url text,
+  status sponsorship_inquiry_status NOT NULL DEFAULT 'new',
+  notes text,
+  year text NOT NULL,
+  last_edited_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_sponsorship_inquiries_status_created ON sponsorship_inquiries(status, created_at DESC);
+CREATE INDEX idx_sponsorship_inquiries_year ON sponsorship_inquiries(year);
+
+CREATE TRIGGER touch_sponsorship_inquiries BEFORE UPDATE ON sponsorship_inquiries
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+ALTER TABLE sponsorship_inquiries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Content admins read sponsorship inquiries" ON sponsorship_inquiries
+  FOR SELECT TO authenticated
+  USING (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins write sponsorship inquiries" ON sponsorship_inquiries
+  FOR INSERT TO authenticated
+  WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins update sponsorship inquiries" ON sponsorship_inquiries
+  FOR UPDATE TO authenticated
+  USING (current_user_has_role('content_admin'))
+  WITH CHECK (current_user_has_role('content_admin'));
+
+CREATE POLICY "Content admins delete sponsorship inquiries" ON sponsorship_inquiries
+  FOR DELETE TO authenticated
+  USING (current_user_has_role('content_admin'));
