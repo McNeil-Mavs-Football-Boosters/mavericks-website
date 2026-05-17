@@ -1310,3 +1310,14 @@ COMMIT;
 
 ALTER TABLE site_settings
   ADD COLUMN freshman_has_blue boolean NOT NULL DEFAULT false;
+
+-- ===
+-- db/migrations/024_practice_schedules_seed.sql
+-- ===
+
+-- Migration 024: Seed practice_schedules with three team-level stubs for 2026-27.
+
+INSERT INTO practice_schedules (year, team_level, body, source_note) VALUES
+  ('2026-27', 'varsity',  '', 'Awaiting practice schedule from coaching staff'),
+  ('2026-27', 'jv',       '', 'Awaiting practice schedule from coaching staff'),
+  ('2026-27', 'freshman', '', 'Awaiting practice schedule from coaching staff');
