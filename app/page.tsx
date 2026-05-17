@@ -212,7 +212,7 @@ export default async function Home() {
       </section>
 
       <section className="bg-muted/40">
-        <div className="py-12">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
             Get Involved
           </h2>
@@ -232,7 +232,7 @@ export default async function Home() {
       </section>
 
       {news.length > 0 ? (
-        <section className="py-12">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold tracking-tight">Latest News</h2>
             <Link
@@ -280,7 +280,7 @@ export default async function Home() {
 
       {events.length > 0 ? (
         <section className="bg-muted/40">
-          <div className="py-12">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold tracking-tight">
                 Upcoming Events
@@ -327,7 +327,7 @@ export default async function Home() {
       ) : null}
 
       {sponsors.length > 0 ? (
-        <section className="py-12">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold tracking-tight">
               Thank You to Our Sponsors

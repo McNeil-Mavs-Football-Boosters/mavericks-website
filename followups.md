@@ -29,6 +29,16 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Anonymous donor option: donors must be able to choose "Anonymous" so their name does not appear on any public donor list/recognition. Needs flag on the donation record (and form UI) plus enforcement on whatever public surface renders donors.
 - [ ] Member name-hide flag: members should be able to opt out of having their name displayed publicly. They are still a member of record, but no public surface (member lists, recognition, etc.) renders their identifying info. Needs flag on the member record (and signup/membership-edit UI) plus enforcement on every public query that touches members.
 
+## "Visual polish (Phase 1.5)" section:
+
+- Rudy's-style aesthetic pass: bolder header band, accent colors beyond Mavs green, type with more personality, stronger CTA buttons
+- Hero carousel on home page rotating background images every 6 seconds (stadium shots, game action photos)
+- Real McNeil photography: players, stadium, sidelines, game action
+- Logo treatment beyond the current wordmark
+- All of the above gated on photo asset gathering (Track A) and post-cutover
+
+These are not blockers for Commit B, Commit C, or Phase 1 cutover. Capture so they don't get lost.
+
 ## Phase 2 / deferred
 - [ ] Bulk player import (paste mode primary, CSV upload optional). Spec'd in conversation 2026-05-16; folded into Step 7b admin rosters CRUD.
 - [ ] Stats per player (Phase 2 pickup per addendum 2).
