@@ -35,7 +35,7 @@ function initialsFor(name: string): string {
     .join("");
 }
 
-async function loadPageData(currentYear: string): Promise<{
+async function loadPageData(boardYear: string): Promise<{
   settings: Pick<
     SiteSettings,
     "legal_name" | "ein" | "primary_contact_email" | "mailing_address"
@@ -59,7 +59,7 @@ async function loadPageData(currentYear: string): Promise<{
         .from("board_members")
         .select("*")
         .eq("active", true)
-        .eq("year", currentYear)
+        .eq("year", boardYear)
         .order("sort_order", { ascending: true })
         .returns<BoardMember[]>(),
     ]);
@@ -85,8 +85,8 @@ async function loadPageData(currentYear: string): Promise<{
 }
 
 export default async function BoostersPage() {
-  const { current_year: currentYear } = await getSiteSettingsCore();
-  const { settings, boardMembers } = await loadPageData(currentYear);
+  const { current_board_year: boardYear } = await getSiteSettingsCore();
+  const { settings, boardMembers } = await loadPageData(boardYear);
   const legalName = settings.legal_name;
   const ein = settings.ein;
   const primaryContactEmail = settings.primary_contact_email;
@@ -200,7 +200,7 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-6">{currentYear} Board</h2>
+        <h2 className="text-xl font-semibold mb-6">{boardYear} Board</h2>
         {boardMembers.length === 0 ? (
           <p className="text-muted-foreground">
             Board roster will be posted soon.

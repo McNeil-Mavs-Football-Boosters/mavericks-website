@@ -30,6 +30,7 @@ export interface SiteSettings {
   alias_webmaster: string | null;
   alias_sponsorship: string | null;
   current_year: string;
+  current_board_year: string;
   maxpreps_team_url: string | null;
   freshman_has_blue: boolean;
   last_edited_by: string | null;
