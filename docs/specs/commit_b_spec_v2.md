@@ -232,7 +232,7 @@ Notes:
 
 **Per-row rendering:**
 - Date: `game_date` formatted as e.g. "Fri, Sep 4"
-- Opponent: `opponent` text; if `opponent_url` is set, wrap in a link
+- Opponent: `opponent` text; if `opponent_url` is set, wrap in a link that opens in a new tab (`target="_blank"`, `rel="noopener noreferrer"`). Convention: `opponent_url` is the opponent's MaxPreps team page. Admin label will read "Opponent MaxPreps URL" when admin CRUD ships.
 - Location: `location`; if `location_url` is set, wrap in a link (opens new tab)
 - Home/Away: badge or label, e.g. "HOME" or "AWAY" or "NEUTRAL"
 - Time: `game_date` formatted as e.g. "7:30pm"
