@@ -3,6 +3,8 @@ import { ExternalLink } from "lucide-react";
 
 import { GameCard } from "@/components/schedule/game-card";
 import { GamesTable } from "@/components/schedule/games-table";
+import { PrintButton } from "@/components/schedule/print-button";
+import { PrintFooter } from "@/components/schedule/print-footer";
 import { getGamesForTeam } from "@/lib/queries/games";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 
@@ -40,22 +42,25 @@ export default async function FreshmanGameSchedulePage({
 
   return (
     <section>
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {current_year} {teamLabel} Game Schedule
-        </h1>
-        {maxpreps_team_url ? (
-          <p className="mt-2 text-sm">
-            <a
-              href={maxpreps_team_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-mavs-green hover:underline"
-            >
-              Live scores and stats →
-            </a>
-          </p>
-        ) : null}
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {current_year} {teamLabel} Game Schedule
+          </h1>
+          {maxpreps_team_url ? (
+            <p className="mt-2 text-sm print:hidden">
+              <a
+                href={maxpreps_team_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-mavs-green hover:underline"
+              >
+                Live scores and stats →
+              </a>
+            </p>
+          ) : null}
+        </div>
+        <PrintButton />
       </header>
 
       {games.length > 0 ? (
@@ -74,7 +79,7 @@ export default async function FreshmanGameSchedulePage({
             details.
           </p>
           {maxpreps_team_url ? (
-            <div className="mt-6">
+            <div className="mt-6 print:hidden">
               <a
                 href={maxpreps_team_url}
                 target="_blank"
@@ -88,6 +93,8 @@ export default async function FreshmanGameSchedulePage({
           ) : null}
         </div>
       )}
+
+      <PrintFooter />
     </section>
   );
 }

@@ -6,7 +6,7 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Remove the "Home" link from the desktop and mobile nav. The "McNeil Mavericks Football" wordmark already links to `/`, so the Home item is redundant. Files: `components/layout/Header.tsx` (remove the `<Link href="/">Home</Link>` entry from the desktop `<nav>`), `components/layout/MobileNav.tsx` (remove the matching mobile drawer link). Verify the wordmark on staging still navigates to `/` from any page.
 
 ## Security
-- [ ] Public pages currently use createServerClient (service role) which bypasses RLS. Switch to anon client before any admin pages land. Affects: every page in app/(public)/. Not blocking Commit B.
+- [ ] Switch public read pages from `SUPABASE_SERVICE_ROLE_KEY` to the anon-key Supabase client so RLS is the actual gate. Affects: home + /about + /boosters + /contact + `/schedule/games/*` + `/schedule/practice/*` + future `/roster`, `/coaches`, `/resources`. Anon RLS policies are in place (verified 2026-05-17 via `SET LOCAL ROLE anon` against `games`) — the fix is just wiring the right client. Defer until admin work begins or pick up as a small followup commit. Not blocking Commit B.
 - [ ] Rotate Supabase anon key (exposed in chat 2026-05-16 during 4c setup). Studio → Settings → API → rotate, then update .env.local and Vercel env vars.
 - [ ] Rotate Supabase service_role key (briefly in chat during original Steps 1-3 setup). Same process.
 - [ ] Verify .env.local is gitignored and has never been committed (git log --all --full-history -- .env.local should return nothing).
@@ -47,3 +47,5 @@ These are not blockers for Commit B, Commit C, or Phase 1 cutover. Capture so th
 - [ ] Stats per player (Phase 2 pickup per addendum 2).
 - [ ] Lake Travis "parking pass at tier" perk idea for membership ladder. Board input needed.
 - [ ] Other Mavericks Sports outbound links on /resources page (after Jeremy has the URLs).
+
+- Copy Roster from previous season. I should be able to, as admin, go in and copy last year's JV team to Varsity, and freshman to JV. A couple of notes. Auto-drop seniors from varsity when doing the copy from JV, but don't drop anyone else. Make user do manual drops. When copying freshman to JV, copy both green and blue rosters. Drop any players that were Juniors because by rule they have to move up to varsity. BUT BIG warning to user. If you have not copied JV to Varsity, the JV roster is just going to get bigger and previous juniors will be dropped! Now the warning should ONLY happen if the roster is not empty. If it's empty we no the other roster was already moved for varsity. Write something better than that. Be sure we have functionality to move a single player between levels too. This is common and sometimes weekly. 

@@ -67,7 +67,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
   const close = () => setOpenDropdown(null);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-border">
+    <header className="sticky top-0 z-40 w-full bg-white border-b border-border print:hidden">
       <div className="flex h-16 items-center gap-2 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"

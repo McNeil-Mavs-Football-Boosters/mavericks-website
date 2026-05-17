@@ -50,7 +50,7 @@ export function GameCard({ game }: { game: Game }) {
   return (
     <div
       className={cn(
-        "block md:hidden rounded-lg border border-border bg-white p-4",
+        "block md:hidden print:hidden rounded-lg border border-border bg-white p-4",
         isHome && "bg-mavs-green/5",
       )}
     >

@@ -128,7 +128,7 @@ export async function Footer() {
   const settings = await loadSettings();
 
   return (
-    <footer className="border-t border-border bg-muted/30 mt-8">
+    <footer className="border-t border-border bg-muted/30 mt-8 print:hidden">
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 text-xs leading-snug">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-start">
           {/* Address (left) */}

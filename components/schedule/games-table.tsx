@@ -35,8 +35,8 @@ function HomeAwayBadge({ value }: { value: Game["home_or_away"] }) {
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium uppercase tracking-wide",
         isHome
-          ? "border-mavs-green/30 bg-mavs-green/10 text-mavs-green-dark"
-          : "border-border bg-muted text-muted-foreground",
+          ? "border-mavs-green/30 bg-mavs-green/10 text-mavs-green-dark print:border-black print:bg-transparent print:text-black"
+          : "border-border bg-muted text-muted-foreground print:border-black print:bg-transparent print:text-black",
       )}
     >
       {value}
@@ -46,11 +46,11 @@ function HomeAwayBadge({ value }: { value: Game["home_or_away"] }) {
 
 export function GamesTable({ games }: { games: Game[] }) {
   return (
-    <div className="hidden md:block">
+    <div className="hidden md:block print:block">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
+            <tr className="border-b border-border text-left text-muted-foreground print:text-black">
               <th scope="col" className="py-2 pr-4 font-medium">Date</th>
               <th scope="col" className="py-2 pr-4 font-medium">Opponent</th>
               <th scope="col" className="py-2 pr-4 font-medium">Location</th>
@@ -63,7 +63,7 @@ export function GamesTable({ games }: { games: Game[] }) {
           <tbody>
             {games.map((game) => {
               const isHome = game.home_or_away === "home";
-              const rowTint = isHome ? "bg-mavs-green/5" : "";
+              const rowTint = isHome ? "bg-mavs-green/5 print:bg-transparent" : "";
               const hasNotes = game.notes != null && game.notes.trim() !== "";
 
               return (
@@ -81,7 +81,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                       {game.opponent_url ? (
                         <a
                           href={game.opponent_url}
-                          className="text-mavs-green hover:underline"
+                          className="text-mavs-green hover:underline print:text-black print:no-underline"
                         >
                           {game.opponent}
                         </a>
@@ -96,7 +96,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                             href={game.location_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-mavs-green hover:underline"
+                            className="text-mavs-green hover:underline print:text-black print:no-underline"
                           >
                             {game.location}
                           </a>
@@ -123,7 +123,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`Watch ${game.opponent} game`}
-                          className="inline-flex text-mavs-green hover:text-mavs-green-dark"
+                          className="inline-flex text-mavs-green hover:text-mavs-green-dark print:hidden"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>
@@ -134,7 +134,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                     <tr className={cn("border-b border-border", rowTint)}>
                       <td
                         colSpan={7}
-                        className="pb-3 pr-4 pl-0 text-xs italic text-muted-foreground"
+                        className="pb-3 pr-4 pl-0 text-xs italic text-muted-foreground print:text-black"
                       >
                         {game.notes}
                       </td>

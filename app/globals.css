@@ -137,3 +137,9 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+}
