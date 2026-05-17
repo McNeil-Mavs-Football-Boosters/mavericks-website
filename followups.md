@@ -2,6 +2,9 @@
 
 Items surfaced during the Phase 1 build that aren't blocking the current step but need attention before launch or in early Phase 2. Append-only. Mark items done when resolved.
 
+## Next pickup
+- [ ] Remove the "Home" link from the desktop and mobile nav. The "McNeil Mavericks Football" wordmark already links to `/`, so the Home item is redundant. Files: `components/layout/Header.tsx` (remove the `<Link href="/">Home</Link>` entry from the desktop `<nav>`), `components/layout/MobileNav.tsx` (remove the matching mobile drawer link). Verify the wordmark on staging still navigates to `/` from any page.
+
 ## Security
 - [ ] Public pages currently use createServerClient (service role) which bypasses RLS. Switch to anon client before any admin pages land. Affects: every page in app/(public)/. Not blocking Commit B.
 - [ ] Rotate Supabase anon key (exposed in chat 2026-05-16 during 4c setup). Studio → Settings → API → rotate, then update .env.local and Vercel env vars.
