@@ -1,0 +1,71 @@
+McNeil Mavericks Varsity Football Roster
+Season: 2025-26 (Fall 2025)
+Source: https://www.maxpreps.com/tx/austin/mcneil-mavericks/football/roster/
+Roster last updated on MaxPreps: Nov 10, 2025 @ 12:23pm GMT
+Snapshot taken: May 17, 2026
+
+Team record: 6-4 overall, 5-3 district (5th in district)
+Total players: 27
+
+JV and Freshman: not maintained on MaxPreps. Those team pages exist
+but the rosters are empty stubs. If those rosters are wanted, source
+is the coaching staff directly.
+
+==================================================================
+ #    Player                  Grade   Position    Height   Weight
+==================================================================
+  0   Aden Taylor             Sr.     -           5'11"    175 lbs
+  1   Bryce Wilson            Sr.     K, P        6'2"     220 lbs
+  2   Sean Crowe              Sr.     FS          -        -
+  3   Brian Perkins           Sr.     WR, DB      -        -
+  4   Isaiah Jones            Jr.     CB, WR      6'2"     185 lbs
+  5   Jarell Gary Jr          Sr.     WR, QB      6'0"     190 lbs
+  7   Ja Corian Hubbard       Sr.     DL, RB      6'2"     250 lbs
+  8   Marshall Holland        Sr.     MLB, OLB    5'10"    215 lbs
+  9   Zach Christie           Sr.     WR          6'2"     188 lbs
+ 10   Jadon Sultz             Sr.     QB          6'1"     200 lbs
+ 11   Calvin Cervini          Sr.     QB, CB      6'4"     180 lbs
+ 14   DJ Vasquez              Sr.     DB          -        -
+ 15   Tyson Cox               Jr.     OLB, SS     5'10"    190 lbs
+ 18   Kaden Kearney           So.     DB          -        -
+ 20   Keyvon Myers            Sr.     CB          6'0"     170 lbs
+ 21   Johnny McFarland        Sr.     DB          -        -
+ 22   Adien Murray            Sr.     DB          -        -
+ 23   Zylen Hall              Jr.     RB          5'7"     155 lbs
+ 24   Malachi Golden          Sr.     DB          -        -
+ 25   Jamal Harris            Sr.     RB          -        -
+ 32   Michael Jones           Sr.     OLB         6'1"     190 lbs
+ 34   Skyler Eaves            Sr.     OLB         6'0"     172 lbs
+ 38   Ford Askins             Jr.     LB          -        -
+ 42   Jacorian Hubbard        Sr.     DE          6'0"     200 lbs
+ 46   Nkume Nwosu             Sr.     DL          -        -
+ 53   Isaiah Escalante        Sr.     C, DE       6'0"     208 lbs
+ 82   Bowen Wheatley          Sr.     TE          6'3"     215 lbs
+
+==================================================================
+Summary by grade:
+  Seniors:    21
+  Juniors:     5
+  Sophomores:  1
+  Freshmen:    0
+
+Position legend:
+  QB = Quarterback         K = Kicker
+  RB = Running Back        P = Punter
+  WR = Wide Receiver       C = Center
+  TE = Tight End           DL = Defensive Line
+  OL = Offensive Line      DE = Defensive End
+  LB = Linebacker          DB = Defensive Back
+  MLB = Middle Linebacker  CB = Cornerback
+  OLB = Outside Linebacker FS = Free Safety
+                           SS = Strong Safety
+
+==================================================================
+Note: the prior 2024-25 varsity roster on MaxPreps has 55 players
+listed (vs 27 here). The 27 likely reflects active end-of-season
+roster after cuts and departures; some may be missing if not
+updated since the November 2025 snapshot.
+
+If a fuller list is needed for Roster deliverable test data, the
+2024-25 roster URL is:
+https://www.maxpreps.com/tx/austin/mcneil-mavericks/football/24-25/roster/

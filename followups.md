@@ -13,6 +13,7 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Investigate news-images Studio policy anomaly: Studio shows 4 policies on news-images while other migration-009 buckets show 0. May indicate Studio-side policies added outside of migrations. Run `SELECT policyname FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND qual::text LIKE '%news-images%'` and reconcile against migration 009's policy array before launch.
 
 ## Pre-cutover content
+- [ ] Remove test varsity roster seed (migration 029) before public cutover. Replaces with real 2026-27 varsity roster once coaching staff provides it. Cleanup: `DELETE FROM players WHERE roster_id = (SELECT id FROM rosters WHERE year='2026-27' AND team_level='varsity' AND team_designation IS NULL AND active=true);`
 - [ ] 2025 varsity game results seeded for June 2 board demo. Add as a separate migration (018c or similar) after 025 lands, before the demo.
 - [ ] Verify Kelly Reeves Athletic Complex address (10211 W Parmer Ln). Seeded value needs confirmation.
 - [ ] SE Tier 1 capture: sponsor logos, coach bios (non-Cruz), parent portal links, stadium info, SportsYou access code. Per site_pivot_addendum.md section 4.
