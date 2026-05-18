@@ -20,7 +20,9 @@ export const BOOSTER_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfJXys
 
 Every Form CTA in slice 1 imports this constant. Future custom-form swap is one find-and-replace.
 
-## Migration 030_membership_tiers_pdf_reseed.sql
+## Migration 034_membership_tiers_pdf_reseed.sql
+
+(Shipped 2026-05-18 as commit `9837aba`. Renumbered from 030 because 030 was already taken by `030_split_year_relabel_football.sql`.)
 
 Two statements:
 
@@ -66,10 +68,10 @@ Server component. Path: `app/boosters/join/page.tsx`. Replace any stub from Step
 
 Data fetch (server-side, anon-key Supabase client per the followups.md note about not using service-role in public pages — if anon-key client doesn't exist yet, defer the swap and note it in followups; don't block slice 1):
 
-1. `site_settings` single row → read `current_year`
-2. `membership_tiers` where `year = current_year` and `active = true` order by `sort_order` ascending
+1. `site_settings` single row → read `current_board_year` (booster club year — currently `'2026-27'`; **not** `current_year`, which governs football data and is currently `'2025-26'`).
+2. `membership_tiers` where `year = current_board_year` and `active = true` order by `sort_order` ascending.
 
-Empty state (zero tiers returned): render `<p>Booster membership for the {current_year} season will open soon. Check back.</p>` and exit. No tier grid, no CTAs.
+Empty state (zero tiers returned): render `<p>Booster membership for the {current_board_year} season will open soon. Check back.</p>` and exit. No tier grid, no CTAs.
 
 ## Layout
 
@@ -84,7 +86,7 @@ This is an intentional one-off deviation from the navy primary brand pass — gr
 Contents:
 - Left: Mavericks horseshoe logo, white variant. Use existing logo asset from `public/`.
 - Centered: `MCNEIL HIGH SCHOOL FOOTBALL BOOSTER CLUB` as h1, Lato Black uppercase, white, with subtle letter-spacing.
-- Top-right corner: `{current_year}` text (e.g. "2026 - 2027"), Lato Bold, white, smaller.
+- Top-right corner: `{current_board_year}` text (e.g. "2026 - 2027"), Lato Bold, white, smaller.
 
 Mobile: stack logo above title, year hidden or moved below title.
 
@@ -92,7 +94,7 @@ Mobile: stack logo above title, year hidden or moved below title.
 
 Below banner, container width:
 - h2: `Be a Mavs Booster!` (Lato Bold uppercase, navy)
-- Paragraph: `Sign up today and get ready for the {current_year} McNeil Mavericks Football Season. Thank you for supporting the MAVS!`
+- Paragraph: `Sign up today and get ready for the {current_board_year} McNeil Mavericks Football Season. Thank you for supporting the MAVS!`
 
 **3. Tier grid**
 
@@ -135,22 +137,22 @@ Update the existing slim footer (from A.5) to include `Join the Booster Club` li
 4. Game Day shows "Most Popular" badge; Blitz "Best Value"; Touchdown "Recommended". Other 4 have no badge.
 5. Every "Join at..." button opens `BOOSTER_FORM_URL` in a new tab.
 6. Layout works on mobile (1 col), tablet (2 col), desktop (3 col).
-7. If `site_settings.current_year` changes, the page either renders that year's tiers or the empty state. No broken state.
+7. If `site_settings.current_board_year` changes, the page either renders that year's tiers or the empty state. No broken state.
 8. Footer includes "Join the Booster Club" link.
 9. No console errors on Vercel preview.
 
 ## Rollback
 
-- Migration: write `030_rollback.sql` that DELETEs the 030 rows and re-INSERTs the migration 018 values. Schema is unchanged so rollback is data-only.
+- Migration: write `034_rollback.sql` that DELETEs the 034 rows and re-INSERTs the migration 010 values (the original 6-row placeholder seed — note 010, not 018). Schema is unchanged so rollback is data-only.
 - Page: revert the commit. Step 4b stub returns. Footer link reverts with the page commit.
 
 ## Implementation order
 
 Two CC turns:
 
-**Turn 1: migration**
-1. Write `db/migrations/030_membership_tiers_pdf_reseed.sql`
-2. Apply via the standard psql workflow (`set -a && source .env.local && set +a && psql "$SUPABASE_DB_URL" -f db/migrations/030_membership_tiers_pdf_reseed.sql`)
+**Turn 1: migration** (✅ shipped 2026-05-18, commit `9837aba`)
+1. Write `db/migrations/034_membership_tiers_pdf_reseed.sql` (renumbered from 030 due to collision)
+2. Apply via the standard psql workflow (`set -a && source .env.local && set +a && psql "$SUPABASE_DB_URL" -f db/migrations/034_membership_tiers_pdf_reseed.sql`)
 3. Run verification queries; report counts and the spot-check row
 4. Commit + push
 
@@ -173,4 +175,6 @@ Two CC turns:
 
 ## First instruction for CC
 
-> Implement Turn 1 of `boosters_join_spec.md`. Write `db/migrations/030_membership_tiers_pdf_reseed.sql`: DELETE FROM membership_tiers WHERE year = '2026-27', then INSERT the 7 rows per the spec's seed table. Apply via psql, run the two verification queries (count = 7, and the spot-check select). Report output. Commit and push. Don't start Turn 2 yet.
+> Implement Turn 1 of `boosters_join_spec.md`. Write `db/migrations/034_membership_tiers_pdf_reseed.sql`: DELETE FROM membership_tiers WHERE year = '2026-27', then INSERT the 7 rows per the spec's seed table. Apply via psql, run the two verification queries (count = 7, and the spot-check select). Report output. Commit and push. Don't start Turn 2 yet.
+
+> (Turn 1 was shipped 2026-05-18 as commit `9837aba`. For Turn 2, the page must query `current_board_year` not `current_year` — booster year and football year are decoupled.)
