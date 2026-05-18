@@ -97,6 +97,23 @@ export interface ResourceLink {
   active: boolean;
 }
 
+export interface Coach {
+  id: string;
+  year: string;
+  name: string;
+  role: string;
+  role_category: "head" | "coordinator" | "position_coach" | "trainer" | "staff";
+  phone: string | null;
+  email: string | null;
+  photo_url: string | null;
+  bio: string | null;
+  sort_order: number;
+  active: boolean;
+  last_edited_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BoardMember {
   id: string;
   name: string;
