@@ -114,6 +114,20 @@ export interface Coach {
   updated_at: string;
 }
 
+export interface MembershipTier {
+  id: string;
+  name: string;
+  price_cents: number;
+  description: string | null;
+  perks: string[];
+  sort_order: number;
+  year: string;
+  requires_tshirt_size: boolean;
+  requires_second_tshirt_size: boolean;
+  badge_label: string | null;
+  active: boolean;
+}
+
 export interface BoardMember {
   id: string;
   name: string;

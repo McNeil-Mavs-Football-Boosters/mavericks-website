@@ -120,6 +120,7 @@ const SITE_LINKS: { href: string; label: string }[] = [
   { href: "/", label: "Home" },
   { href: "/schedule", label: "Schedule" },
   { href: "/boosters", label: "Boosters" },
+  { href: "/boosters/join", label: "Join the Booster Club" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/boosters/donate", label: "Donate" },
   { href: "/about", label: "About" },
