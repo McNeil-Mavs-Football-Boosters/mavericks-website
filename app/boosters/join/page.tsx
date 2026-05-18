@@ -113,16 +113,33 @@ export default async function BoostersJoinPage() {
         aria-label="Membership tiers"
       >
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 list-none p-0">
-          {tiers.map((tier) => {
+          {tiers.map((tier, i) => {
             const badged = tier.badge_label !== null;
+            const isLast = i === tiers.length - 1;
+            // Generic orphan centering: if the last card is alone in its row
+            // at md (2-col) or lg (3-col), center it. Self-heals if the
+            // tier count changes. gap-6 = 1.5rem, so a one-column width at
+            // md is calc(50% - 0.75rem). At lg, override the md hacks and
+            // just shift to column 2.
+            const mdOrphan = isLast && tiers.length % 2 === 1;
+            const lgOrphan = isLast && tiers.length % 3 === 1;
+            const orphanClasses = [
+              mdOrphan &&
+                "md:col-span-2 md:max-w-[calc(50%-0.75rem)] md:mx-auto",
+              lgOrphan &&
+                "lg:col-start-2 lg:col-span-1 lg:max-w-none lg:mx-0",
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
               <li
                 key={tier.id}
                 className={
                   "relative flex flex-col rounded-lg bg-white p-5 " +
                   (badged
-                    ? "border-2 border-mavs-green shadow-sm"
-                    : "border border-mavs-navy/10")
+                    ? "border-2 border-mavs-green shadow-sm "
+                    : "border border-mavs-navy ") +
+                  orphanClasses
                 }
               >
                 {badged ? (
