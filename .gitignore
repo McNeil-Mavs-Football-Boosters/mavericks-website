@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PII: roster spreadsheet with student + parent/guardian names and contact info.
+# Public repo — never commit. If you have a copy locally, keep it here or move
+# it outside the repo into MavericksWebsite/private-data/.
+docs/Football Player & Guardian Name*.xlsx
+docs/Football Player & Guardian Name*.xls
+docs/Football Player & Guardian Name*.csv

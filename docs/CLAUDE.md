@@ -19,9 +19,9 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-05-17)
+## Status (2026-05-17 — Commit B complete)
 
-**Steps 1–4c Commit B slices 1–4 + Deliverable E shipped.** Every `/schedule/*` URL renders real data per spec (games table on game routes, markdown/empty-state on practice). `/resources` renders the 6-row seed grouped by section. Print supported on every schedule route. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
+**Commit B fully shipped end-to-end.** All five Deliverables (A through E) live on Vercel preview. Every public route in the v2 spec route map renders real data or 404s per spec. Print supported on `/schedule/*` and `/roster/*`. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
 | Step | Status | Notes |
 |---|---|---|
@@ -35,13 +35,13 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 | **4c Commit B slice 2. Practice routes** | ✅ done | `de846d5`. react-markdown + remark-gfm for practice body |
 | **4c Commit B slice 3. Freshman games designation route** | ✅ done | `7bf7ec3` |
 | **4c Commit B fix. Designation conditional on `freshman_has_blue`** | ✅ done | `b5dd67b` games-page; `2422f0f` practice-page "Green & Blue" + spec § 5 paragraph |
-| **4c Commit B slice 4 Part 1. Test seed migration 027** | ✅ done | `26c6322`. 9 throwaway rows for 2026-27 (varsity 5, jv 2, freshman/Green 2) |
-| **4c Commit B slice 4 Part 2. Games table render** | ✅ done | `94ecb6b`. Desktop 7-col table + mobile cards + home tint + result cells + lib/queries/games.ts |
-| **4c Commit B slice 4 Part 3. Print support (schedule)** | ✅ done | `4ce0afd`. PrintButton + PrintFooter + global header/footer print:hidden + @page margin |
-| **4c Commit B fix. Opponent link new tab + MaxPreps convention + migration 028 real URLs** | ✅ done | `c2b398a` + `14d33c7` + `9d32ada` |
+| **4c Commit B slice 4 Parts 1–3 + fixes. Games table + print** | ✅ done | `26c6322` → `9d32ada` (seed 027 + render + print + 028 real URLs + spec clarification) |
 | **4c Commit B Deliverable E. `/resources`** | ✅ done | `32400b1`. resource_links grouped by section, icon mapping, empty state, /resources/[catchall] → 404 |
-| Deliverable C. Roster routes (`/roster`, `/roster/[level]`, `/roster/freshman/[designation]`) | ⏳ pending | spec § 6. Print support for roster also pending (spec § 9). |
-| Deliverable D. Coaches (`/coaches`) | ⏳ pending | spec § 7. No print. |
+| **4c Commit B Deliverable C. `/roster/*`** | ✅ done | `a7a9aa8`. Layout + varsity/jv + freshman/[designation] + PlayerTable + 27-player test seed (migration 029) |
+| **Year split — `current_year` + `current_board_year`** | ✅ done | `8971644`. Migration 030 (schema add + relabel football data 2026-27 → 2025-26); board untouched at 2026-27; `app/boosters/page.tsx` reads `current_board_year` |
+| **Real 2025-26 roster + schedule seed** | ✅ done | `e7ae151` + `947ed46`. Migrations 031 (JV=65, F-Green=22, F-Blue=27, freshman_has_blue=true) + 032 (real 2025 schedule, 46 games) + 033 (8 freshman color-resolved by Jeremy) |
+| **4c Commit B Deliverable D. `/coaches`** | ✅ done | `6d2e082`. Section grouping by `role_category`, CoachCard with default-avatar fallback, head-coach-open placeholder, /coaches/[catchall] → 404 |
+| **Brand pass — McNeil HS style guide** | ✅ done | `2ac698c`, 28 files. Navy (#011858) primary, green (#1E541E recolored darker) secondary, brown (#7C5838) tertiary token. Lato (Google Fonts 400/700/900) replaces Geist. Logo + favicon installed. |
 | 5. Public collection routes (expanded) | pending | news/sponsors + /boosters/* |
 | 6–20 | pending | See `specs/build_plan_v2.md` |
 
@@ -94,6 +94,26 @@ Continuation of the same calendar day. Two more bundles shipped after the origin
 - Migration **027 + 028 are throwaway test seeds** for `games`. Admin CRUD will replace them entirely. Cleanup: `DELETE FROM games WHERE year = '2026-27';`.
 - Next: Deliverable C (roster) and/or D (coaches). Both independent of each other and of E. Roster also gets print per spec § 9; coaches does not.
 
+## Build progress 2026-05-17 — Commit B close-out + year split + brand pass (final session)
+
+Continuation of the same calendar day. Closed out Commit B end-to-end and shipped the brand identity pass.
+
+**Deliverable C `/roster` (`a7a9aa8`).** `app/roster/layout.tsx` (server, primes `getSiteSettingsCore()`), `app/roster/[level]/page.tsx` (varsity/jv), `app/roster/[level]/[designation]/page.tsx` (freshman/green always, freshman/blue gated on `freshman_has_blue`, omits "Green" from copy when flag is false). `components/roster/player-table.tsx` — desktop 6-col table (`hidden md:block print:block`), mobile stacked cards (`md:hidden print:hidden`), sort_order ASC primary then numeric-aware jersey ASC tiebreaker (the DB's text-sort puts "10" before "2" so the component re-sorts in JS), "—" for null position/grade/height, "{n} lbs" for weight, sr-only caption. `lib/queries/rosters.ts` with `getRosterForTeam` (strict `IS NULL` for varsity/jv, `eq` for freshman Green/Blue) + `getPlayersForRoster`. Reuses `react-markdown`+`remarkGfm` for optional roster `body` preamble. PrintButton + PrintFooter wired identically to schedule. Migration 029 seeded 27 varsity players from the 2025-26 MaxPreps snapshot in `docs/mcneil_varsity_roster_2025-26.txt`.
+
+**Year split — `current_year` vs `current_board_year` (`8971644`).** The /boosters board was queried by `year = current_year`, but Jeremy clarified the operating board is on a different fiscal cadence from the displayed football season (the 2026-27 board governs the 2025-26 football season). Migration 030 added `site_settings.current_board_year text NOT NULL DEFAULT '2026-27'`, flipped `current_year` to `'2025-26'`, and relabeled all football-stamped seed rows (rosters 3, practice_schedules 3, coaches 2, games 9) to `'2025-26'`. `board_members` left untouched at `'2026-27'`. `lib/site-settings.ts` + `lib/types.ts` gained `current_board_year`. `app/boosters/page.tsx:62` and the h2 board heading now read `current_board_year`; local var renamed `currentYear` → `boardYear`. `components/layout/Footer.tsx` `FALLBACK_SETTINGS` gained the field (fallback only fires when the singleton row is missing — never in prod). Idempotent single-tx migration; reversible.
+
+**Real 2025-26 rosters + schedule (`e7ae151` + `947ed46`).** Migration 031: inserted Freshman Blue rosters row, flipped `freshman_has_blue=true`, seeded JV (65 players from `docs/2025 McNeil Football Rosters - JV.pdf`), Freshman Green (19 players, color-read from the PDF), Freshman Blue (22 players, same). 8 freshman players had no Green/Blue color fill in the source — held out, then color-assigned by Jeremy and seeded by migration 033 (Green: #4 Shin, #71 Pelosi, #73 Omagbon; Blue: #19 Brown, #53 Cocke, #55 Solages, #63 Llamas, #72 McCallister). sort_order values picked to tie with each new player's preceding existing player so the PlayerTable's jersey-ascending secondary sort drops them into the right slot without an UPDATE on existing rows. Final freshman counts: Green=22, Blue=27 (49 total, matches the PDF named-row count). Migration 032: DELETE'd the 9 throwaway placeholder games from 027/028, INSERT'd the real 2025 schedule from `docs/2025 Football schedule.pdf` — Varsity=11, JV=11, Freshman Blue=12, Freshman Green=12 (= 46 games). Freshman split-time games are duplicated as Blue (5:00 PM) + Green (6:30 PM) rows; Aug 16 Cedar Park scrimmage and Aug 21 Anderson are mirrored across both teams at the single advertised time. All games `result_status='scheduled'` with NULL scores (2025 season is over but the PDF has no scores — honest representation). All opponent_url/location_url NULL. Notes: 'Homecoming' (V Sep 12 Westwood), 'Senior Night' (V Oct 31 Manor), 'Scrimmage' (F Aug 16 Cedar Park). All times stored as `America/Chicago` timestamptz with correct CDT/CST handling around the Nov 2 DST transition.
+
+**Deliverable D `/coaches` (`6d2e082`).** Single-page server component with `export const dynamic = "force-dynamic"` (paramless DB-reading page, same pattern as /resources). `lib/queries/coaches.ts` returns `Coach[]` ordered by `role_category, sort_order`; the page groups in code into 5 buckets in fixed render order: Head Coach → Coordinators → Position Coaches → Trainers → Staff. Section headings hidden when their bucket is empty, EXCEPT Head Coach when empty — that renders heading + a `HeadCoachPlaceholder` card with the spec's "position currently open" copy. `components/coaches/coach-card.tsx` renders photo (next/image with priority) or default-avatar fallback (filled square in `bg-mavs-green` — picks up navy automatically after the brand pass's token recolor, but the avatar block currently shows the new green; revisit if it should be navy for primary), white initials centered, then h3 name, role, contact links (mailto/tel only if non-null), markdown bio (only if non-empty). `/coaches/[catchall]/page.tsx` unconditional `notFound()`. Hale's role_category was `coordinator` (Defensive Coordinator) so he lands under Coordinators, not Position Coaches — Wallin solo in Position Coaches.
+
+**Brand pass — McNeil HS style guide (`2ac698c`, 28 files).** Decisions: navy as primary (per the official guide), green demoted to semantic-only (W result marker stays `text-mavs-green`), HOME badge + home-game row tint moved to navy. Type: Lato (Google Fonts) replaces Geist site-wide via `next/font/google` weights 400/700/900. h1 = `font-black uppercase tracking-tight`, h2 = `font-bold uppercase`, body = regular (Lato 500 "Medium" is not published by Google Fonts so body uses 400 — captured in `app/layout.tsx` comment + commit message). `app/globals.css` `@theme` block: added `--mavs-navy: #011858`, `--mavs-navy-dark`, `--mavs-brown: #7C5838` (defined, unused — kept available); recolored `--mavs-green: #1E541E` (darker per the guide); shadcn `--primary` now points to `var(--mavs-navy)` so all shadcn primitives adopt navy automatically. Logo: `docs/MHS Logo.png` (official primary lockup) → `public/brand/mhs-logo.png`, rendered in `Header.tsx` via `next/image` at 40×40 with `priority` next to a Lato Black uppercase navy wordmark. Favicon: `docs/MHS Horseshoe Color.jpg` → `app/icon.png` (512) + `app/apple-icon.png` (180); old `favicon.ico` deleted. All green-as-primary refs across header/footer/mobile-nav/Game-Practice toggle/Print button/MaxPreps CTA/dropdown chevrons swapped to navy. Print styles untouched (still `print:text-black` / `print:bg-transparent`).
+
+**Other notes.**
+- `lib/supabase/server.ts` still uses the service-role key on every public read — tracked followup, not bundled into any of today's commits.
+- All migrations applied locally via psql against the live Supabase project; each verified with a SELECT before commit.
+- Style guide PDF + 11 logo source files live in `docs/`. The xlsx with player + guardian PII is gitignored (public repo); should be moved to `MavericksWebsite/private-data/` before cutover.
+- Commit B is done. Next session picks from `specs/build_plan_v2.md` Step 5 (news/sponsors/expanded booster routes) or jumps to Step 6 (admin auth + CRUD) if Jeremy wants to start letting officers in.
+
 ## The pivot (2026-05-16)
 
 Jeremy clarified mid-build that the site's audience is the McNeil football community, not the booster club's members specifically. The current SE site is the football team's de facto public web presence; the booster club just owns the hosting. Reframe:
@@ -132,16 +152,59 @@ Spec docs evolve as a chain of addenda rather than rewrites. Read in order if yo
 ## Stack
 
 - **Frontend**: Next.js **16.2.6** (App Router) + TypeScript (strict + `noUncheckedIndexedAccess`) + Tailwind v4 + shadcn/ui (`base-nova` style on `@base-ui/react`)
+- **Type**: Lato (Google Fonts, weights 400/700/900) via `next/font/google` in `app/layout.tsx`. Replaces Geist as `--font-sans` site-wide as of `2ac698c`.
 - **Hosting**: Vercel (auto-deploy from `main`)
 - **Backend**: Supabase (Postgres + Auth + Storage + RLS)
 - **Payments**: Stripe Checkout (guest checkout — no public user accounts)
 - **Email**: Cloudflare Email Routing for role aliases (pending); Resend for contact-form delivery (wired in Step 4)
 - **Repo**: GitHub org `github.com/McNeil-Mavs-Football-Boosters/mavericks-website` (public)
 
+**Brand tokens** (defined in `app/globals.css` `@theme inline`):
+- `--mavs-navy: #011858` — primary
+- `--mavs-green: #1E541E` — secondary (semantic only — W result marker)
+- `--mavs-brown: #7C5838` — tertiary (defined, unused)
+- shadcn `--primary` aliased to `var(--mavs-navy)` so primitives adopt navy automatically
+
 **Components installed in `mavericks-website/`:**
 - shadcn primitives: `button`, `input`, `label`, `textarea`
-- React deps: `react-hook-form`, `@hookform/resolvers`, `zod`, `resend`, `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `lucide-react`
+- React deps: `react-hook-form`, `@hookform/resolvers`, `zod`, `resend`, `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `lucide-react`, `react-markdown` + `remark-gfm`
 - **Lucide v1.x dropped brand glyphs** (trademark reasons). Inline SVGs in `components/layout/Footer.tsx` provide Facebook/Instagram/Youtube icons. If we add X/Twitter (anticipated in schema v2), keep inlining or add a brand-icon dep.
+
+## What's live as of brand pass (`2ac698c`)
+
+Most recent inventory. Supersedes the older "as of Deliverable E" and "as of Step 4b" sections below for the routes it covers; those sections remain as historical reference for everything that hasn't changed.
+
+**Roster (`/roster/*`):**
+- `/roster` → 308 redirect to `/roster/varsity`.
+- `/roster/varsity` — "2025-26 Varsity Roster" header + 27-player table (migration 029, from the MaxPreps 2025-26 snapshot).
+- `/roster/jv` — "2025-26 JV Roster" + 65-player table (migration 031, from `docs/2025 McNeil Football Rosters - JV.pdf`).
+- `/roster/freshman/green` — "2025-26 Freshman Green Roster" (with "Green" in copy because `freshman_has_blue=true`) + 22-player table.
+- `/roster/freshman/blue` — "2025-26 Freshman Blue Roster" + 27-player table.
+- `/roster/freshman` → 404 (per spec — freshman URLs always carry designation).
+- `/roster/varsity/anything`, `/roster/jv/anything`, `/roster/freshman/yellow` → 404.
+- Per-row: jersey# (text, preserves "00"), Name (first + last), Position (verbatim from source — "WR/DB", "OL, DL", etc.), Grade ("Sr."/"Jr."/"So."/"Fr."), Height (verbatim — `5'11"`), Weight (`{n} lbs` or `—`). Sorted by sort_order ASC then numeric-aware jersey ASC. Mobile collapses to stacked cards (jersey + name, position · grade, height · weight).
+- Print: PrintButton in page header + PrintFooter; reuses the same global `print:hidden` rules as schedule. Desktop table forces `print:block` so it renders on paper even from a mobile viewport.
+
+**Coaches (`/coaches`):**
+- `/coaches` — "Coaches & Trainers" h1, "2025-26" subhead. Sections render in fixed order: Head Coach → Coordinators → Position Coaches → Trainers → Staff. Empty sections are hidden EXCEPT Head Coach when empty, which shows the placeholder card with copy "Head Coach: position currently open. We'll update this page when the new coach is announced." Current data: Head Coach placeholder (no head row seeded), Coordinators = Michael Hale (Defensive Coordinator), Position Coaches = Coach Wallin, Trainers/Staff hidden.
+- `/coaches/anything`, `/coaches/foo/bar` → 404.
+- `export const dynamic = "force-dynamic"` (paramless DB-reading page).
+- CoachCard: photo block (next/image with priority) OR default-avatar block (`bg-mavs-green`, white initials = first letter of first word + first letter of last word, decorative alt). h3 name, role, optional mailto/tel/markdown bio (each rendered only when non-null).
+- No print support per spec.
+
+**Year split state (DB):**
+- `site_settings.current_year = '2025-26'` — governs football queries: rosters, players (via roster_id), practice_schedules, coaches, games. All flipped to 2025-26 by migration 030.
+- `site_settings.current_board_year = '2026-27'` — governs `/boosters` board grid query. board_members untouched.
+- `site_settings.freshman_has_blue = true` — Blue dropdown entry in header + `/roster/freshman/blue` + `/schedule/games/freshman/blue` all render. Migration 031 flipped the flag.
+
+**Brand identity (live across every page):**
+- **Primary: Navy `#011858`** — header logo wordmark, link hover, nav active, Game/Practice toggle active fill, Print button outline + text, MaxPreps "Live scores and stats →" CTA, hero CTA, Quick Links cards, dropdown chevrons, HOME badge + `bg-mavs-navy/5` row tint, footer link hover.
+- **Secondary: Green `#1E541E`** — semantic only; W result marker (`text-mavs-green` in `result-cell.tsx`) and the default coach-card avatar block. (Note: existing Tailwind class `mavs-green` is now the darker brand shade, not the previous shade.)
+- **Tertiary: Brown `#7C5838`** — `--mavs-brown` token defined but unused; available for future accents.
+- **Type: Lato** (Google Fonts) via `next/font/google` in `app/layout.tsx`, weights 400/700/900. `--font-sans` points to Lato. h1 = `font-black uppercase tracking-tight`, h2 = `font-bold uppercase`, body = Lato 400 (Google Fonts doesn't publish Lato 500 / "Medium" — body uses 400). All h1 + h2 headings across every page were updated in the brand-pass commit.
+- **Header logo**: `public/brand/mhs-logo.png` (sourced from `docs/MHS Logo.png` — the official primary lockup: horseshoe + horse + MHS Mavericks ribbon, full color). Rendered via `next/image` at 40×40 with `priority`. To its right: Lato Black uppercase navy wordmark "McNeil Mavericks Football" / "Mavs Football" on mobile.
+- **Favicon**: `app/icon.png` (512×512) + `app/apple-icon.png` (180×180) — sourced from `docs/MHS Horseshoe Color.jpg` (clean horseshoe-only navy mark). Old `app/favicon.ico` deleted. Next.js App Router auto-picks these up.
+- **Style guide PDF** + **11 logo source files** archived in `docs/` for future reference. The xlsx with student/guardian PII is gitignored (public repo).
 
 ## What's live as of Commit B Deliverable E (`32400b1`)
 

@@ -2,12 +2,13 @@
 
 Replacement website for [mcneilmavericks.org](https://mcneilmavericks.org) — McNeil Mavericks Football Booster Club. Cutting over from SportsEngine before the 2026-07-31 renewal.
 
-The day-by-day build plan lives at [`../ClaudeAiFiles/build_plan.md`](../ClaudeAiFiles/build_plan.md). Spec is in `../ClaudeAiFiles/{content_map,admin_scope,schema}.md`.
+**Status (2026-05-17):** Commit B end-to-end shipped. Every public route in the v2 spec route map renders real data or 404s per spec. McNeil HS official brand identity applied site-wide. Cutover target: July 13–20. See [`docs/CLAUDE.md`](./docs/CLAUDE.md) for the current Status table, build log, and "What's live" inventory. Spec docs are in [`docs/specs/`](./docs/specs/) (read order is in `docs/CLAUDE.md` → "Docs (canonical for v2)").
 
 ## Stack
 
 - **Framework**: Next.js 16 (App Router) + TypeScript (strict)
-- **Styling**: Tailwind CSS v4 + shadcn/ui (base-nova style, neutral)
+- **Styling**: Tailwind CSS v4 + shadcn/ui (base-nova). Brand tokens (`--mavs-navy #011858`, `--mavs-green #1E541E`, `--mavs-brown #7C5838`) in `app/globals.css`.
+- **Type**: Lato (Google Fonts) via `next/font/google` — weights 400/700/900
 - **Backend**: Supabase (Postgres + Auth + Storage + RLS)
 - **Payments**: Stripe Checkout (guest checkout, no public user accounts)
 - **Email**: Cloudflare Email Routing (Phase 1); Resend deferred to Phase 2
@@ -65,7 +66,7 @@ db/
 
 ## Database migrations
 
-All schema changes live in `db/migrations/`, numbered sequentially. Files are applied in numeric order. The full chain through migration 026 is bundled in `db/apply_all.sql` for fresh-DB rebuilds.
+All schema changes live in `db/migrations/`, numbered sequentially. Files are applied in numeric order. `db/apply_all.sql` is a concatenated bundle of every migration through the latest, for fresh-DB rebuilds via Supabase SQL Editor (regenerate after every new migration — recipe at the bottom of `docs/CLAUDE.md`). Migration sequence as of 2026-05-17: 001 through 033.
 
 ### Apply a single migration
 
@@ -114,4 +115,4 @@ RLS policies on `storage.objects` are SQL-managed via migrations. Bucket setting
 
 ## Build plan
 
-The full 20-step Phase 1 plan is in [`../ClaudeAiFiles/build_plan.md`](../ClaudeAiFiles/build_plan.md). This repo is the output of Step 1.
+The full 20-step Phase 1 plan is in [`docs/specs/build_plan_v2.md`](./docs/specs/build_plan_v2.md). Current state: Steps 1–4 done, 4b done, 4c (Commit A + Commit B in full) done. Step 5 onward pending. See `docs/CLAUDE.md` for the live status table and most recent build progress.

@@ -37,13 +37,13 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 
 ## "Visual polish (Phase 1.5)" section:
 
-- Rudy's-style aesthetic pass: bolder header band, accent colors beyond Mavs green, type with more personality, stronger CTA buttons
-- Hero carousel on home page rotating background images every 6 seconds (stadium shots, game action photos)
-- Real McNeil photography: players, stadium, sidelines, game action
-- Logo treatment beyond the current wordmark
-- All of the above gated on photo asset gathering (Track A) and post-cutover
+- ✅ Done (commit `2ac698c`, 2026-05-17). Brand pass — McNeil HS official style guide applied: navy (#011858) primary, green (#1E541E, recolored darker per guide) secondary, brown (#7C5838) tertiary token (defined, unused — kept for future accents), Lato (Google Fonts 400/700/900) replaces Geist site-wide, logo in header + horseshoe favicon, h1 Lato Black uppercase / h2 Lato Bold uppercase / body Lato regular. Style guide PDF + 11 logo originals live in `docs/`. Chosen assets copied to `public/brand/` and `app/icon.png` / `app/apple-icon.png`.
+- Hero carousel on home page rotating background images every 6 seconds (stadium shots, game action photos). Gated on photo assets (Track A) + post-cutover.
+- Real McNeil photography: players, stadium, sidelines, game action. Gated on Track A.
+- Lato Medium (500) — the brand guide labels body weight as "Medium" but Google Fonts doesn't publish Lato 500; current build uses 400. If self-hosted Lato variable fonts ever land, revisit and switch body to true Medium.
+- "Football Player & Guardian Name" xlsx is gitignored (PII; public repo). Currently sitting untracked in `docs/`. Move to `MavericksWebsite/private-data/` or another path outside the repo before cutover so it can't be `git add -f`'d by accident.
 
-These are not blockers for Commit B, Commit C, or Phase 1 cutover. Capture so they don't get lost.
+These are not blockers for Commit C or Phase 1 cutover. Capture so they don't get lost.
 
 ## Phase 2 / deferred
 - [ ] Bulk player import (paste mode primary, CSV upload optional). Spec'd in conversation 2026-05-16; folded into Step 7b admin rosters CRUD.
@@ -51,4 +51,8 @@ These are not blockers for Commit B, Commit C, or Phase 1 cutover. Capture so th
 - [ ] Lake Travis "parking pass at tier" perk idea for membership ladder. Board input needed.
 - [ ] Other Mavericks Sports outbound links on /resources page (after Jeremy has the URLs).
 
-- Copy Roster from previous season. I should be able to, as admin, go in and copy last year's JV team to Varsity, and freshman to JV. A couple of notes. Auto-drop seniors from varsity when doing the copy from JV, but don't drop anyone else. Make user do manual drops. When copying freshman to JV, copy both green and blue rosters. Drop any players that were Juniors because by rule they have to move up to varsity. BUT BIG warning to user. If you have not copied JV to Varsity, the JV roster is just going to get bigger and previous juniors will be dropped! Now the warning should ONLY happen if the roster is not empty. If it's empty we no the other roster was already moved for varsity. Write something better than that. Be sure we have functionality to move a single player between levels too. This is common and sometimes weekly. 
+- Copy Roster function from previous season. I should be able to, as admin, go in and copy last year's JV team to Varsity, and freshman to JV. A couple of notes. Auto-drop seniors from varsity when doing the copy from JV, but don't drop anyone else. Make user do manual drops. When copying freshman to JV, copy both green and blue rosters. Drop any players that were Juniors because by rule they have to move up to varsity. BUT BIG warning to user. If you have not copied JV to Varsity, the JV roster is just going to get bigger and previous juniors will be dropped! Now the warning should ONLY happen if the roster is not empty. If it's empty we no the other roster was already moved for varsity. Write something better than that. Be sure we have functionality to move a single player between levels too. This is common and sometimes weekly. 
+
+- wife wants roster and season images
+- put bylaws document of booster club but only for board members. 
+
