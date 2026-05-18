@@ -13,7 +13,7 @@ export function ResourceSection({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
+      <h2 className="text-xl font-bold uppercase tracking-tight">{heading}</h2>
       <ul className="mt-3 divide-y divide-border">
         {links.map((link) => (
           <ResourceItem key={link.id} link={link} />

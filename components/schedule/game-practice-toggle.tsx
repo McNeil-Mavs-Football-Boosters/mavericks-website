@@ -43,7 +43,7 @@ export function GamePracticeToggle() {
     <div
       role="tablist"
       aria-label="Game or practice schedule"
-      className="inline-flex rounded-full border border-mavs-green p-1 bg-white"
+      className="inline-flex rounded-full border border-mavs-navy p-1 bg-white"
     >
       <ToggleButton
         href={gameHref}
@@ -77,8 +77,8 @@ function ToggleButton({
       className={cn(
         "inline-flex h-9 min-w-24 items-center justify-center rounded-full px-5 text-sm font-medium transition-colors",
         active
-          ? "bg-mavs-green text-white"
-          : "bg-transparent text-mavs-green hover:bg-mavs-green/10",
+          ? "bg-mavs-navy text-white"
+          : "bg-transparent text-mavs-navy hover:bg-mavs-navy/10",
       )}
     >
       {label}

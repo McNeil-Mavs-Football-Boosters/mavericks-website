@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Menu } from "lucide-react";
 
@@ -67,20 +68,31 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
   const close = () => setOpenDropdown(null);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-border print:hidden">
-      <div className="flex h-16 items-center gap-2 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 w-full bg-white border-b border-mavs-navy/10 print:hidden">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="font-semibold text-mavs-green shrink-0"
+          aria-label="McNeil Mavericks Football home"
+          className="flex items-center gap-2 shrink-0"
         >
-          <span className="hidden md:inline">McNeil Mavericks Football</span>
-          <span className="inline md:hidden">Mavs Football</span>
+          <Image
+            src="/brand/mhs-logo.png"
+            alt=""
+            width={48}
+            height={48}
+            priority
+            className="h-10 w-10 object-contain"
+          />
+          <span className="font-black uppercase tracking-tight text-mavs-navy text-sm sm:text-base">
+            <span className="hidden md:inline">McNeil Mavericks Football</span>
+            <span className="inline md:hidden">Mavs Football</span>
+          </span>
         </Link>
 
         <nav className="hidden xl:flex flex-1 items-center justify-between gap-2 pl-8">
           <Link
             href="/"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             Home
           </Link>
@@ -107,25 +119,25 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/coaches"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             Coaches &amp; Trainers
           </Link>
           <Link
             href="/news"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             News
           </Link>
           <Link
             href="/sponsors"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             Sponsors
           </Link>
           <Link
             href="/resources"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             Forms &amp; Links
           </Link>
@@ -142,7 +154,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/about"
-            className="text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             About
           </Link>
@@ -151,7 +163,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
         <button
           type="button"
           aria-label="Open menu"
-          className="xl:hidden ml-auto inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-green"
+          className="xl:hidden ml-auto inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-navy"
           onClick={() => setMobileOpen(true)}
         >
           <Menu className="h-6 w-6" />
@@ -192,7 +204,7 @@ function HeaderDropdown({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-mavs-green transition-colors"
+        className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
       >
         {label}
         <ChevronDown
@@ -212,7 +224,7 @@ function HeaderDropdown({
               href={link.href}
               role="menuitem"
               onClick={onItemClick}
-              className="block px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-mavs-green"
+              className="block px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-mavs-navy"
             >
               {link.label}
             </Link>

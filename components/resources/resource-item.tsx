@@ -17,7 +17,7 @@ function LinkWrapper({
   children: ReactNode;
 }) {
   const className =
-    "font-semibold text-mavs-green hover:underline";
+    "font-semibold text-mavs-navy hover:underline";
 
   if (isExternal(url)) {
     return (
@@ -48,7 +48,7 @@ export function ResourceItem({ link }: { link: ResourceLink }) {
     <li className="flex items-start gap-3 py-2">
       <Icon
         aria-hidden="true"
-        className="h-5 w-5 shrink-0 text-mavs-green"
+        className="h-5 w-5 shrink-0 text-mavs-navy"
       />
       <div className="min-w-0 flex-1">
         <LinkWrapper url={link.url}>{link.label}</LinkWrapper>

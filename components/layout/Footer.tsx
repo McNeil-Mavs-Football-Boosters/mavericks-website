@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -133,27 +134,36 @@ export async function Footer() {
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 text-xs leading-snug">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-start">
           {/* Address (left) */}
-          <div>
-            <p className="font-semibold text-foreground">
-              {settings.display_name}
-            </p>
-            <p className="text-muted-foreground">
-              Supporting Mavericks football since 2009.
-            </p>
-            {settings.mailing_address ? (
-              <address className="not-italic text-muted-foreground whitespace-pre-line mt-1">
-                {settings.mailing_address}
-              </address>
-            ) : null}
+          <div className="flex items-start gap-3">
+            <Image
+              src="/brand/mhs-logo.png"
+              alt=""
+              width={56}
+              height={56}
+              className="h-12 w-12 object-contain shrink-0"
+            />
+            <div>
+              <p className="font-bold uppercase tracking-wide text-mavs-navy">
+                {settings.display_name}
+              </p>
+              <p className="text-muted-foreground">
+                Supporting Mavericks football since 2009.
+              </p>
+              {settings.mailing_address ? (
+                <address className="not-italic text-muted-foreground whitespace-pre-line mt-1">
+                  {settings.mailing_address}
+                </address>
+              ) : null}
+            </div>
           </div>
 
           {/* Site links (center) */}
-          <nav aria-label="Footer site links" className="md:text-center">
+          <nav aria-label="Footer site links" className="md:text-center font-bold uppercase tracking-wide">
             {SITE_LINKS.map((link, i) => (
               <Fragment key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-muted-foreground hover:text-mavs-green"
+                  className="text-muted-foreground hover:text-mavs-navy"
                 >
                   {link.label}
                 </Link>
@@ -173,7 +183,7 @@ export async function Footer() {
           <div className="md:text-right">
             <a
               href={`mailto:${settings.primary_contact_email}`}
-              className="text-muted-foreground hover:text-mavs-green"
+              className="text-muted-foreground hover:text-mavs-navy"
             >
               {settings.primary_contact_email}
             </a>
@@ -184,7 +194,7 @@ export async function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="text-muted-foreground hover:text-mavs-green transition-colors"
+                  className="text-muted-foreground hover:text-mavs-navy transition-colors"
                 >
                   <Facebook className="h-4 w-4" />
                 </a>
@@ -195,7 +205,7 @@ export async function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-muted-foreground hover:text-mavs-green transition-colors"
+                  className="text-muted-foreground hover:text-mavs-navy transition-colors"
                 >
                   <Instagram className="h-4 w-4" />
                 </a>
@@ -206,7 +216,7 @@ export async function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"
-                  className="text-muted-foreground hover:text-mavs-green transition-colors"
+                  className="text-muted-foreground hover:text-mavs-navy transition-colors"
                 >
                   <Youtube className="h-4 w-4" />
                 </a>

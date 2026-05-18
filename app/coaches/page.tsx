@@ -33,7 +33,7 @@ export default async function CoachesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           Coaches & Trainers
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{current_year}</p>
@@ -47,7 +47,7 @@ export default async function CoachesPage() {
             // Head Coach: always render heading; show placeholder when empty.
             return (
               <section key={key}>
-                <h2 className="text-xl font-semibold tracking-tight">
+                <h2 className="text-xl font-bold uppercase tracking-tight">
                   {heading}
                 </h2>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -68,7 +68,7 @@ export default async function CoachesPage() {
 
           return (
             <section key={key}>
-              <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
+              <h2 className="text-xl font-bold uppercase tracking-tight">{heading}</h2>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {rows.map((coach) => (
                   <CoachCard key={coach.id} coach={coach} />

@@ -98,7 +98,7 @@ export default async function BoostersPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
       <header className="mb-12 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           McNeil Maverick Football Booster Club
         </h1>
         <p className="mt-3 text-muted-foreground">
@@ -107,8 +107,8 @@ export default async function BoostersPage() {
       </header>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-3">Our Mission</h2>
-        <blockquote className="border-l-4 border-mavs-green pl-4 py-1 text-foreground space-y-3">
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-3">Our Mission</h2>
+        <blockquote className="border-l-4 border-mavs-navy pl-4 py-1 text-foreground space-y-3">
           <p>
             The purpose of the Booster Club is to provide encouragement and
             generate support for the football program at McNeil High School.
@@ -149,7 +149,7 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-3">What dues fund</h2>
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-3">What dues fund</h2>
         {/* PLACEHOLDER — replace once Chevon delivers copy (spec_review.md G5) */}
         <p className="text-foreground">
           Membership dues directly fund the Mavericks football program — team
@@ -160,11 +160,11 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-6">Get Involved</h2>
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-6">Get Involved</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link
             href="/boosters/join"
-            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-green hover:shadow-md transition-all"
+            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-navy hover:shadow-md transition-all"
           >
             <UserPlus size={24} />
             <span className="font-semibold text-foreground">
@@ -173,7 +173,7 @@ export default async function BoostersPage() {
           </Link>
           <Link
             href="/boosters/sponsor"
-            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-green hover:shadow-md transition-all"
+            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-navy hover:shadow-md transition-all"
           >
             <Handshake size={24} />
             <span className="font-semibold text-foreground">
@@ -182,7 +182,7 @@ export default async function BoostersPage() {
           </Link>
           <Link
             href="/boosters/donate"
-            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-green hover:shadow-md transition-all"
+            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-navy hover:shadow-md transition-all"
           >
             <HeartHandshake size={24} />
             <span className="font-semibold text-foreground">
@@ -191,7 +191,7 @@ export default async function BoostersPage() {
           </Link>
           <Link
             href="/boosters/volunteer"
-            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-green hover:shadow-md transition-all"
+            className="flex flex-col items-center text-center gap-2 rounded-lg border border-border bg-white p-4 hover:border-mavs-navy hover:shadow-md transition-all"
           >
             <HandHelping size={24} />
             <span className="font-semibold text-foreground">Volunteer</span>
@@ -200,7 +200,7 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-6">{boardYear} Board</h2>
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-6">{boardYear} Board</h2>
         {boardMembers.length === 0 ? (
           <p className="text-muted-foreground">
             Board roster will be posted soon.
@@ -232,7 +232,7 @@ export default async function BoostersPage() {
                   {member.email_alias ? (
                     <a
                       href={`mailto:${member.email_alias}`}
-                      className="mt-1 inline-block text-sm text-mavs-green hover:underline"
+                      className="mt-1 inline-block text-sm text-mavs-navy hover:underline"
                     >
                       {member.email_alias}
                     </a>
@@ -245,7 +245,7 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mt-12 pt-8 border-t border-border">
-        <h2 className="text-xl font-semibold mb-3">Affiliations & Contact</h2>
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-3">Affiliations & Contact</h2>
         <p className="text-foreground">
           The {legalName} is a Texas 501(c)(3) nonprofit, EIN {ein}. We operate
           independently of McNeil High School and Round Rock ISD.
@@ -256,7 +256,7 @@ export default async function BoostersPage() {
             <dd>
               <a
                 href={`mailto:${primaryContactEmail}`}
-                className="text-mavs-green hover:underline"
+                className="text-mavs-navy hover:underline"
               >
                 {primaryContactEmail}
               </a>
@@ -279,7 +279,7 @@ export default async function BoostersPage() {
         </dl>
         <p className="mt-6 text-sm text-muted-foreground">
           See our{" "}
-          <Link href="/privacy" className="text-mavs-green hover:underline">
+          <Link href="/privacy" className="text-mavs-navy hover:underline">
             Privacy Policy
           </Link>{" "}
           for details on how we handle personal information.
@@ -287,12 +287,12 @@ export default async function BoostersPage() {
       </section>
 
       <section className="mt-12 pt-8 border-t border-border">
-        <h2 className="text-xl font-semibold mb-3">Booster Section</h2>
+        <h2 className="text-xl font-bold uppercase tracking-tight mb-3">Booster Section</h2>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm list-none p-0">
           <li>
             <Link
               href="/boosters/join"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Join
             </Link>
@@ -300,7 +300,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/members"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Members
             </Link>
@@ -308,7 +308,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/sponsor"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Sponsorship Opportunities
             </Link>
@@ -316,7 +316,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/volunteer"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Volunteer
             </Link>
@@ -324,7 +324,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/committees"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Committees
             </Link>
@@ -332,7 +332,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/board"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Board
             </Link>
@@ -340,7 +340,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/events"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Calendar / Events
             </Link>
@@ -348,7 +348,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/documents"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Documents
             </Link>
@@ -356,7 +356,7 @@ export default async function BoostersPage() {
           <li>
             <Link
               href="/boosters/donate"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               Donate
             </Link>

@@ -150,7 +150,7 @@ export function ContactForm() {
         <Button
           type="submit"
           disabled={status === "submitting"}
-          className="mt-2 bg-mavs-green text-white hover:bg-mavs-green-dark"
+          className="mt-2 bg-mavs-navy text-white hover:bg-mavs-navy-dark"
         >
           {status === "submitting" ? "Sending…" : "Send message"}
         </Button>

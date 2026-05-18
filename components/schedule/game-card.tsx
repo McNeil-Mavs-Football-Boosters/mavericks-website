@@ -34,7 +34,7 @@ function HomeAwayBadge({ value }: { value: Game["home_or_away"] }) {
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium uppercase tracking-wide",
         isHome
-          ? "border-mavs-green/30 bg-mavs-green/10 text-mavs-green-dark"
+          ? "border-mavs-navy/30 bg-mavs-navy/10 text-mavs-navy-dark"
           : "border-border bg-muted text-muted-foreground",
       )}
     >
@@ -51,7 +51,7 @@ export function GameCard({ game }: { game: Game }) {
     <div
       className={cn(
         "block md:hidden print:hidden rounded-lg border border-border bg-white p-4",
-        isHome && "bg-mavs-green/5",
+        isHome && "bg-mavs-navy/5",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -61,7 +61,7 @@ export function GameCard({ game }: { game: Game }) {
               href={game.opponent_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               {game.opponent}
             </a>
@@ -83,7 +83,7 @@ export function GameCard({ game }: { game: Game }) {
               href={game.location_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-mavs-green hover:underline"
+              className="text-mavs-navy hover:underline"
             >
               {game.location}
             </a>
@@ -103,7 +103,7 @@ export function GameCard({ game }: { game: Game }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Watch ${game.opponent} game`}
-            className="inline-flex text-mavs-green hover:text-mavs-green-dark"
+            className="inline-flex text-mavs-navy hover:text-mavs-navy-dark"
           >
             <ExternalLink className="h-4 w-4" />
           </a>

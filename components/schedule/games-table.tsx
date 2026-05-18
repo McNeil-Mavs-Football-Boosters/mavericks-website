@@ -35,7 +35,7 @@ function HomeAwayBadge({ value }: { value: Game["home_or_away"] }) {
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium uppercase tracking-wide",
         isHome
-          ? "border-mavs-green/30 bg-mavs-green/10 text-mavs-green-dark print:border-black print:bg-transparent print:text-black"
+          ? "border-mavs-navy/30 bg-mavs-navy/10 text-mavs-navy-dark print:border-black print:bg-transparent print:text-black"
           : "border-border bg-muted text-muted-foreground print:border-black print:bg-transparent print:text-black",
       )}
     >
@@ -63,7 +63,7 @@ export function GamesTable({ games }: { games: Game[] }) {
           <tbody>
             {games.map((game) => {
               const isHome = game.home_or_away === "home";
-              const rowTint = isHome ? "bg-mavs-green/5 print:bg-transparent" : "";
+              const rowTint = isHome ? "bg-mavs-navy/5 print:bg-transparent" : "";
               const hasNotes = game.notes != null && game.notes.trim() !== "";
 
               return (
@@ -83,7 +83,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                           href={game.opponent_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-mavs-green hover:underline print:text-black print:no-underline"
+                          className="text-mavs-navy hover:underline print:text-black print:no-underline"
                         >
                           {game.opponent}
                         </a>
@@ -98,7 +98,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                             href={game.location_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-mavs-green hover:underline print:text-black print:no-underline"
+                            className="text-mavs-navy hover:underline print:text-black print:no-underline"
                           >
                             {game.location}
                           </a>
@@ -125,7 +125,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`Watch ${game.opponent} game`}
-                          className="inline-flex text-mavs-green hover:text-mavs-green-dark print:hidden"
+                          className="inline-flex text-mavs-navy hover:text-mavs-navy-dark print:hidden"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>

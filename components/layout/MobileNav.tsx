@@ -17,7 +17,7 @@ interface MobileNavProps {
 }
 
 const TOP_LINK_CLASS =
-  "text-lg font-medium py-3 border-b border-border last:border-b-0 text-foreground hover:text-mavs-green";
+  "text-lg font-bold uppercase tracking-wide py-3 border-b border-border last:border-b-0 text-foreground hover:text-mavs-navy";
 
 const BOOSTER_LINKS: NavLink[] = [
   { href: "/boosters", label: "About the Booster Club" },
@@ -75,7 +75,7 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
             type="button"
             aria-label="Close menu"
             onClick={onClose}
-            className="inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-green"
+            className="inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-navy"
           >
             <X className="h-6 w-6" />
           </button>
@@ -164,7 +164,7 @@ function MobileNavAccordion({
               key={link.href}
               href={link.href}
               onClick={onItemClick}
-              className="text-base font-medium py-2 text-muted-foreground hover:text-mavs-green"
+              className="text-base font-medium py-2 text-muted-foreground hover:text-mavs-navy"
             >
               {link.label}
             </Link>

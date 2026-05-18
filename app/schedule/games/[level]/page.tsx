@@ -34,7 +34,7 @@ export default async function GameSchedulePage({
     <section>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
             {current_year} {levelTitle} Game Schedule
           </h1>
           {maxpreps_team_url ? (
@@ -43,7 +43,7 @@ export default async function GameSchedulePage({
                 href={maxpreps_team_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-mavs-green hover:underline"
+                className="text-mavs-navy hover:underline"
               >
                 Live scores and stats →
               </a>
@@ -74,7 +74,7 @@ export default async function GameSchedulePage({
                 href={maxpreps_team_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md bg-mavs-green px-4 py-2 text-sm font-medium text-white hover:bg-mavs-green-dark"
+                className="inline-flex items-center gap-2 rounded-md bg-mavs-navy px-4 py-2 text-sm font-medium text-white hover:bg-mavs-navy-dark"
               >
                 MaxPreps
                 <ExternalLink className="h-4 w-4" />

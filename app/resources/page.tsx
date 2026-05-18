@@ -30,7 +30,7 @@ export default async function ResourcesPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           Forms & Links
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

@@ -170,7 +170,7 @@ export default async function Home() {
     <>
       <section
         className={`relative isolate w-full min-h-[60vh] md:min-h-[70vh] flex items-center justify-center text-center text-white ${
-          hasHeroImage ? "" : "bg-mavs-green"
+          hasHeroImage ? "" : "bg-mavs-navy"
         }`}
       >
         {hasHeroImage && hero.hero_image_url ? (
@@ -190,7 +190,7 @@ export default async function Home() {
         ) : null}
 
         <div className="mx-auto max-w-3xl px-6 py-24">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-black uppercase tracking-tight sm:text-5xl md:text-6xl">
             {hero.hero_headline}
           </h1>
           {hero.hero_subhead ? (
@@ -202,7 +202,7 @@ export default async function Home() {
             <Button
               size="lg"
               nativeButton={false}
-              className="bg-white text-mavs-green hover:bg-white/90"
+              className="bg-white text-mavs-navy hover:bg-white/90"
               render={<Link href={hero.primary_cta_url} />}
             >
               {hero.primary_cta_label}
@@ -213,7 +213,7 @@ export default async function Home() {
 
       <section className="bg-muted/40">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
+          <h2 className="text-2xl font-bold uppercase tracking-tight mb-6 text-center">
             Get Involved
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -221,9 +221,9 @@ export default async function Home() {
               <Link
                 key={href}
                 href={href}
-                className="flex flex-col items-center text-center gap-3 rounded-lg border border-border bg-white p-6 hover:border-mavs-green hover:shadow-md transition-all"
+                className="flex flex-col items-center text-center gap-3 rounded-lg border border-border bg-white p-6 hover:border-mavs-navy hover:shadow-md transition-all"
               >
-                <Icon size={32} className="text-mavs-green" />
+                <Icon size={32} className="text-mavs-navy" />
                 <span className="font-medium text-foreground">{label}</span>
               </Link>
             ))}
@@ -234,10 +234,10 @@ export default async function Home() {
       {news.length > 0 ? (
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold tracking-tight">Latest News</h2>
+            <h2 className="text-2xl font-bold uppercase tracking-tight">Latest News</h2>
             <Link
               href="/news"
-              className="text-sm font-medium text-mavs-green hover:underline"
+              className="text-sm font-medium text-mavs-navy hover:underline"
             >
               View all news →
             </Link>
@@ -282,12 +282,12 @@ export default async function Home() {
         <section className="bg-muted/40">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold tracking-tight">
+              <h2 className="text-2xl font-bold uppercase tracking-tight">
                 Upcoming Events
               </h2>
               <Link
                 href="/boosters/events"
-                className="text-sm font-medium text-mavs-green hover:underline"
+                className="text-sm font-medium text-mavs-navy hover:underline"
               >
                 View calendar →
               </Link>
@@ -298,7 +298,7 @@ export default async function Home() {
                   key={ev.id}
                   className="rounded-lg border border-border bg-white p-4"
                 >
-                  <p className="text-xs uppercase tracking-wide text-mavs-green font-semibold">
+                  <p className="text-xs uppercase tracking-wide text-mavs-navy font-semibold">
                     {formatDate(ev.starts_at)}
                   </p>
                   <p className="mt-2 font-semibold text-foreground">
@@ -313,7 +313,7 @@ export default async function Home() {
                     <p className="mt-3">
                       <Link
                         href={`/boosters/events/${ev.slug}`}
-                        className="text-sm font-medium text-mavs-green hover:underline"
+                        className="text-sm font-medium text-mavs-navy hover:underline"
                       >
                         Learn more →
                       </Link>
@@ -329,12 +329,12 @@ export default async function Home() {
       {sponsors.length > 0 ? (
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold uppercase tracking-tight">
               Thank You to Our Sponsors
             </h2>
             <Link
               href="/sponsors"
-              className="text-sm font-medium text-mavs-green hover:underline"
+              className="text-sm font-medium text-mavs-navy hover:underline"
             >
               See all sponsors →
             </Link>

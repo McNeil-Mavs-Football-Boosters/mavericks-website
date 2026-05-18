@@ -8,7 +8,7 @@ export function PrintButton() {
       type="button"
       aria-label="Print this page"
       onClick={() => window.print()}
-      className="inline-flex items-center gap-1.5 rounded-md border border-mavs-green px-3 py-1.5 text-sm font-medium text-mavs-green hover:bg-mavs-green/10 print:hidden"
+      className="inline-flex items-center gap-1.5 rounded-md border border-mavs-navy px-3 py-1.5 text-sm font-medium text-mavs-navy hover:bg-mavs-navy/10 print:hidden"
     >
       <Printer className="h-4 w-4" />
       Print
