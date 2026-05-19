@@ -1372,3 +1372,794 @@ CREATE POLICY "Content admins delete coach photos" ON storage.objects
     bucket_id = 'coach-photos'
     AND current_user_has_role('content_admin')
   );
+
+-- ===
+-- db/migrations/027_seed_test_games.sql
+-- ===
+
+-- Migration 027: test seed for `games` table (slice 4 of Commit B).
+--
+-- Purpose
+--   Slice 4 needs rendered rows on every /schedule/games/* page so the table
+--   render and home-tint / result-cell / Watch-icon logic can be exercised
+--   on Vercel preview. There is no admin CRUD yet (lands in Step 7b or 13),
+--   so we seed plausible Central Texas opponents and result states.
+--
+-- Coverage
+--   varsity:        5 rows (final win, final loss, scheduled, cancelled, tbd)
+--   jv:             2 rows (final win, scheduled)
+--   freshman/Green: 2 rows (scheduled home, scheduled away)
+--   Total: 9 rows, all year='2026-27'.
+--
+-- Cleanup
+--   When real games are entered via admin CRUD (Step 7b or 13), drop the
+--   whole test set in one shot:
+--       DELETE FROM games WHERE year = '2026-27';
+--   This whole row set is intended to be replaced, not merged with, real data.
+
+BEGIN;
+
+-- Varsity (team_designation NULL)
+INSERT INTO games (
+  year, team_level, team_designation,
+  opponent, opponent_url,
+  game_date,
+  location, location_url,
+  home_or_away,
+  our_score, their_score, result_status,
+  watch_url, notes
+) VALUES
+  -- 1. Final, win, home, watch_url, Homecoming
+  (
+    '2026-27', 'varsity', NULL,
+    'Hutto', NULL,
+    '2026-09-25 19:30:00 America/Chicago'::timestamptz,
+    'Kelly Reeves Athletic Complex', NULL,
+    'home',
+    35, 14, 'final',
+    'https://www.youtube.com/watch?v=test-mcneil-hutto', 'Homecoming'
+  ),
+  -- 2. Final, loss, away, no notes
+  (
+    '2026-27', 'varsity', NULL,
+    'Cedar Ridge', NULL,
+    '2026-09-04 19:30:00 America/Chicago'::timestamptz,
+    'Cedar Ridge High School', NULL,
+    'away',
+    21, 28, 'final',
+    NULL, NULL
+  ),
+  -- 3. Scheduled, home, opponent_url + location_url
+  (
+    '2026-27', 'varsity', NULL,
+    'Round Rock', 'https://roundrockfootball.example.com/',
+    '2026-10-09 19:30:00 America/Chicago'::timestamptz,
+    'Kelly Reeves Athletic Complex',
+    'https://maps.google.com/?q=Kelly+Reeves+Athletic+Complex+Round+Rock+TX',
+    'home',
+    NULL, NULL, 'scheduled',
+    NULL, NULL
+  ),
+  -- 4. Cancelled, away
+  (
+    '2026-27', 'varsity', NULL,
+    'Vista Ridge', NULL,
+    '2026-10-16 19:30:00 America/Chicago'::timestamptz,
+    'Vista Ridge High School', NULL,
+    'away',
+    NULL, NULL, 'cancelled',
+    NULL, NULL
+  ),
+  -- 5. TBD, home
+  (
+    '2026-27', 'varsity', NULL,
+    'Westwood', NULL,
+    '2026-10-30 19:30:00 America/Chicago'::timestamptz,
+    'Kelly Reeves Athletic Complex', NULL,
+    'home',
+    NULL, NULL, 'tbd',
+    NULL, NULL
+  );
+
+-- JV (team_designation NULL)
+INSERT INTO games (
+  year, team_level, team_designation,
+  opponent, game_date,
+  location, home_or_away,
+  our_score, their_score, result_status
+) VALUES
+  -- 1. Final, win, home
+  (
+    '2026-27', 'jv', NULL,
+    'Hutto',
+    '2026-09-17 18:00:00 America/Chicago'::timestamptz,
+    'Kelly Reeves Athletic Complex', 'home',
+    24, 7, 'final'
+  ),
+  -- 2. Scheduled, away
+  (
+    '2026-27', 'jv', NULL,
+    'Stony Point',
+    '2026-10-01 18:00:00 America/Chicago'::timestamptz,
+    'Stony Point High School', 'away',
+    NULL, NULL, 'scheduled'
+  );
+
+-- Freshman Green
+INSERT INTO games (
+  year, team_level, team_designation,
+  opponent, game_date,
+  location, home_or_away,
+  result_status
+) VALUES
+  -- 1. Scheduled, home
+  (
+    '2026-27', 'freshman', 'Green',
+    'Cedar Ridge',
+    '2026-09-17 16:30:00 America/Chicago'::timestamptz,
+    'Kelly Reeves Athletic Complex', 'home',
+    'scheduled'
+  ),
+  -- 2. Scheduled, away
+  (
+    '2026-27', 'freshman', 'Green',
+    'Round Rock',
+    '2026-10-01 16:30:00 America/Chicago'::timestamptz,
+    'Round Rock High School', 'away',
+    'scheduled'
+  );
+
+COMMIT;
+
+-- ===
+-- db/migrations/028_fix_seed_test_games_urls.sql
+-- ===
+
+-- Migration 028: replace .example.com placeholder URLs from 027 with real
+-- MaxPreps and venue URLs. Throwaway test data; admin CRUD will replace these
+-- rows entirely (Step 7b or 13). Convention: opponent_url points to the
+-- opponent's MaxPreps team page.
+
+BEGIN;
+
+UPDATE games
+SET opponent_url = 'https://www.maxpreps.com/tx/round-rock/round-rock-dragons/football/'
+WHERE year = '2026-27'
+  AND team_level = 'varsity'
+  AND opponent = 'Round Rock'
+  AND opponent_url = 'https://roundrockfootball.example.com/';
+
+COMMIT;
+
+-- ===
+-- db/migrations/029_seed_test_varsity_roster.sql
+-- ===
+
+-- Migration 029: TEST DATA. Lights up the public roster render with the
+-- 2025-26 MaxPreps varsity snapshot, attached to the 2026-27 varsity
+-- roster row so the page has real-looking content for staging review.
+--
+-- Remove before public cutover. Tracked in followups.md.
+-- Cleanup path: DELETE FROM players WHERE roster_id =
+--   (SELECT id FROM rosters WHERE year='2026-27' AND team_level='varsity'
+--    AND team_designation IS NULL AND active=true);
+--
+-- Source: docs/mcneil_varsity_roster_2025-26.txt (27 players).
+
+BEGIN;
+
+INSERT INTO players (
+  roster_id,
+  jersey_number, first_name, last_name,
+  position, grade, height, weight,
+  sort_order, active
+)
+SELECT
+  r.id,
+  v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, v.height, v.weight,
+  v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('0',  'Aden',     'Taylor',     NULL,      'Sr.', '5''11"', 175, 1),
+  ('1',  'Bryce',    'Wilson',     'K, P',    'Sr.', '6''2"',  220, 2),
+  ('2',  'Sean',     'Crowe',      'FS',      'Sr.', NULL,     NULL::int, 3),
+  ('3',  'Brian',    'Perkins',    'WR, DB',  'Sr.', NULL,     NULL::int, 4),
+  ('4',  'Isaiah',   'Jones',      'CB, WR',  'Jr.', '6''2"',  185, 5),
+  ('5',  'Jarell',   'Gary Jr',    'WR, QB',  'Sr.', '6''0"',  190, 6),
+  ('7',  'Ja Corian','Hubbard',    'DL, RB',  'Sr.', '6''2"',  250, 7),
+  ('8',  'Marshall', 'Holland',    'MLB, OLB','Sr.', '5''10"', 215, 8),
+  ('9',  'Zach',     'Christie',   'WR',      'Sr.', '6''2"',  188, 9),
+  ('10', 'Jadon',    'Sultz',      'QB',      'Sr.', '6''1"',  200, 10),
+  ('11', 'Calvin',   'Cervini',    'QB, CB',  'Sr.', '6''4"',  180, 11),
+  ('14', 'DJ',       'Vasquez',    'DB',      'Sr.', NULL,     NULL::int, 12),
+  ('15', 'Tyson',    'Cox',        'OLB, SS', 'Jr.', '5''10"', 190, 13),
+  ('18', 'Kaden',    'Kearney',    'DB',      'So.', NULL,     NULL::int, 14),
+  ('20', 'Keyvon',   'Myers',      'CB',      'Sr.', '6''0"',  170, 15),
+  ('21', 'Johnny',   'McFarland',  'DB',      'Sr.', NULL,     NULL::int, 16),
+  ('22', 'Adien',    'Murray',     'DB',      'Sr.', NULL,     NULL::int, 17),
+  ('23', 'Zylen',    'Hall',       'RB',      'Jr.', '5''7"',  155, 18),
+  ('24', 'Malachi',  'Golden',     'DB',      'Sr.', NULL,     NULL::int, 19),
+  ('25', 'Jamal',    'Harris',     'RB',      'Sr.', NULL,     NULL::int, 20),
+  ('32', 'Michael',  'Jones',      'OLB',     'Sr.', '6''1"',  190, 21),
+  ('34', 'Skyler',   'Eaves',      'OLB',     'Sr.', '6''0"',  172, 22),
+  ('38', 'Ford',     'Askins',     'LB',      'Jr.', NULL,     NULL::int, 23),
+  ('42', 'Jacorian', 'Hubbard',    'DE',      'Sr.', '6''0"',  200, 24),
+  ('46', 'Nkume',    'Nwosu',      'DL',      'Sr.', NULL,     NULL::int, 25),
+  ('53', 'Isaiah',   'Escalante',  'C, DE',   'Sr.', '6''0"',  208, 26),
+  ('82', 'Bowen',    'Wheatley',   'TE',      'Sr.', '6''3"',  215, 27)
+) AS v(jersey_number, first_name, last_name, position, grade, height, weight, sort_order)
+WHERE r.year = '2026-27'
+  AND r.team_level = 'varsity'
+  AND r.team_designation IS NULL
+  AND r.active = true;
+
+COMMIT;
+
+-- ===
+-- db/migrations/030_split_year_relabel_football.sql
+-- ===
+
+-- Migration 030: Split site_settings year fields and relabel football
+-- seed rows from "2026-27" to "2025-26".
+--
+-- Schema add: site_settings.current_board_year (governs board data).
+-- site_settings.current_year now governs only football data (rosters,
+-- practice_schedules, coaches, games). Board year is decoupled because
+-- the operating board year and the football season being displayed are
+-- on different cadences.
+--
+-- Data relabel: rosters, practice_schedules, coaches, games move from
+-- "2026-27" -> "2025-26" to match the actual data we have (the season
+-- just completed). board_members stays at "2026-27" — current board is
+-- already the 2026-27 board. membership_tiers, sponsorship_tiers, and
+-- every other year-stamped table are untouched.
+--
+-- Idempotent: each UPDATE filters by the current value, so re-running
+-- against a database that has already moved forward is a no-op.
+-- Reversible: an inverse migration can flip values back; the new
+-- column can be dropped if needed (no data depends on it before this
+-- migration ships).
+
+BEGIN;
+
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS current_board_year text NOT NULL DEFAULT '2026-27';
+
+UPDATE site_settings      SET current_year = '2025-26' WHERE current_year = '2026-27';
+UPDATE rosters            SET year         = '2025-26' WHERE year         = '2026-27';
+UPDATE practice_schedules SET year         = '2025-26' WHERE year         = '2026-27';
+UPDATE coaches            SET year         = '2025-26' WHERE year         = '2026-27';
+UPDATE games              SET year         = '2025-26' WHERE year         = '2026-27';
+
+COMMIT;
+
+-- ===
+-- db/migrations/031_seed_2025_jv_freshman_rosters.sql
+-- ===
+
+-- Migration 031: TEST DATA for the 2025-26 review period.
+-- Adds the JV (65 players), Freshman Green (19), and Freshman Blue (22)
+-- rosters from the 2025 PDFs in docs/. Creates the Freshman Blue
+-- rosters row (Green already seeded by 018 + 019). Flips
+-- site_settings.freshman_has_blue=true so the Blue page renders and
+-- the header dropdown shows the Blue entry.
+--
+-- 8 freshman players are uncolored in the source PDF (no Green/Blue
+-- assignment). They are NOT seeded; flagged in followups.md for coach
+-- clarification. 1 freshman row in the PDF has neither jersey# nor
+-- name (corrupt source row) — skipped.
+--
+-- Class column: source values 10 and 11 map to "So." and "Jr." for
+-- display consistency with the varsity seed. Freshman = "Fr.".
+--
+-- Position: stored verbatim from source (e.g., "WR/DB", "OL/DL").
+-- Height/weight not provided by source -> NULL.
+--
+-- Cleanup before public cutover:
+--   DELETE FROM players WHERE roster_id IN (
+--     SELECT id FROM rosters WHERE year='2025-26' AND team_level IN ('jv','freshman')
+--   );
+--   DELETE FROM rosters WHERE year='2025-26' AND team_level='freshman' AND team_designation='Blue';
+
+BEGIN;
+
+-- 1. Add the Freshman Blue rosters row (Green already exists from migration 018+019).
+INSERT INTO rosters (year, team_level, team_designation, body, source_note, active)
+VALUES ('2025-26', 'freshman', 'Blue', '', 'Awaiting roster from coaching staff', true);
+
+-- 2. Flip the Blue flag so /roster/freshman/blue + /schedule/games/freshman/blue render.
+UPDATE site_settings SET freshman_has_blue = true WHERE freshman_has_blue = false;
+
+-- 3. JV roster: 65 players.
+INSERT INTO players (
+  roster_id, jersey_number, first_name, last_name,
+  position, grade, height, weight, sort_order, active
+)
+SELECT
+  r.id, v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, NULL, NULL::int, v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('0',  'Kees',                'Glinski',          'TE',       'Jr.',  1),
+  ('1',  'Jace',                'Servantez',        'QB',       'So.',  2),
+  ('2',  'Case',                'Keough',           'DB',       'So.',  3),
+  ('3',  'Evan',                'Vest',             'DB',       'Jr.',  4),
+  ('4',  'Hudson',              'Cronin',           'WR',       'So.',  5),
+  ('5',  'Cicero',              'Stroman',          'DL',       'So.',  6),
+  ('6',  'Silas',               'Carter',           'DB',       'So.',  7),
+  ('7',  'Kieran',              'Jalbert',          'TE',       'So.',  8),
+  ('8',  'Orion',               'Covault',          'QB',       'Jr.',  9),
+  ('9',  'Aiden',               'Creque',           'WR',       'Jr.', 10),
+  ('10', 'Keston',              'Variste',          'WR',       'So.', 11),
+  ('11', 'Angel',               'Gudino De Leon',   'LB',       'Jr.', 12),
+  ('12', 'Jatavius',            'Washington',       'QB',       'Jr.', 13),
+  ('13', 'Eli',                 'Weaver',           'DB',       'Jr.', 14),
+  ('14', 'Alonzo',              'Mata',             'WR',       'So.', 15),
+  ('15', 'Hendrix',             'Boston',           'DB',       'Jr.', 16),
+  ('16', 'Logan',               'Moeller',          'QB',       'So.', 17),
+  ('17', 'Jude',                'Montez',           'WR',       'Jr.', 18),
+  ('18', 'Ka''Darious',         'Montgomery',       'DB',       'So.', 19),
+  ('19', 'Owen',                'Baumann',          'DB',       'So.', 20),
+  ('20', 'Chance',              'Woodward',         'WR',       'Jr.', 21),
+  ('21', 'Gabe',                'Parker',           'WR',       'So.', 22),
+  ('22', 'Akmal',               'Waqif',            'LB',       'So.', 23),
+  ('23', 'Omar',                'Aviles',           'LB',       'So.', 24),
+  ('24', 'Tramaurie',           'Mayweather',       'WR',       'Jr.', 25),
+  ('25', 'Owen',                'Mazorra',          'WR',       'So.', 26),
+  ('26', 'Mcharo',              'Criswell',         'RB',       'Jr.', 27),
+  ('27', 'Richardo',            'Gonzalez jr.',     'DB',       'So.', 28),
+  ('28', 'Michael',              'Sieber',          'K',        'Jr.', 29),
+  ('30', 'Ryan',                 'Amin',            'LB',       'Jr.', 30),
+  ('31', 'Jordan',               'Deshay',          'RB',       'So.', 31),
+  ('32', 'Aston',                'Sampayo',         'DB',       'So.', 32),
+  ('33', 'Zji''Sean',            'Thomas',          'WR',       'So.', 33),
+  ('34', 'Reid',                 'Gordon',          'DB',       'So.', 34),
+  ('35', 'Ben',                  'Eaton',           'DB',       'So.', 35),
+  ('36', 'Ford',                 'Askins',          'LB',       'Jr.', 36),
+  ('37', 'Dylan',                'Woods',           'RB',       'Jr.', 37),
+  ('38', 'Maxwell',              'Leger',           'DB',       'So.', 38),
+  ('40', 'Akiereon',             'Chatman',         'DB',       'So.', 39),
+  ('42', 'Quamera',              'Sutherland',      'LB',       'Jr.', 40),
+  ('43', 'Aymane',               'El Anssari',      'K',        'Jr.', 41),
+  ('45', 'James',                'Evans',           'DL',       'Jr.', 42),
+  ('46', 'Oliver',               'Weisbrod',        'LB',       'So.', 43),
+  ('48', 'Zackary',              'Hauser',          'DL',       'Jr.', 44),
+  ('51', 'Joaquin',              'Mata',            'DL',       'Jr.', 45),
+  ('52', 'Montana',              'Burks',           'LB',       'Jr.', 46),
+  ('54', 'Nathan',               'Park',            'DL',       'So.', 47),
+  ('55', 'Jayden',               'Fabien',          'DL',       'So.', 48),
+  ('56', 'Juan',                 'Ramirez',         'OL',       'So.', 49),
+  ('61', 'Gianni',               'Aviles',          'DL',       'Jr.', 50),
+  ('62', 'Garrett',              'Root',            'OL',       'Jr.', 51),
+  ('63', 'Leonardo',             'Soto',            'OL',       'Jr.', 52),
+  ('66', 'Aiden',                'Ross',            'OL',       'So.', 53),
+  ('70', 'Jackson',              'Miller',          'DL',       'So.', 54),
+  ('71', 'D''Zion',              'Taylor',          'OL',       'So.', 55),
+  ('72', 'Daniel',               'Christensen',     'OL',       'So.', 56),
+  ('75', 'Preston',              'Higgins',         'OL',       'So.', 57),
+  ('78', 'Wesley',               'Davis',           'OL',       'So.', 58),
+  ('79', 'Soumith',              'Veeragoni',       'OL',       'So.', 59),
+  ('80', 'Rashawn',              'McDowell',        'WR',       'So.', 60),
+  ('81', 'Amery',                'Schoepflin',      'TE',       'Jr.', 61),
+  ('82', 'Orion',                'Smith',           'WR',       'So.', 62),
+  ('83', 'Brendyn',              'Brown',           'WR',       'Jr.', 63),
+  ('86', 'Tramaurie',            'Mayweather',      'TE',       'Jr.', 64),
+  ('88', 'Derrick',              'WIlliams',        'DL',       'So.', 65)
+) AS v(jersey_number, first_name, last_name, position, grade, sort_order)
+WHERE r.year = '2025-26'
+  AND r.team_level = 'jv'
+  AND r.team_designation IS NULL
+  AND r.active = true;
+
+-- 4. Freshman Green: 19 players.
+INSERT INTO players (
+  roster_id, jersey_number, first_name, last_name,
+  position, grade, height, weight, sort_order, active
+)
+SELECT
+  r.id, v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, NULL, NULL::int, v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('1',  'Brayden',  'Norman',                'WR/DB', 'Fr.',  1),
+  ('2',  'Ade',      'Carter',                'WR/DB', 'Fr.',  2),
+  ('5',  'Kai',      'Brito',                 'QB/DB', 'Fr.',  3),
+  ('6',  'William',  'Miller',                'QB/DB', 'Fr.',  4),
+  ('7',  'Matheo',   'Ramirez-Escamilla',     'QB/DB', 'Fr.',  5),
+  ('8',  'Josiah',   'Scott',                 'WR/DB', 'Fr.',  6),
+  ('11', 'TreyVon',  'Cargill',               'WR/DB', 'Fr.',  7),
+  ('12', 'Jeremy',   'Powell',                'TE/LB', 'Fr.',  8),
+  ('13', 'Jeramiyah','Harris',                'RB/LB', 'Fr.',  9),
+  ('15', 'TK',       'Keller',                'RB/LB', 'Fr.', 10),
+  ('20', 'Antonio',  'Showels',               'WR/LB', 'Fr.', 11),
+  ('26', 'Remiel',   'Soto',                  'TE/DB', 'Fr.', 12),
+  ('30', 'Logan',    'Gurrola',               'WR/LB', 'Fr.', 13),
+  ('38', 'Anjrue',   'Williams',              'QB/LB', 'Fr.', 14),
+  ('52', 'Caleb',    'Woodward',              'OL/DL', 'Fr.', 15),
+  ('67', 'Caleb',    'Cox',                   'OL/DL', 'Fr.', 16),
+  ('75', 'Charles',  'Lewis',                 'OL/DL', 'Fr.', 17),
+  ('76', 'Jace',     'Hicks',                 'OL/DL', 'Fr.', 18),
+  ('84', 'Jake',     'Thomas',                'WR/DB', 'Fr.', 19)
+) AS v(jersey_number, first_name, last_name, position, grade, sort_order)
+WHERE r.year = '2025-26'
+  AND r.team_level = 'freshman'
+  AND r.team_designation = 'Green'
+  AND r.active = true;
+
+-- 5. Freshman Blue: 22 players.
+INSERT INTO players (
+  roster_id, jersey_number, first_name, last_name,
+  position, grade, height, weight, sort_order, active
+)
+SELECT
+  r.id, v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, NULL, NULL::int, v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('9',  'Zane',     'Valenzuela',            'WR/DB', 'Fr.',  1),
+  ('10', 'Jake',     'Saenz',                 'WR/DB', 'Fr.',  2),
+  ('17', 'Owen',     'Richardson',            'WR/DB', 'Fr.',  3),
+  ('18', 'Jackson',  'James',                 'WR/DB', 'Fr.',  4),
+  ('21', 'Bryant',   'Smith',                 'RB/DB', 'Fr.',  5),
+  ('22', 'Michael',  'Menchaca',              'WR/DB', 'Fr.',  6),
+  ('23', 'Dante',    'McBeath',               'RB/LB', 'Fr.',  7),
+  ('25', 'Angel',    'Meza',                  'RB/DL', 'Fr.',  8),
+  ('28', 'Jasiah',   'Harris',                'WR/DB', 'Fr.',  9),
+  ('33', 'Eli',      'Thrift',                'WR/DB', 'Fr.', 10),
+  ('35', 'Ricky',    'Brown',                 'WR/DB', 'Fr.', 11),
+  ('36', 'Isaac',    'Chandy',                'WR/DB', 'Fr.', 12),
+  ('40', 'Gabriel',  'Berney',                'TE/DB', 'Fr.', 13),
+  ('44', 'Iger',     'Mallvichko',            'TE/LB', 'Fr.', 14),
+  ('45', 'Da''Mauri','Barfield',              'RB/DB', 'Fr.', 15),
+  ('51', 'Jayden',   'Harris',                'OL/DL', 'Fr.', 16),
+  ('54', 'Joseph',   'Bowles',                'OL/DL', 'Fr.', 17),
+  ('60', 'Isaiah',   'Arias-Faulkner',        'OL/DL', 'Fr.', 18),
+  ('61', 'Leland',   'Boston',                'OL/LB', 'Fr.', 19),
+  ('77', 'Kaeden',   'Frazier',               'OL/DL', 'Fr.', 20),
+  ('81', 'Alex',     'Pugliese',              'WR/DB', 'Fr.', 21),
+  ('85', 'Riley',    'Cortez',                'WR/DB', 'Fr.', 22)
+) AS v(jersey_number, first_name, last_name, position, grade, sort_order)
+WHERE r.year = '2025-26'
+  AND r.team_level = 'freshman'
+  AND r.team_designation = 'Blue'
+  AND r.active = true;
+
+COMMIT;
+
+-- ===
+-- db/migrations/032_seed_2025_schedule.sql
+-- ===
+
+-- Migration 032: TEST DATA. Replace the 9 throwaway placeholder games
+-- (seeded by 027/028, then relabeled to 2025-26 by 030) with the real
+-- 2025 McNeil schedule from docs/2025 Football schedule.pdf.
+--
+-- 46 rows total: V=11, JV=11, Freshman Blue=12, Freshman Green=12.
+-- BYE weeks (Oct 17 V / Oct 16 JV+F) are skipped because the schema
+-- requires opponent NOT NULL. Cedar Park (Aug 16, freshman) carries
+-- notes='Scrimmage' per the schema_v2_addendum operational note.
+--
+-- Decisions:
+-- - result_status='scheduled' for all games. The 2025 season is over
+--   but the PDF carries no scores; honest representation is "we have
+--   the schedule, not the results." Admin CRUD will backfill.
+-- - opponent_url and location_url NULL on every row. Admin populates.
+-- - Freshman Blue plays 5:00 PM, Freshman Green plays 6:30 PM on the
+--   ten split-time games (per the schedule footer). Aug 16 Cedar Park
+--   scrimmage and Aug 21 Anderson are duplicated across both teams at
+--   the single advertised time so both /freshman/blue and
+--   /freshman/green pages render them.
+-- - Times use America/Chicago. CDT through Nov 2, 2025; CST from
+--   Nov 3 onward. Nov 6 (JV+F Hutto) and Nov 7 (V Hutto) fall in CST.
+-- - Notes: 'Homecoming' (V Sep 12 Westwood), 'Senior Night' (V Oct 31
+--   Manor), 'Scrimmage' (F Aug 16 Cedar Park). District (*) markers
+--   from the PDF are ignored — no column for it.
+--
+-- Cleanup before public cutover:
+--   DELETE FROM games WHERE year='2025-26';
+
+BEGIN;
+
+-- 1. Clear the 9 throwaway placeholder games from migrations 027+028.
+DELETE FROM games WHERE year = '2025-26';
+
+-- 2. Insert the real 2025 V/JV schedule.
+INSERT INTO games (
+  year, team_level, team_designation,
+  opponent, opponent_url, game_date, location, location_url,
+  home_or_away, result_status, our_score, their_score,
+  watch_url, notes, featured
+) VALUES
+  -- VARSITY (11)
+  ('2025-26', 'varsity', NULL, 'Anderson',                 NULL, '2025-08-21 19:30 America/Chicago', 'House Park',       NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Weiss High School',        NULL, '2025-08-28 19:00 America/Chicago', 'The Pfield',       NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Lake Belton High School',  NULL, '2025-09-04 19:00 America/Chicago', 'Gupton Stadium',   NULL, 'home',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Westwood High School',     NULL, '2025-09-12 19:00 America/Chicago', 'KRAC',             NULL, 'home',    'scheduled', NULL, NULL, NULL, 'Homecoming',   false),
+  ('2025-26', 'varsity', NULL, 'Round Rock High School',   NULL, '2025-09-19 19:00 America/Chicago', 'Dragon Stadium',   NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Stony Point High School',  NULL, '2025-09-26 19:00 America/Chicago', 'Dragon Stadium',   NULL, 'home',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Vandegrift High School',   NULL, '2025-10-03 19:00 America/Chicago', 'Monroe Stadium',   NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Vista Ridge High School',  NULL, '2025-10-10 19:00 America/Chicago', 'KRAC',             NULL, 'home',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Cedar Ridge High School',  NULL, '2025-10-24 19:00 America/Chicago', 'KRAC',             NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'varsity', NULL, 'Manor High School',        NULL, '2025-10-31 19:00 America/Chicago', 'Dragon Stadium',   NULL, 'home',    'scheduled', NULL, NULL, NULL, 'Senior Night', false),
+  ('2025-26', 'varsity', NULL, 'Hutto High School',        NULL, '2025-11-07 19:00 America/Chicago', 'Memorial Stadium', NULL, 'away',    'scheduled', NULL, NULL, NULL, NULL, false),
+
+  -- JV (11)
+  ('2025-26', 'jv', NULL, 'Anderson',                 NULL, '2025-08-21 18:00 America/Chicago', 'House Park',        NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Weiss High School',        NULL, '2025-08-27 18:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Lake Belton High School',  NULL, '2025-09-03 17:00 America/Chicago', 'Lake Belton HS',    NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Westwood High School',     NULL, '2025-09-11 18:00 America/Chicago', 'Westwood HS',       NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Round Rock High School',   NULL, '2025-09-18 18:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Stony Point High School',  NULL, '2025-09-25 17:00 America/Chicago', 'Stony Point HS',    NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Vandegrift High School',   NULL, '2025-10-02 18:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Vista Ridge High School',  NULL, '2025-10-09 18:00 America/Chicago', 'Vista Ridge HS',    NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Cedar Ridge High School',  NULL, '2025-10-23 18:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Manor High School',        NULL, '2025-10-30 18:00 America/Chicago', 'Manor HS',          NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'jv', NULL, 'Hutto High School',        NULL, '2025-11-06 18:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+
+  -- FRESHMAN BLUE (12) — Aug 16 + Aug 21 combined-time; the rest at 5:00 PM
+  ('2025-26', 'freshman', 'Blue',  'Cedar Park High School',    NULL, '2025-08-16 10:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, 'Scrimmage', false),
+  ('2025-26', 'freshman', 'Blue',  'Anderson',                  NULL, '2025-08-21 18:00 America/Chicago', 'House Park',        NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Weiss High School',         NULL, '2025-08-27 17:00 America/Chicago', 'Weiss HS',          NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Lake Belton High School',   NULL, '2025-09-03 17:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Westwood High School',      NULL, '2025-09-11 17:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Round Rock High School',    NULL, '2025-09-18 17:00 America/Chicago', 'Round Rock HS',     NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Stony Point High School',   NULL, '2025-09-25 17:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Vandegrift High School',    NULL, '2025-10-02 17:00 America/Chicago', 'Vandegrift HS',     NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Vista Ridge High School',   NULL, '2025-10-09 17:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Cedar Ridge High School',   NULL, '2025-10-23 17:00 America/Chicago', 'Cedar Ridge HS',    NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Manor High School',         NULL, '2025-10-30 17:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Blue',  'Hutto High School',         NULL, '2025-11-06 17:00 America/Chicago', 'Hutto HS',          NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+
+  -- FRESHMAN GREEN (12) — same opponents/sites as Blue; split-time games at 6:30 PM
+  ('2025-26', 'freshman', 'Green', 'Cedar Park High School',    NULL, '2025-08-16 10:00 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, 'Scrimmage', false),
+  ('2025-26', 'freshman', 'Green', 'Anderson',                  NULL, '2025-08-21 18:00 America/Chicago', 'House Park',        NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Weiss High School',         NULL, '2025-08-27 18:30 America/Chicago', 'Weiss HS',          NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Lake Belton High School',   NULL, '2025-09-03 18:30 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Westwood High School',      NULL, '2025-09-11 18:30 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Round Rock High School',    NULL, '2025-09-18 18:30 America/Chicago', 'Round Rock HS',     NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Stony Point High School',   NULL, '2025-09-25 18:30 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Vandegrift High School',    NULL, '2025-10-02 18:30 America/Chicago', 'Vandegrift HS',     NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Vista Ridge High School',   NULL, '2025-10-09 18:30 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Cedar Ridge High School',   NULL, '2025-10-23 18:30 America/Chicago', 'Cedar Ridge HS',    NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Manor High School',         NULL, '2025-10-30 18:30 America/Chicago', 'Maverick Stadium',  NULL, 'home', 'scheduled', NULL, NULL, NULL, NULL, false),
+  ('2025-26', 'freshman', 'Green', 'Hutto High School',         NULL, '2025-11-06 18:30 America/Chicago', 'Hutto HS',          NULL, 'away', 'scheduled', NULL, NULL, NULL, NULL, false);
+
+COMMIT;
+
+-- ===
+-- db/migrations/033_seed_2025_freshman_uncolored_players.sql
+-- ===
+
+-- Migration 033: Add the 8 freshman players that had no Green/Blue
+-- color fill in the source PDF, after coach clarification from Jeremy.
+--
+-- Assignment (per Jeremy 2026-05-17):
+--   Green: #4 Conan Shin, #71 Jaxon Pelosi, #73 Favor Omagbon  (+3 -> 22 total)
+--   Blue:  #19 Lamonte Brown, #53 Augustus Cocke, #55 Jaye Solages,
+--          #63 Mark Llamas, #72 Brennan McCallister             (+5 -> 27 total)
+--
+-- Total freshman seeded across Green + Blue: 49 (matches the named
+-- count from docs/2025 McNeil Football Rosters - Freshmen.pdf).
+--
+-- sort_order values are picked to TIE with the preceding existing
+-- player on the roster, so the PlayerTable component's secondary
+-- jersey-ascending sort drops each new player into the right slot
+-- without requiring an UPDATE of existing rows.
+--
+-- Still skipped: the corrupt PDF row with no jersey# and no name
+-- (position WR/LB, grade 9 only). Tracked in followups.md.
+
+BEGIN;
+
+-- Freshman Green additions (3).
+INSERT INTO players (
+  roster_id, jersey_number, first_name, last_name,
+  position, grade, height, weight, sort_order, active
+)
+SELECT
+  r.id, v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, NULL, NULL::int, v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('4',  'Conan',  'Shin',    'RB/DB', 'Fr.',  2),   -- between #2 Carter (sort 2) and #5 Brito (sort 3)
+  ('71', 'Jaxon',  'Pelosi',  'OL/DL', 'Fr.', 16),   -- between #67 Cox (sort 16) and #75 Lewis (sort 17)
+  ('73', 'Favor',  'Omagbon', 'OL/DL', 'Fr.', 16)    -- between #71 Pelosi (sort 16) and #75 Lewis (sort 17)
+) AS v(jersey_number, first_name, last_name, position, grade, sort_order)
+WHERE r.year = '2025-26'
+  AND r.team_level = 'freshman'
+  AND r.team_designation = 'Green'
+  AND r.active = true;
+
+-- Freshman Blue additions (5).
+INSERT INTO players (
+  roster_id, jersey_number, first_name, last_name,
+  position, grade, height, weight, sort_order, active
+)
+SELECT
+  r.id, v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, NULL, NULL::int, v.sort_order, true
+FROM rosters r
+CROSS JOIN (VALUES
+  ('19', 'Lamonte',  'Brown',        'WR/DB', 'Fr.',  4),   -- between #18 James (sort 4) and #21 Smith (sort 5)
+  ('53', 'Augustus', 'Cocke',        'OL/DL', 'Fr.', 16),   -- between #51 J. Harris (sort 16) and #54 Bowles (sort 17)
+  ('55', 'Jaye',     'Solages',      'OL/DL', 'Fr.', 17),   -- between #54 Bowles (sort 17) and #60 Arias-Faulkner (sort 18)
+  ('63', 'Mark',     'Llamas',       'OL/LB', 'Fr.', 19),   -- between #61 Boston (sort 19) and #77 Frazier (sort 20)
+  ('72', 'Brennan',  'McCallister',  'OL/DL', 'Fr.', 19)    -- between #61 Boston (sort 19) and #77 Frazier (sort 20)
+) AS v(jersey_number, first_name, last_name, position, grade, sort_order)
+WHERE r.year = '2025-26'
+  AND r.team_level = 'freshman'
+  AND r.team_designation = 'Blue'
+  AND r.active = true;
+
+COMMIT;
+
+-- ===
+-- db/migrations/034_membership_tiers_pdf_reseed.sql
+-- ===
+
+-- Migration 034: Reseed membership_tiers for 2026-27 to match the
+-- board-ratified PDF (docs/2026 - 2027 Membership - McNeil HS Football
+-- Boosters.pdf). The seed in migration 010 predates the PDF and has
+-- only 6 tiers with placeholder copy; this replaces it with the 7
+-- canonical tiers.
+--
+-- Spec: docs/specs/boosters_join_spec.md (Slice 1 / Turn 1).
+-- Filename note: spec said "030" but 030 is taken by the year-split
+-- migration. This is 034 (next free slot).
+--
+-- DELETE (not TRUNCATE) so any rows from other years are preserved.
+-- year stays '2026-27' to match the PDF + current_board_year; the
+-- /boosters/join page query in Turn 2 must read current_board_year
+-- (not current_year, which now governs football data).
+
+BEGIN;
+
+DELETE FROM membership_tiers WHERE year = '2026-27';
+
+INSERT INTO membership_tiers
+  (name, price_cents, description, perks, sort_order, year, requires_tshirt_size, requires_second_tshirt_size, badge_label, active)
+VALUES
+  ('Free Fan Base!', 0, 'Join Mav Nation.',
+   '["Receive the Mavs Football Booster newsletter and important Mavs updates!"]'::jsonb,
+   1, '2026-27', false, false, null, true),
+  ('Game Day!', 2000, 'Friday nights, Mavs colors.',
+   '["Mavs Football Car Decal"]'::jsonb,
+   2, '2026-27', false, false, 'Most Popular', true),
+  ('Offense ⇄ Defense!', 5000, 'Back both sides of the ball.',
+   '["1 Mavs Football Game Day Fan or Bell", "1 Exclusive Booster Car Decal"]'::jsonb,
+   3, '2026-27', false, false, null, true),
+  ('Blitz!', 10000, 'Bring the pressure.',
+   '["1 Exclusive Booster T-Shirt Voucher", "2 Mavs Football Car Decals"]'::jsonb,
+   4, '2026-27', true, false, 'Best Value', true),
+  ('Touchdown!', 25000, 'Six points for the program.',
+   '["2 Exclusive Booster T-Shirt Vouchers", "2 Exclusive Booster Car Decals"]'::jsonb,
+   5, '2026-27', true, true, 'Recommended', true),
+  ('Playoffs!', 50000, 'Push deep into November.',
+   '["2 Exclusive Booster T-Shirt Vouchers", "2 Exclusive Booster Car Decals", "Sponsorship Announcement at Home Games"]'::jsonb,
+   6, '2026-27', true, true, null, true),
+  ('Championship!', 100000, 'Go all in for the ring.',
+   '["2 Exclusive Booster T-Shirt Vouchers", "2 Exclusive Booster Car Decals", "Sponsorship Announcement at Home Games", "Premier Parking Space at All Home Games"]'::jsonb,
+   7, '2026-27', true, true, null, true);
+
+COMMIT;
+
+-- ===
+-- db/migrations/035_fix_rrisd_athletic_forms_url.sql
+-- ===
+
+-- Migration 035: Fix RRISD Athletic Forms URL.
+--
+-- The /resources page card pointed to https://roundrockisd.org/athletics
+-- (a landing page that requires further clicks). Jeremy 2026-05-19: the
+-- direct deep link is the Rank One forms portal. Update the resource_links
+-- row in place.
+--
+-- Idempotent: UPDATE matches on label, sets the URL. No-op on re-run.
+
+BEGIN;
+
+UPDATE resource_links
+SET url = 'https://roundrockisd.rankone.com/New/NewInstructionsPage.aspx'
+WHERE label = 'RRISD Athletic Forms';
+
+COMMIT;
+
+-- ===
+-- db/migrations/036_hero_carousel.sql
+-- ===
+
+-- Migration 036: Homepage hero carousel — background images + foreground tiles.
+-- Spec: docs/specs/commit_homepage_hero_carousel_spec.md (2026-05-19).
+-- Spec calls this 035; renumbered to 036 because 035_fix_rrisd_athletic_forms_url.sql shipped first.
+-- Seeds three headline_cta foreground tiles. Background images come in a follow-up migration
+-- once Jeremy provides the photo count and alt text.
+
+-- -----------------------------------------------------------------------------
+-- hero_background_images: photos that rotate behind everything in the homepage hero
+-- -----------------------------------------------------------------------------
+CREATE TABLE hero_background_images (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  storage_path text NOT NULL,         -- e.g. 'hero/hero-01.jpg' inside the site-images bucket
+  alt_text text NOT NULL,             -- accessibility; describe the photo
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX hero_background_images_active_sort_idx
+  ON hero_background_images (active, sort_order);
+
+-- -----------------------------------------------------------------------------
+-- hero_foreground_tiles: rotating content tiles overlaying the photos.
+-- tile_type drives rendering; payload is jsonb for flexibility (see spec for shapes).
+-- -----------------------------------------------------------------------------
+CREATE TYPE hero_tile_type AS ENUM ('headline_cta', 'sponsor_spotlight');
+
+CREATE TABLE hero_foreground_tiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tile_type hero_tile_type NOT NULL,
+  payload jsonb NOT NULL,
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX hero_foreground_tiles_active_sort_idx
+  ON hero_foreground_tiles (active, sort_order);
+
+-- -----------------------------------------------------------------------------
+-- updated_at triggers (reuses touch_updated_at() from migration 006)
+-- -----------------------------------------------------------------------------
+CREATE TRIGGER touch_hero_background_images BEFORE UPDATE ON hero_background_images
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+CREATE TRIGGER touch_hero_foreground_tiles BEFORE UPDATE ON hero_foreground_tiles
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- RLS: public read of active rows. Admin write policies arrive with admin CRUD.
+-- -----------------------------------------------------------------------------
+ALTER TABLE hero_background_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hero_foreground_tiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone reads active hero backgrounds" ON hero_background_images
+  FOR SELECT TO anon, authenticated
+  USING (active = true);
+
+CREATE POLICY "Anyone reads active hero tiles" ON hero_foreground_tiles
+  FOR SELECT TO anon, authenticated
+  USING (active = true);
+
+-- -----------------------------------------------------------------------------
+-- Seed: three headline_cta foreground tiles per spec.
+-- Background images deliberately NOT seeded here.
+-- sponsor_spotlight tiles wait for SE Tier 1 sponsor capture (followups.md).
+-- -----------------------------------------------------------------------------
+INSERT INTO hero_foreground_tiles (tile_type, payload, sort_order) VALUES
+  ('headline_cta',
+   jsonb_build_object(
+     'headline',  'McNeil Mavericks Football',
+     'subhead',   'Home of the McNeil Mavericks, Austin, TX',
+     'cta_label', 'Join the Booster Club',
+     'cta_url',   '/boosters/join'
+   ),
+   1),
+  ('headline_cta',
+   jsonb_build_object(
+     'headline',  'Support the Mavs',
+     'subhead',   'Your booster dues fund equipment, meals, and senior gifts.',
+     'cta_label', 'Make a Donation',
+     'cta_url',   '/boosters/donate'
+   ),
+   2),
+  ('headline_cta',
+   jsonb_build_object(
+     'headline',  'Get Involved',
+     'subhead',   'Game-day help, banquet planning, sponsor outreach. We need you.',
+     'cta_label', 'Volunteer',
+     'cta_url',   '/boosters/volunteer'
+   ),
+   3);
