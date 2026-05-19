@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -9,29 +8,12 @@ import {
   Users,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { StaticHero } from "@/components/shared/StaticHero";
+import { HERO_DEFAULTS, mergeHero, type HeroFields } from "@/lib/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
-import type { SiteSettings } from "@/lib/types";
 
 export const revalidate = 60;
-
-type HeroFields = Pick<
-  SiteSettings,
-  | "hero_image_url"
-  | "hero_headline"
-  | "hero_subhead"
-  | "primary_cta_label"
-  | "primary_cta_url"
->;
-
-const HERO_DEFAULTS: HeroFields = {
-  hero_image_url: null,
-  hero_headline: "McNeil Mavericks Football",
-  hero_subhead: "Home of the McNeil Mavericks · Austin, TX",
-  primary_cta_label: "Join the Booster Club",
-  primary_cta_url: "/boosters/join",
-};
 
 type NewsCard = {
   id: string;
@@ -80,18 +62,6 @@ function formatDate(iso: string | null | undefined): string {
     month: "long",
     day: "numeric",
   });
-}
-
-function mergeHero(data: Partial<HeroFields> | null | undefined): HeroFields {
-  if (!data) return HERO_DEFAULTS;
-  return {
-    hero_image_url: data.hero_image_url ?? null,
-    hero_headline: data.hero_headline || HERO_DEFAULTS.hero_headline,
-    hero_subhead: data.hero_subhead ?? HERO_DEFAULTS.hero_subhead,
-    primary_cta_label:
-      data.primary_cta_label || HERO_DEFAULTS.primary_cta_label,
-    primary_cta_url: data.primary_cta_url || HERO_DEFAULTS.primary_cta_url,
-  };
 }
 
 async function loadHome(): Promise<HomeData> {
@@ -164,52 +134,10 @@ export default async function Home() {
   const { current_year } = await getSiteSettingsCore();
   const { hero, news, events, sponsors } = await loadHome();
   const quickLinks = buildQuickLinks(current_year);
-  const hasHeroImage = Boolean(hero.hero_image_url);
 
   return (
     <>
-      <section
-        className={`relative isolate w-full min-h-[60vh] md:min-h-[70vh] flex items-center justify-center text-center text-white ${
-          hasHeroImage ? "" : "bg-mavs-navy"
-        }`}
-      >
-        {hasHeroImage && hero.hero_image_url ? (
-          <>
-            <Image
-              src={hero.hero_image_url}
-              alt=""
-              fill
-              priority
-              className="object-cover -z-10"
-            />
-            <div
-              className="absolute inset-0 -z-10 bg-black/50"
-              aria-hidden="true"
-            />
-          </>
-        ) : null}
-
-        <div className="mx-auto max-w-3xl px-6 py-24">
-          <h1 className="text-4xl font-black uppercase tracking-tight sm:text-5xl md:text-6xl">
-            {hero.hero_headline}
-          </h1>
-          {hero.hero_subhead ? (
-            <p className="mt-4 text-lg sm:text-xl text-white/90">
-              {hero.hero_subhead}
-            </p>
-          ) : null}
-          <div className="mt-8 flex justify-center">
-            <Button
-              size="lg"
-              nativeButton={false}
-              className="bg-white text-mavs-navy hover:bg-white/90"
-              render={<Link href={hero.primary_cta_url} />}
-            >
-              {hero.primary_cta_label}
-            </Button>
-          </div>
-        </div>
-      </section>
+      <StaticHero hero={hero} />
 
       <section className="bg-muted/40">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">

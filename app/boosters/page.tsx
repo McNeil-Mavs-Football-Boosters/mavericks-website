@@ -6,6 +6,8 @@ import {
   UserPlus,
 } from "lucide-react";
 
+import { StaticHero } from "@/components/shared/StaticHero";
+import { loadHero } from "@/lib/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
 import type { BoardMember, SiteSettings } from "@/lib/types";
@@ -86,7 +88,10 @@ async function loadPageData(boardYear: string): Promise<{
 
 export default async function BoostersPage() {
   const { current_board_year: boardYear } = await getSiteSettingsCore();
-  const { settings, boardMembers } = await loadPageData(boardYear);
+  const [hero, { settings, boardMembers }] = await Promise.all([
+    loadHero(),
+    loadPageData(boardYear),
+  ]);
   const legalName = settings.legal_name;
   const ein = settings.ein;
   const primaryContactEmail = settings.primary_contact_email;
@@ -96,7 +101,9 @@ export default async function BoostersPage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
+    <>
+      <StaticHero hero={hero} />
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
       <header className="mb-12 text-center">
         <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           McNeil Maverick Football Booster Club
@@ -363,6 +370,7 @@ export default async function BoostersPage() {
           </li>
         </ul>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
