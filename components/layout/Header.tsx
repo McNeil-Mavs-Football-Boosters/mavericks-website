@@ -69,7 +69,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-mavs-navy/10 print:hidden">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto">
         <Link
           href="/"
           aria-label="McNeil Mavericks Football home"
@@ -90,13 +90,6 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
         </Link>
 
         <nav className="hidden xl:flex flex-1 items-center justify-between gap-2 pl-8">
-          <Link
-            href="/"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
-          >
-            Home
-          </Link>
-
           <HeaderDropdown
             label="Schedule"
             links={buildScheduleLinks(freshmanHasBlue)}
@@ -123,6 +116,17 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
           >
             Coaches &amp; Trainers
           </Link>
+
+          <HeaderDropdown
+            label="Booster Club"
+            links={BOOSTER_LINKS}
+            isOpen={openDropdown === "boosters"}
+            onToggle={() => toggle("boosters")}
+            onItemClick={close}
+            containerRef={boostersRef}
+            align="left"
+          />
+
           <Link
             href="/news"
             className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
@@ -140,23 +144,6 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
           >
             Forms &amp; Links
-          </Link>
-
-          <HeaderDropdown
-            label="Boosters"
-            links={BOOSTER_LINKS}
-            isOpen={openDropdown === "boosters"}
-            onToggle={() => toggle("boosters")}
-            onItemClick={close}
-            containerRef={boostersRef}
-            align="right"
-          />
-
-          <Link
-            href="/about"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
-          >
-            About
           </Link>
         </nav>
 

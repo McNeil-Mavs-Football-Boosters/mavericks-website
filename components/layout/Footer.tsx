@@ -117,13 +117,11 @@ async function loadSettings(): Promise<SiteSettings> {
 }
 
 const SITE_LINKS: { href: string; label: string }[] = [
-  { href: "/", label: "Home" },
   { href: "/schedule", label: "Schedule" },
   { href: "/boosters", label: "Boosters" },
   { href: "/boosters/join", label: "Join the Booster Club" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/boosters/donate", label: "Donate" },
-  { href: "/about", label: "About" },
   { href: "/privacy", label: "Privacy" },
 ];
 
@@ -188,6 +186,14 @@ export async function Footer() {
             >
               {settings.primary_contact_email}
             </a>
+            <div className="mt-1">
+              <Link
+                href="/about"
+                className="text-muted-foreground hover:text-mavs-navy"
+              >
+                About
+              </Link>
+            </div>
             <div className="mt-1 flex items-center gap-3 md:justify-end">
               {settings.facebook_boosters_url ? (
                 <a

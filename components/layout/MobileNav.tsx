@@ -81,10 +81,6 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
           </button>
         </div>
         <nav className="mt-4 flex flex-col">
-          <Link href="/" onClick={onClose} className={TOP_LINK_CLASS}>
-            Home
-          </Link>
-
           <MobileNavAccordion
             label="Schedule"
             links={buildScheduleLinks(freshmanHasBlue)}
@@ -104,6 +100,15 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
           <Link href="/coaches" onClick={onClose} className={TOP_LINK_CLASS}>
             Coaches &amp; Trainers
           </Link>
+
+          <MobileNavAccordion
+            label="Booster Club"
+            links={BOOSTER_LINKS}
+            isOpen={openAccordion === "boosters"}
+            onToggle={() => toggle("boosters")}
+            onItemClick={onClose}
+          />
+
           <Link href="/news" onClick={onClose} className={TOP_LINK_CLASS}>
             News
           </Link>
@@ -112,18 +117,6 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
           </Link>
           <Link href="/resources" onClick={onClose} className={TOP_LINK_CLASS}>
             Forms &amp; Links
-          </Link>
-
-          <MobileNavAccordion
-            label="Boosters"
-            links={BOOSTER_LINKS}
-            isOpen={openAccordion === "boosters"}
-            onToggle={() => toggle("boosters")}
-            onItemClick={onClose}
-          />
-
-          <Link href="/about" onClick={onClose} className={TOP_LINK_CLASS}>
-            About
           </Link>
         </nav>
       </div>
