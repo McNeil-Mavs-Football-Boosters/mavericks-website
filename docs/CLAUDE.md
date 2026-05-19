@@ -362,6 +362,14 @@ These are not blockers but will need attention as Step 4c progresses:
   set -a && source .env.local && set +a
   psql "$SUPABASE_DB_URL" -f db/migrations/0XX_name.sql
   ```
-  `SUPABASE_DB_URL` is the Session pooler URI from Supabase Connect, with the password URL-encoded (`&` → `%26`, etc.). **Never echo `$SUPABASE_DB_URL`.** `db/apply_all.sql` remains as the concatenated bundle for one-paste via Supabase SQL Editor when psql is not handy; after any migration edit, regenerate via `for f in db/migrations/0*.sql; do printf '\n-- ===\n-- %s\n-- ===\n\n' "$f"; cat "$f"; done > db/apply_all.sql`.
+  `SUPABASE_DB_URL` is the Session pooler URI from Supabase Connect, with the password URL-encoded (`&` → `%26`, etc.). **Never echo `$SUPABASE_DB_URL`.** `db/apply_all.sql` remains as the concatenated bundle for one-paste via Supabase SQL Editor when psql is not handy; after any migration edit, regenerate via:
+  ```
+  for f in db/migrations/0*.sql; do
+    case "$f" in *_rollback.sql) continue;; esac
+    printf '\n-- ===\n-- %s\n-- ===\n\n' "$f"
+    cat "$f"
+  done > db/apply_all.sql
+  ```
+  The `*_rollback.sql` guard exists because rollbacks (e.g. `037_rollback.sql`) live alongside forward migrations in `db/migrations/` but must NOT be bundled into the forward-apply sequence — running them on a fresh DB would silently undo the seed.
 - **Stripe should be created last** in the new-account chain so receipts come from a real `treasurer@mcneilmavericks.org` role address.
 - **Migration of 35 existing Google Form signups**: 7 paid rows should go to `payments` with `method = 'other'`, NOT `'stripe'`. See schema.md migration plan and Step 12 of build_plan_v2.md.
