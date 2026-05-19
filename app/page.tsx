@@ -8,8 +8,8 @@ import {
   Users,
 } from "lucide-react";
 
-import { StaticHero } from "@/components/shared/StaticHero";
-import { HERO_DEFAULTS, mergeHero, type HeroFields } from "@/lib/hero";
+import { HeroCarousel } from "@/components/home/HeroCarousel";
+import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -40,14 +40,12 @@ type SponsorTile = {
 };
 
 type HomeData = {
-  hero: HeroFields;
   news: NewsCard[];
   events: EventCard[];
   sponsors: SponsorTile[];
 };
 
 const EMPTY_HOME: HomeData = {
-  hero: HERO_DEFAULTS,
   news: [],
   events: [],
   sponsors: [],
@@ -70,14 +68,7 @@ async function loadHome(): Promise<HomeData> {
     const supabase = createServerClient();
     const nowIso = new Date().toISOString();
 
-    const [heroRes, newsRes, eventsRes, sponsorsRes] = await Promise.all([
-      supabase
-        .from("site_settings")
-        .select(
-          "hero_image_url, hero_headline, hero_subhead, primary_cta_label, primary_cta_url",
-        )
-        .eq("id", 1)
-        .single<HeroFields>(),
+    const [newsRes, eventsRes, sponsorsRes] = await Promise.all([
       supabase
         .from("news_posts")
         .select("id, slug, title, excerpt, featured_image_url, published_at")
@@ -104,7 +95,6 @@ async function loadHome(): Promise<HomeData> {
     ]);
 
     return {
-      hero: heroRes.error ? HERO_DEFAULTS : mergeHero(heroRes.data),
       news: newsRes.error || !newsRes.data ? [] : newsRes.data,
       events: eventsRes.error || !eventsRes.data ? [] : eventsRes.data,
       sponsors:
@@ -132,12 +122,18 @@ function buildQuickLinks(currentYear: string): Array<{
 
 export default async function Home() {
   const { current_year } = await getSiteSettingsCore();
-  const { hero, news, events, sponsors } = await loadHome();
+  const [{ news, events, sponsors }, carousel] = await Promise.all([
+    loadHome(),
+    loadHeroCarouselData(),
+  ]);
   const quickLinks = buildQuickLinks(current_year);
 
   return (
     <>
-      <StaticHero hero={hero} />
+      <HeroCarousel
+        backgrounds={carousel.backgrounds}
+        tiles={carousel.tiles}
+      />
 
       <section className="bg-muted/40">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">

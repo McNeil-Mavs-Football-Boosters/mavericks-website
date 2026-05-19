@@ -142,3 +142,36 @@ export interface BoardMember {
   created_at: string;
   updated_at: string;
 }
+
+export interface HeadlineCtaPayload {
+  headline: string;
+  subhead: string;
+  cta_label: string;
+  cta_url: string;
+}
+
+export interface SponsorSpotlightPayload {
+  sponsor_name: string;
+  logo_storage_path: string;
+  tagline?: string | null;
+}
+
+export type HeroForegroundTilePayload =
+  | HeadlineCtaPayload
+  | SponsorSpotlightPayload;
+
+export interface HeroBackgroundImage {
+  id: string;
+  storage_path: string;
+  alt_text: string;
+  sort_order: number;
+  active: boolean;
+}
+
+export interface HeroForegroundTile {
+  id: string;
+  tile_type: "headline_cta" | "sponsor_spotlight";
+  payload: HeroForegroundTilePayload;
+  sort_order: number;
+  active: boolean;
+}
