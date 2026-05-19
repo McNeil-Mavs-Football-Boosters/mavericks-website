@@ -150,21 +150,33 @@ export default async function BoostersMembersPage() {
         </section>
       )}
 
-      {/* Top Donors — flat alphabetical name list, no tier breakdown. */}
+      {/* Top Donors — flat alphabetical name list on the McNeil green band.
+          Column count scales with the donor count: 1 -> 1 centered, 2 -> 2,
+          3+ -> 3 columns. Container is max-w-3xl so a sparse N=2 doesn't
+          spread to opposite page edges. */}
       {topDonors.length > 0 ? (
-        <section
-          className="bg-mavs-navy/5 border-t border-mavs-navy/10"
-          aria-label="Top donors"
-        >
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
-            <h2 className="text-center text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-mavs-navy">
+        <section className="bg-mavs-green text-white" aria-label="Top donors">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 text-center">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-white">
+              Special Thanks
+            </p>
+            <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
               Top Donors
             </h2>
-            <ul className="mt-10 columns-1 sm:columns-2 gap-x-10 list-none p-0">
+            <ul
+              className={
+                "mt-10 grid gap-x-12 gap-y-3 list-none p-0 max-w-3xl mx-auto " +
+                (topDonors.length === 1
+                  ? "grid-cols-1"
+                  : topDonors.length === 2
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")
+              }
+            >
               {topDonors.map((m, i) => (
                 <li
                   key={`top-${i}`}
-                  className="break-inside-avoid py-1.5 text-lg sm:text-xl font-black uppercase tracking-tight text-mavs-navy leading-snug"
+                  className="py-1.5 text-lg sm:text-xl font-black uppercase tracking-tight text-white leading-snug"
                 >
                   {displayName(m)}
                 </li>
