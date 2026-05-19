@@ -87,7 +87,7 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
 
   return (
     <section
-      className={`relative isolate w-full min-h-[50vh] md:min-h-[70vh] overflow-hidden ${
+      className={`relative isolate w-full min-h-[55vh] md:min-h-[77vh] overflow-hidden ${
         hasBackgrounds ? "" : "bg-mavs-navy"
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -108,7 +108,7 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
                 fill
                 sizes="100vw"
                 priority={idx === 0}
-                className="object-cover"
+                className="object-cover object-top"
               />
             </div>
           ))
@@ -122,7 +122,7 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
       ) : null}
 
       {hasTiles ? (
-        <div className="relative z-10 flex min-h-[50vh] md:min-h-[70vh] items-center justify-center px-6">
+        <div className="relative z-10 flex min-h-[55vh] md:min-h-[77vh] items-center justify-center px-6">
           <div className="relative w-full max-w-5xl">
             {tiles.map((tile, idx) => (
               <div
