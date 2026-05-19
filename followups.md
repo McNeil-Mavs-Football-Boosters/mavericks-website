@@ -3,10 +3,10 @@
 Items surfaced during the Phase 1 build that aren't blocking the current step but need attention before launch or in early Phase 2. Append-only. Mark items done when resolved.
 
 ## Next pickup
-- [ ] Remove the "Home" link from the desktop and mobile nav. The "McNeil Mavericks Football" wordmark already links to `/`, so the Home item is redundant. Files: `components/layout/Header.tsx` (remove the `<Link href="/">Home</Link>` entry from the desktop `<nav>`), `components/layout/MobileNav.tsx` (remove the matching mobile drawer link). Verify the wordmark on staging still navigates to `/` from any page.
+- [x] ~~Remove the "Home" link from the desktop and mobile nav.~~ Done 2026-05-19, commit `afee45f`. Also removed from footer center-column `SITE_LINKS` for consistency ("no Home in any nav surface").
 
 ## Security
-- [ ] Switch public read pages from `SUPABASE_SERVICE_ROLE_KEY` to the anon-key Supabase client so RLS is the actual gate. Affects: home + /about + /boosters + /boosters/join + /contact + `/schedule/games/*` + `/schedule/practice/*` + `/roster/*` + `/coaches` + `/resources`. Anon RLS policies are in place (verified 2026-05-17 via `SET LOCAL ROLE anon` against `games`) — the fix is just wiring the right client. Defer until admin work begins or pick up as a small followup commit. Not blocking Commit B.
+- [ ] Switch public read pages from `SUPABASE_SERVICE_ROLE_KEY` to the anon-key Supabase client so RLS is the actual gate. Affects: home + /about + /boosters + /boosters/join + /boosters/members + /contact + `/schedule/games/*` + `/schedule/practice/*` + `/roster/*` + `/coaches` + `/resources`. Anon RLS policies are in place (verified 2026-05-17 via `SET LOCAL ROLE anon` against `games`) — the fix is just wiring the right client. Defer until admin work begins or pick up as a small followup commit. Not blocking Commit B.
 - [ ] Rotate Supabase anon key (exposed in chat 2026-05-16 during 4c setup). Studio → Settings → API → rotate, then update .env.local and Vercel env vars.
 - [ ] Rotate Supabase service_role key (briefly in chat during original Steps 1-3 setup). Same process.
 - [ ] Verify .env.local is gitignored and has never been committed (git log --all --full-history -- .env.local should return nothing).

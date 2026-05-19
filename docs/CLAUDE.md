@@ -19,9 +19,11 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-05-17 — Commit B complete)
+## Status (2026-05-19 — Booster Phase 1 slices 1 + 2 live)
 
-**Commit B fully shipped end-to-end.** All five Deliverables (A through E) live on Vercel preview. Every public route in the v2 spec route map renders real data or 404s per spec. Print supported on `/schedule/*` and `/roster/*`. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
+**Commit B fully shipped end-to-end** (2026-05-17). **Booster Phase 1 slices 1 + 2 shipped on top** (2026-05-18 and 2026-05-19). Every public route in the v2 spec route map renders real data or 404s per spec. Print supported on `/schedule/*` and `/roster/*`. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
+
+**Phase 1 pivot for boosters** (2026-05-18): the original `/boosters/join` Stripe-Checkout flow was scoped out for Phase 1. Replaced with a Google-Form CTA + server-rendered tier ladder. `/boosters/members` is now backed by the Form-responses sheet (read-only service account) rather than the `public_members` view. The Stripe + custom-form / `public_members` view design lives on as Phase 2+ work; see `specs/boosters_join_spec.md` and the "Phase 1 reality" notes appended to `specs/content_map_v2.md` /boosters/join + /boosters/members sections.
 
 | Step | Status | Notes |
 |---|---|---|
@@ -42,8 +44,12 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 | **Real 2025-26 roster + schedule seed** | ✅ done | `e7ae151` + `947ed46`. Migrations 031 (JV=65, F-Green=22, F-Blue=27, freshman_has_blue=true) + 032 (real 2025 schedule, 46 games) + 033 (8 freshman color-resolved by Jeremy) |
 | **4c Commit B Deliverable D. `/coaches`** | ✅ done | `6d2e082`. Section grouping by `role_category`, CoachCard with default-avatar fallback, head-coach-open placeholder, /coaches/[catchall] → 404 |
 | **Brand pass — McNeil HS style guide** | ✅ done | `2ac698c`, 28 files. Navy (#011858) primary, green (#1E541E recolored darker) secondary, brown (#7C5838) tertiary token. Lato (Google Fonts 400/700/900) replaces Geist. Logo + favicon installed. |
-| 5. Public collection routes (expanded) | pending | news/sponsors + /boosters/* |
-| 6–20 | pending | See `specs/build_plan_v2.md` |
+| **Booster Phase 1 slice 1 — `/boosters/join` (Form CTA tier ladder)** | ✅ done | `9837aba` (migration 034 reseed) + `090986f` (page + footer link + `lib/constants.ts`) + `9185b4b` (solid-navy unbadged borders, orphan-card centering). Replaces the original Step 6 Stripe-Checkout join flow; see `specs/boosters_join_spec.md`. |
+| **Booster Phase 1 — Google Sheets API setup** | ✅ done | `8b79407` (add) + `3030f2a` (remove smoke test). GCP project `mcneil-mavericks-site` under `mcneilfootballboosters@gmail.com`, service account `mcneil-site-reader@…`, sheet shared at Viewer, `googleapis@^171.4.0` installed, 3 env vars wired in `.env.local` + Vercel (Production+Preview+Development). JSON key at `~/Projects/BoosterClub/MavericksWebsite/secrets/mcneil-site-reader.json`, outside the repo. |
+| **Booster Phase 1 slice 2 — `/boosters/members` (Sheets-backed list + Top Donors)** | ✅ done | `92239e3` (initial slice) + `5bea309` (polish pass — 8-item rewrite) + `563955b` (Top Donors green band + centered names). ISR `revalidate=300`. `lib/sheets/boosters.ts` does JWT auth + dedupe (email primary, parent1-name fallback, latest-timestamp wins). Flat alphabetical-by-surname list in Lato Black uppercase navy; Top Donors section on mavs-green band with dynamic 1/2/3-col grid. |
+| **Header/footer nav restructure** | ✅ done | `afee45f`. Removed "Home" from desktop + mobile + footer center column. Top-level "Boosters" header label renamed to "Booster Club" (label only — routes/dropdown-children/titles unchanged). Booster Club moved to position immediately after Coaches & Trainers. About moved out of the header entirely; added to footer right column below the contact-email line. Header inner content constrained to `lg:max-w-[80vw] lg:mx-auto` (band stays full-width; content centered at 80% viewport at lg+). |
+| 5. Public collection routes (expanded) | in progress | `/boosters/join` + `/boosters/members` live; `news/sponsors` + remaining `/boosters/*` (sponsor, volunteer, committees, board, events, documents, donate) still pending. |
+| 6–20 | pending | See `specs/build_plan_v2.md`. Step 6 (admin auth + CRUD) is the next gating item before officers can edit content. |
 
 **Staging URL** (no SSO wall as of Step 4b push): `https://mavericks-website-jeremy-vest-s-projects.vercel.app`. Stable alias; per-deployment URLs follow the `mavericks-website-<hash>-jeremy-vest-s-projects.vercel.app` pattern. Per the prior CLAUDE.md, Deployment Protection was set to ON — Step 4b smoke tests returned 200 across the board, so the protection may have been disabled at some point. Re-check before assuming.
 
@@ -114,6 +120,53 @@ Continuation of the same calendar day. Closed out Commit B end-to-end and shippe
 - Style guide PDF + 11 logo source files live in `docs/`. The xlsx with player + guardian PII is gitignored (public repo); should be moved to `MavericksWebsite/private-data/` before cutover.
 - Commit B is done. Next session picks from `specs/build_plan_v2.md` Step 5 (news/sponsors/expanded booster routes) or jumps to Step 6 (admin auth + CRUD) if Jeremy wants to start letting officers in.
 
+## Build progress 2026-05-18 — Booster Phase 1 slice 1 + Google Sheets API
+
+Two threads, same calendar day.
+
+**Slice 1: `/boosters/join` Form CTA tier ladder.** Phase 1 pivot: no payments, no custom form. The board-ratified PDF (`docs/2026 - 2027 Membership - McNeil HS Football Boosters.pdf`) defines 7 tiers (Free Fan Base!, Game Day!, Offense ⇄ Defense!, Blitz!, Touchdown!, Playoffs!, Championship!). Single Google Form URL (`BOOSTER_FORM_URL` in `lib/constants.ts`) is the join action across every CTA.
+
+- `9837aba` — **Migration 034 (renumbered from spec's 030 because 030 is taken by the year-split).** DELETE membership_tiers WHERE year='2026-27', INSERT 7 PDF-canonical rows. Idempotent transaction. Verification: count=7, Championship! perks=4, Game Day! badge='Most Popular'. Also committed `docs/specs/boosters_join_spec.md` and the PDF reference.
+- `341d57a` — **Spec fix.** All booster references in `boosters_join_spec.md` switched from `current_year` to `current_board_year` (booster year decoupled from football year — 2026-27 vs 2025-26 respectively). Rollback migration reference corrected to 010 (not 018).
+- `090986f` — **Slice 1 Turn 2 page.** `app/boosters/join/page.tsx` server component, `force-dynamic`. Green `#1E541E` banner band (one-off brand deviation, documented in top-of-file comment), intro, responsive tier grid (3/2/1 at lg/md/sm), GO MAVS closing block. Each tier card: price+name h3, optional badge pill, tagline, perks with `+ ` prefix, navy "Join at {name}" anchor → `BOOSTER_FORM_URL`, target=_blank, sr-only "(opens in new tab)". `lib/constants.ts` created. `MembershipTier` type added to `lib/types.ts`. Footer SITE_LINKS gained "Join the Booster Club". Followup logged for the missing white-on-transparent horseshoe asset (brand pack doesn't include one; using full-color primary lockup on green as a compromise).
+- `9185b4b` — **Polish.** Unbadged cards switched from `border-mavs-navy/10` (barely visible) to solid `border-mavs-navy`. Orphan tier card (last card alone in row at lg or md) centered via modulo detection (`tiers.length % 3 === 1` / `% 2 === 1`), self-heals if active tier count changes.
+
+**Google Sheets API setup (interactive walkthrough).** 9-step setup to wire read-only Form-responses access for slice 2.
+
+- GCP project `mcneil-mavericks-site` created under `mcneilfootballboosters@gmail.com` (club's master Gmail, decoupled from `jvest@s3.com`). Sheets API enabled. Drive API deferred (Sheets-by-ID is enough today).
+- Service account: `mcneil-site-reader@mcneil-mavericks-site.iam.gserviceaccount.com`. No project-level IAM roles — sheet-level Viewer share is the only authorization gate. JSON key downloaded, renamed, `chmod 600`'d, and parked at `~/Projects/BoosterClub/MavericksWebsite/secrets/mcneil-site-reader.json` (outside the repo — the repo root is `mavericks-website/`).
+- Sheet ID `1-Jyc3dYc6MnMOezGJa4IZpCDINZuxE6zh1QwCLpA7U0`. Title "*USE THIS* McNeil HS Football Booster Club Membership 2026-2027 (Responses)". Two tabs: `Form Responses 1` (live, 33 columns, ~35 row signups at slice-1 build time) and `Sheet1` (empty placeholder).
+- Env vars (in `.env.local` and Vercel Production+Preview+Development): `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (literal-`\n` escaped form; code does `.replace(/\\n/g, '\n')` to normalize), `GOOGLE_SHEETS_BOOSTERS_ID`. Distinct from the existing Supabase anon/service_role rotation followups — do not conflate.
+- `8b79407` — added `googleapis@^171.4.0` + throwaway `scripts/test-sheets-access.ts` smoke test (verified Node + JWT + env path works end-to-end; reads metadata + 5 rows of cols A-E).
+- `3030f2a` — removed the smoke test in a follow-up commit so it doesn't accrete.
+
+## Build progress 2026-05-19 — Booster Phase 1 slice 2 + nav restructure
+
+**Slice 2: `/boosters/members` Sheets-backed public list.** Initial render → polish pass → Top Donors styling, three commits.
+
+- `92239e3` — **Initial.** `lib/sheets/boosters.ts` (server-only JWT auth, `cache()` memoization, parses tier label + formats parent names as "First L."). `app/boosters/members/page.tsx`, `revalidate=300` (5-min ISR — static prerender + on-demand revalidation, sheet edits propagate within 5 min). Hero band ("{board_year} Boosters" eyebrow + "Our Supporters" h1 + dynamic count). Privacy note line. Tier-grouped list with badge pills + per-tier counts + multi-column names. Bottom "Special Thanks → Top Donors" section with top-3-tier cards on `bg-mavs-navy/5`. CTA back to `/boosters/join`.
+- `5bea309` — **Polish pass (8 changes in one commit).** Per Jeremy 2026-05-19:
+    1. `h1 = "Members"` (was "Our Supporters").
+    2. Main list flattened — no tier groupings/badges. Single alphabetical-by-Parent-1-surname (split on the LAST whitespace, so "Sarah Van Buren" sorts under "Buren").
+    3. Each name rendered with the tier-card h3 typography from `/boosters/join` (Lato Black, uppercase, navy). Multi-column responsive grid (1/2/3 cols).
+    4. Removed the "Names shown as first name + last initial" line.
+    5. Footer block reordered: "Not yet a member? Join the Boosters →" → `BOOSTER_FORM_URL` (Google Form, NOT `/boosters/join`), new tab. "Want yours updated or removed? Email us mcneilfootballboosters@gmail.com" with "Email us" plain text + only the email as a mailto link (the opt-out email is the master Gmail, distinct from `boosters@mcneilmavericks.org` which the Footer uses for general contact — intentional split).
+    6. Hero eyebrow `text-white` (was `text-mavs-green`).
+    7. Top Donors section: no tier sub-headings, no "go all-in" sentence, same name typography, same surname sort.
+    8. **Dedupe in `lib/sheets/boosters.ts`.** Primary key: lowercased Email Address. Fallback when email blank: lowercased Parent 1 Name. Within a key group, latest parseable Timestamp wins. Pre-flight Python scan against live sheet: 35 form rows → 1 with no tier dropped → 2 email-key duplicate pairs collapsed = 32 displayed. Zero same-name-different-email conflicts. Internal `console.warn` logs same-name-different-email conflicts (for future data) without auto-resolving.
+- `563955b` — **Top Donors green band + centered names.** Restored "Special Thanks" eyebrow above "Top Donors" h2 (dropped in polish pass by mistake). Section bg → `bg-mavs-green` (`#1E541E`), all text `text-white`. Replaced CSS multi-column layout (which left-aligned names inside columns and pushed N=2 to opposite page edges) with a centered CSS Grid + `text-center`. Grid column count scales with donor count: 1 → `grid-cols-1`, 2 → `grid-cols-1 sm:grid-cols-2`, 3+ → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`. Container clamped to `max-w-3xl` so sparse N=2 sits near the page center.
+
+**Header/footer nav restructure.** Single commit, 5 changes:
+
+- `afee45f` —
+    1. Removed "Home" from header desktop, mobile drawer, AND footer center column. The logo/wordmark already navigates home. The footer-column cascade went beyond Jeremy's literal ask but enforces "no Home in any nav surface".
+    2. Renamed top-level "Boosters" header label → "Booster Club" (header only — dropdown child labels/targets, `/boosters` route, page titles, and the footer center-column "Boosters" entry all unchanged per "Header label only").
+    3. Reordered desktop + mobile nav so Booster Club sits immediately after Coaches & Trainers. New order: Schedule, Roster, Coaches & Trainers, Booster Club, News, Sponsors, Forms & Links.
+    4. Removed "About" from header and from footer center column. Added as a new `<Link>` line in the footer right column, immediately below the `primary_contact_email` mailto line and above the social icons.
+    5. Header inner content width constraint at lg+: added `lg:max-w-[80vw] lg:mx-auto` to the header inner div. Header band stays full-width; only the content centers at 80vw with 10% gutters. Note: the desktop nav itself only renders at xl+, so the constraint at lg-xl mainly affects logo/hamburger positioning — benign.
+
+Also: Booster Club dropdown align flipped from `right` to `left` (no longer at the far right of the row).
+
 ## The pivot (2026-05-16)
 
 Jeremy clarified mid-build that the site's audience is the McNeil football community, not the booster club's members specifically. The current SE site is the football team's de facto public web presence; the booster club just owns the hosting. Reframe:
@@ -139,6 +192,7 @@ Spec docs evolve as a chain of addenda rather than rewrites. Read in order if yo
 7. **`specs/content_map_v2.md`** — Every public route, sections, data sources.
 8. **`specs/admin_scope_v2.md`** — Three admin roles, permission matrix, admin pages (Tier A/B/C), workflows.
 9. **`specs/build_plan_v2.md`** — Implementation plan; supersedes the original `build_plan.md`. Step ordering, hard dates, time budget.
+10. **`specs/boosters_join_spec.md`** — Phase 1 pivot spec for `/boosters/join`. Google Form CTA tier ladder; supersedes the original Step 6 (Stripe Checkout). Turn 1 (migration 034) + Turn 2 (page + footer link) both shipped 2026-05-18. Future custom join flow is Phase 2+.
 
 **Older docs (v1)** still useful as reference but no longer the source of truth:
 - `specs/content_map.md` — booster-focused IA (pre-pivot)

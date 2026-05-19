@@ -156,12 +156,14 @@ Two CC turns:
 3. Run verification queries; report counts and the spot-check row
 4. Commit + push
 
-**Turn 2: page**
+**Turn 2: page** (✅ shipped 2026-05-18, commit `090986f`; polish in `9185b4b`)
 1. Add `BOOSTER_FORM_URL` to `lib/constants.ts`
 2. Build `app/boosters/join/page.tsx` per layout above
 3. Add footer link
 4. Verify Vercel preview deploy
 5. Commit + push
+
+(Note: banner uses `public/brand/mhs-logo.png` — the full-color primary lockup — instead of a white-variant horseshoe, because the brand pack has no white-on-transparent horseshoe asset. Logged in `followups.md` under "Brand assets" pending designer output. Polish commit `9185b4b` made unbadged tier borders solid `border-mavs-navy` and added generic orphan-card centering for the last card alone in a row at lg or md.)
 
 ## Out of scope for slice 1
 

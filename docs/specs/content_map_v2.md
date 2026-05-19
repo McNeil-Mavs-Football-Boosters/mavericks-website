@@ -425,6 +425,8 @@ Same across all routes.
 
 ### `/boosters/join`
 
+> **⚠️ Phase 1 reality (as of 2026-05-18):** This section describes the Phase 2 custom-form + Stripe-Checkout flow. **Phase 1 is materially different** — the live page is a server-rendered tier ladder with no payment integration; every tier card CTA opens the same Google Form (`BOOSTER_FORM_URL` in `lib/constants.ts`) in a new tab. No `memberships` row is created on Phase 1 signup; the Google Sheet linked to the Form is the source of record. See `specs/boosters_join_spec.md` for the Phase 1 spec and `app/boosters/join/page.tsx` for the implementation. Everything below applies when the custom form lands as Phase 2 work.
+
 **Purpose:** the membership signup form. Flow: tier selection → form → Stripe Checkout (or $0 bypass for Free Fan Base) → success page.
 
 **Sections, top to bottom:**
@@ -472,6 +474,8 @@ Same across all routes.
 ---
 
 ### `/boosters/members`
+
+> **⚠️ Phase 1 reality (as of 2026-05-19):** The live page does NOT query the `public_members` view or honor a `list_publicly` opt-in (the Google Form has no such checkbox; that field exists only in the Phase 2 custom-form design). Instead it reads the linked Google Sheet via `lib/sheets/boosters.ts` (service-account JWT, ISR 5min), dedupes by Email Address (latest-Timestamp wins, falls back to Parent 1 Name when email is blank), and renders **every row that has a tier selected** — Payable Status is intentionally ignored. Names are displayed as "First L." (conservative privacy default; opt-out is via email to `mcneilfootballboosters@gmail.com`). The list is a **single flat alphabetical-by-Parent-1-surname** layout (no tier grouping), and a separate **Top Donors** band at the bottom (mavs-green band, white text, dynamic 1/2/3-column grid) features the top-3 tiers by sort_order. The "Join the Boosters →" CTA at the bottom links directly to the Google Form, not back to `/boosters/join`. Everything below applies when the Phase 2 custom-form + `public_members` view lands.
 
 **Purpose:** public list of dues-paid members who opted in. Recognition page.
 
