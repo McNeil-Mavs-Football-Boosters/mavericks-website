@@ -68,7 +68,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
   const close = () => setOpenDropdown(null);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-mavs-navy/10 print:hidden">
+    <header className="sticky top-0 z-40 w-full bg-mavs-navy print:hidden">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto">
         <Link
           href="/"
@@ -83,7 +83,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             priority
             className="h-10 w-10 object-contain"
           />
-          <span className="font-black uppercase tracking-tight text-mavs-navy text-sm sm:text-base">
+          <span className="font-black uppercase tracking-tight text-white text-sm sm:text-base">
             <span className="hidden md:inline">McNeil Mavericks Football</span>
             <span className="inline md:hidden">Mavs Football</span>
           </span>
@@ -112,7 +112,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/coaches"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Coaches &amp; Trainers
           </Link>
@@ -129,19 +129,19 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/news"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             News
           </Link>
           <Link
             href="/sponsors"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Sponsors
           </Link>
           <Link
             href="/resources"
-            className="text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
+            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Forms &amp; Links
           </Link>
@@ -150,7 +150,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
         <button
           type="button"
           aria-label="Open menu"
-          className="xl:hidden ml-auto inline-flex items-center justify-center p-2 text-foreground hover:text-mavs-navy"
+          className="xl:hidden ml-auto inline-flex items-center justify-center p-2 text-white hover:text-white/80"
           onClick={() => setMobileOpen(true)}
         >
           <Menu className="h-6 w-6" />
@@ -191,7 +191,7 @@ function HeaderDropdown({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-foreground hover:text-mavs-navy transition-colors"
+        className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
       >
         {label}
         <ChevronDown

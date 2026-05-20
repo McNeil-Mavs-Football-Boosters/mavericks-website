@@ -47,11 +47,11 @@ Written 2026-05-16. **Supersedes the original `content_map.md`** (which was stru
 
 Same across all routes.
 
-- Wordmark on the left, links to `/`. Desktop: "McNeil Mavericks Football". Mobile (<768px): "Mavs Football".
-- Primary nav on the right, in order: Home, Schedule, Roster, Coaches & Trainers, News, Sponsors, Forms & Links, Boosters ▼, About.
-- Boosters dropdown items: About the Booster Club, Join, Members, Sponsorship Opportunities, Volunteer, Committees, Board, Calendar / Events, Documents, Donate.
-- Sticky on scroll, white background, thin bottom border.
-- Mobile: hamburger opens a full-height drawer with the same top-level items; Boosters is an accordion in the drawer.
+- Logo + wordmark on the left, links to `/` (the logo serves as the Home link — no standalone Home entry). Desktop: "McNeil Mavericks Football". Mobile (<768px): "Mavs Football".
+- Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, News, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column.)
+- Booster Club dropdown items: About the Booster Club, Join, Members, Sponsorship Opportunities, Volunteer, Committees, Board, Calendar / Events, Documents, Donate.
+- Sticky on scroll, McNeil navy background, no bottom border. Wordmark and nav links render white (dropdown caret and mobile hamburger icon also white). Dropdown panels and the mobile drawer panel remain white with navy text.
+- Mobile: hamburger opens a full-height drawer with the same top-level items; Booster Club is an accordion in the drawer.
 - No login link in public nav. `/admin` is unlinked.
 
 ### Footer
