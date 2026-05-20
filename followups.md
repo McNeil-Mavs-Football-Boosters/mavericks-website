@@ -4,6 +4,9 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 
 ## Next pickup
 - [x] ~~Remove the "Home" link from the desktop and mobile nav.~~ Done 2026-05-19, commit `afee45f`. Also removed from footer center-column `SITE_LINKS` for consistency ("no Home in any nav surface").
+- [x] ~~Homepage Hero Carousel (3-turn rollout).~~ Done 2026-05-19 evening. Migrations 036 + 037, `components/home/HeroCarousel.tsx`, StaticHero moved to /boosters. Commits `279f47a` → `8b35446`.
+- [x] ~~Print View PDFs replacing window.print() buttons; Coach Wallin → Douglas Wallin / Defensive Line Coach.~~ Done 2026-05-19 evening. Migrations 038 + 039 + 040 (freshmen plural fix). Commits `c919aa3` → `4705b8b`.
+- [x] ~~UI rename Freshman → Freshmen on every user-visible label.~~ Done 2026-05-19, commit `a27a08c`. DB enum + URL slugs + code identifiers kept singular.
 
 ## Security
 - [ ] Switch public read pages from `SUPABASE_SERVICE_ROLE_KEY` to the anon-key Supabase client so RLS is the actual gate. Affects: home + /about + /boosters + /boosters/join + /boosters/members + /contact + `/schedule/games/*` + `/schedule/practice/*` + `/roster/*` + `/coaches` + `/resources`. Anon RLS policies are in place (verified 2026-05-17 via `SET LOCAL ROLE anon` against `games`) — the fix is just wiring the right client. Defer until admin work begins or pick up as a small followup commit. Not blocking Commit B.
@@ -47,6 +50,27 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - "Football Player & Guardian Name" xlsx is gitignored (PII; public repo). Currently sitting untracked in `docs/`. Move to `MavericksWebsite/private-data/` or another path outside the repo before cutover so it can't be `git add -f`'d by accident.
 
 These are not blockers for Commit C or Phase 1 cutover. Capture so they don't get lost.
+
+## Naming conventions (Phase 2+)
+- **"Freshmen" is the user-facing collective noun** for the team. UI labels, page titles, and any new copy use "Freshmen" (plural). The DB enum value (`team_level = 'freshman'`), URL slugs (`/roster/freshman/...`), boolean flag (`site_settings.freshman_has_blue`), props (`freshmanHasBlue`), and default-export function names (`FreshmanRosterPage`, `FreshmanGameSchedulePage`) deliberately stay **singular** to preserve schema/URL/code stability. Source: 2026-05-19 evening, commit `a27a08c`. PDF filename in Storage is `freshmen-2025.pdf` (plural); migration 040 aligned the DB to match.
+
+## Hero carousel — open items from spec (Phase 2+)
+- **Admin UI for hero content.** `/admin/hero/backgrounds` (upload, reorder, enable/disable) and `/admin/hero/tiles` (CRUD for `headline_cta` + `sponsor_spotlight`). Phase 2. Admin write policies on `hero_background_images` + `hero_foreground_tiles` arrive with this work — the current RLS is read-only for anon + authenticated.
+- **Sponsor spotlight tiles seed.** Wait for SE Tier 1 capture (sponsor logos). Then write a follow-up migration that inserts `sponsor_spotlight` rows for each active sponsor — payload shape per `specs/commit_homepage_hero_carousel_spec.md`: `{ sponsor_name, logo_storage_path, tagline? }`. Logos live in `site-images/sponsors/`.
+- **Mobile photo variants.** If Lighthouse mobile flags hero images as too large, generate 768w variants of each photo and wire `next/image` `sizes` to use them on small viewports. Not blocking v1.
+- **Featured-slide override.** Optional `hero_featured_override` row for championship-game-style coupled slides (photo + headline paired, both rotations suspended while active). Phase 2 or later.
+- **`useSyncExternalStore` refactor for HeroCarousel reduced-motion.** `react-hooks/set-state-in-effect` flags `setReducedMotion(mql.matches)` inside the first useEffect. The proper React 18+ idiom for subscribing to a `matchMedia` (which is exactly what an "external store" is) is `useSyncExternalStore`. Acceptable as-is (one extra render at mount when reduce-motion is on), but worth a small cleanup pass. File: `components/home/HeroCarousel.tsx:32-43`.
+
+## Print View PDFs — open items from spec (Phase 2+)
+- **Admin UI for PDF uploads.** Right now Jeremy uploads via Studio and CC runs `UPDATE` statements. Phase 2: the roster edit form gets a "Replace PDF" button that uploads + updates the path in one action. Same for schedule. Same for any other PDF the site adds later.
+- **Freshmen Green / Blue PDF split.** When coaches hand Jeremy team-specific freshmen PDFs, upload as `documents/rosters/freshmen-green-2026.pdf` and `documents/rosters/freshmen-blue-2026.pdf` and UPDATE only the Blue row (or both if Green diverges too).
+- **PDF preview on the page itself.** Some district sites embed the PDF inline below the rendered roster instead of (or in addition to) linking it. Not in scope here; revisit if parents ask.
+- **`publicStorageUrl` / `publicObjectUrl` reconciliation.** Two helpers now exist in `lib/storage.ts`: `publicStorageUrl(path)` (hardcodes `site-images`, used by HeroCarousel) and `publicObjectUrl(absolutePath)` (handles bucket-PREFIXED paths, used by PrintViewLink). They serve different storage-path conventions. Long-term: pick one (probably collapse to a single bucket-aware helper) and migrate callers. Not urgent.
+
+## Lint baseline
+- **`resource-item.tsx`** lines 43, 49: `react-hooks/static-components`. Pre-existing from Commit B Deliverable E. Component is being created during render via `iconForHint()`. Refactor to define the icon components at module scope and pick by hint.
+- See HeroCarousel.tsx:35 item above for the third lint error.
+- The `print-footer.tsx` lint errors (two `react-hooks/set-state-in-effect` on lines 10-13) **were resolved by deletion** in commit `c919aa3`.
 
 ## Phase 2 / deferred
 - [ ] Bulk player import (paste mode primary, CSV upload optional). Spec'd in conversation 2026-05-16; folded into Step 7b admin rosters CRUD.

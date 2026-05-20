@@ -226,3 +226,33 @@ Add to `followups.md` after this commit:
 - **Admin UI for PDF uploads.** Right now Jeremy uploads via Studio and CC runs UPDATE statements. Phase 2: roster edit form has a "Replace PDF" button that uploads + updates the path in one action. Same for schedule. Same for any other PDF the site adds.
 - **Freshman Green/Blue PDF split.** When the new freshman coaches hand Jeremy team-specific PDFs, upload them as `documents/rosters/freshman-green-2026.pdf` and `documents/rosters/freshman-blue-2026.pdf` and UPDATE only the Blue row (or both if Green changes too).
 - **PDF preview on the page itself.** Some district sites embed the PDF inline below the rendered roster instead of (or in addition to) linking it. Not in scope here; revisit if parents want it.
+
+## Shipped state (2026-05-19)
+
+Both parts landed in one CC session, plus two follow-up commits.
+
+**Conflicts surfaced + resolved at apply-time** (per "default to your reading" guidance):
+
+- **`team_levels` table does not exist** in this codebase. `team_level` is an ENUM (`varsity, jv, freshman`). The per-team-per-year anchor that already exists at the cardinality the spec wants is `rosters` (one row per `year + team_level + team_designation`). Added BOTH `pdf_storage_path` AND `schedule_pdf_storage_path` to `rosters`. Schedule-game pages now fetch the matching rosters row in parallel via `Promise.all` to resolve the PDF path.
+- **Freshman color split is NOT in the team_level enum.** It lives in `rosters.team_designation` (text: `'Green'` / `'Blue'`). The spec's `team_level in ('freshman_green', 'freshman_blue')` would never match. Seed filters on `team_level = 'freshman'` alone, which catches both designation rows.
+- **`documents` bucket already existed.** Created in or before migration 009 (`009_storage_policies.sql` already pre-baked the read + content_admin write policies for it). Bucket needed `UPDATE` for the size + MIME constraints, not `INSERT`.
+- **Spec column name `position` was actually `role`** in `coaches`. Wallin update writes to `role`.
+- **Helper `publicStorageUrl()` hardcodes `site-images`** (designed for hero). Added a sibling `publicObjectUrl()` in `lib/storage.ts` for bucket-PREFIXED paths like `documents/rosters/varsity-2025.pdf`. Two helpers coexist — both inline-documented.
+
+**Implementation status by commit:**
+
+- **Commit 1 (Part 1)** — Migration **038_print_view_pdfs.sql** + frontend swap on 5 affected pages. `documents` bucket configured (5 MB cap, `application/pdf` only). Two new columns on `rosters`. 4 roster PDF paths + 4 schedule PDF paths seeded for 2025-26. `components/shared/PrintViewLink.tsx` (server component, hides when null, sr-only "(opens PDF in new tab)" hint). `components/schedule/print-button.tsx` + `print-footer.tsx` **deleted entirely** (no remaining consumers; the two pre-existing `react-hooks/set-state-in-effect` errors in print-footer.tsx are gone with it). Practice schedule pages: Print button removed with no replacement (no PDF in this scope; browser Cmd-P still works natively). `Roster` interface in `lib/types.ts` extended with both new fields, both nullable. Commit `c919aa3`.
+- **Commit 2 (Part 2)** — Migration **039_update_coach_wallin.sql**. SELECT before UPDATE confirmed Wallin was NOT in the head coach slot (`role_category = 'position_coach'`, not `head`) — no slot clearing needed. UPDATE flipped name `Coach Wallin → Douglas Wallin` and `role` `Position Coach → Defensive Line Coach`; `role_category` unchanged. Commit `cd27abb`.
+- **PDF upload follow-ups** — Migration **040_fix_freshmen_pdf_path.sql** flips both freshman rows from `documents/rosters/freshman-2025.pdf` (singular) to `documents/rosters/freshmen-2025.pdf` (plural). Jeremy's preference: file stays plural in Storage; the underlying `team_level` enum stays singular. All four storage URLs verified `200 OK` via curl after upload + rename. Commit `4705b8b`.
+- **Freshman → Freshmen UI rename** — Per Jeremy ("collective...of men"): every user-visible "Freshman" label switched to "Freshmen". Touches `components/layout/teamLinks.ts` (header + mobile dropdown items), both `[designation]` page teamLabel computations, and the practice schedule's `LEVEL_TITLES.freshman` + "Freshman Green & Blue" combined label. DB enum (`team_level = 'freshman'`), URL slugs (`/roster/freshman/green`), variable names (`freshman_has_blue`, `freshmanHasBlue`), and internal function names (`FreshmanRosterPage`) deliberately untouched. Commit `a27a08c`.
+
+Final state of the four Print View URLs in production:
+
+| Page | Storage URL |
+|---|---|
+| `/roster/varsity` Print View | `…/storage/v1/object/public/documents/rosters/varsity-2025.pdf` |
+| `/roster/jv` Print View | `…/storage/v1/object/public/documents/rosters/jv-2025.pdf` |
+| `/roster/freshman/{green,blue}` Print View | `…/storage/v1/object/public/documents/rosters/freshmen-2025.pdf` |
+| `/schedule/games/*` Print View (all 4) | `…/storage/v1/object/public/documents/schedules/2025-26.pdf` |
+
+All four 200 OK. Part 1 acceptance criteria 1–9 met; Part 2 criteria 1–3 met.
