@@ -88,7 +88,7 @@ Same across all routes.
    - If query returns nothing AND no override AND `site_settings.season_opener_date` is in the future: render countdown ("Season opens in 14 days")
    - If none of those: hide the section entirely
 
-3. **Quick Links band** — 6 cards, equal weight, clickable:
+3. **Get Involved band** (h2 reads "Get Involved") — 6 cards, equal weight, clickable. Rendered as `bg-mavs-green` band with white heading; cards inside keep white backgrounds with navy icons and navy hover border.
    - Join the Club → `/boosters/join`
    - Sponsor the Team → `/boosters/sponsor`
    - Make a Donation → `/boosters/donate`
@@ -118,7 +118,7 @@ Same across all routes.
 
 **Data sources:** site_settings, games (varsity next), news_posts, events, sponsors.
 
-**Open question:** Should the "Quick Links" band cards have icons? My pick: yes, simple line icons (lucide-react), one per card. No icons makes the section read like a footer.
+**Open question:** Should the Get Involved band cards have icons? My pick: yes, simple line icons (lucide-react), one per card. No icons makes the section read like a footer.
 
 ---
 

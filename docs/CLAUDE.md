@@ -19,7 +19,7 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-05-19 — Hero carousel + Print View PDFs live; Wallin updated)
+## Status (2026-05-20 — Header band + Get Involved repainted)
 
 **Commit B fully shipped end-to-end** (2026-05-17). **Booster Phase 1 slices 1 + 2 shipped on top** (2026-05-18 and 2026-05-19). **Homepage HeroCarousel + canonical-PDF Print View links shipped end-to-end** in the late-day 2026-05-19 session. Every public route in the v2 spec route map renders real data or 404s per spec. The old `window.print()` "Print" buttons on roster/schedule pages have been **replaced** with "Print View" links to the official PDFs (the same handouts parents get at meetings); practice schedules no longer have any print affordance — browser Cmd-P only. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
@@ -198,6 +198,23 @@ Continuation of the same calendar day, after the morning's slice 2 + nav restruc
 - `next.config.ts` `images.remotePatterns` now whitelists `*.supabase.co` under `/storage/v1/object/public/**`. Any future image bucket can render through `next/image` without further config.
 - **`publicStorageUrl` and `publicObjectUrl` coexist** in `lib/storage.ts`. The former hardcodes `site-images` (hero callers); the latter handles full bucket-PREFIXED paths (PDF callers). Inline comments document the convention.
 - `lib/hero.ts` is the StaticHero/site_settings hero loader; `lib/queries/hero.ts` is the HeroCarousel loader. **Distinct files, distinct concerns** — don't conflate.
+
+## Build progress 2026-05-20 — Header navy flip + Get Involved green band
+
+Two small visual passes, three commits. No data, no schema, no spec contract changes — just band-color repaints.
+
+**Header bar: white → navy** (`babc65e` + `bbd273a`).
+- `components/layout/Header.tsx`: sticky header band flipped from `bg-white border-b border-mavs-navy/10` to `bg-mavs-navy` with the bottom border removed entirely. Wordmark, all top-level nav `<Link>`s, the Booster Club dropdown trigger button (with its chevron icon, which inherits color), and the mobile hamburger button all flipped from `text-foreground hover:text-mavs-navy` to `text-white hover:text-white/80`. Logo `<Image>` got `rounded-full bg-white p-0.5` so a white disc sits behind the artwork — the PNG is transparent RGBA (no circle baked in), and on the new navy band the dark logo elements blended into the bar. Same treatment as the existing mcneilmavericks.org header.
+- **Untouched**: dropdown panels (`HeaderDropdown` menu div + items) and the mobile drawer panel — both remain `bg-white` with navy-text items. Only the header bar itself flipped. Mobile drawer's X close button also untouched; it lives inside the white drawer panel.
+- `docs/specs/content_map_v2.md` Header section rewritten in the same commit (`babc65e`): nav order matches the live header (Schedule, Roster, Coaches & Trainers, Booster Club ▼, News, Sponsors, Forms & Links — no standalone Home, no About in primary nav); "white background, thin bottom border" → "McNeil navy background, no bottom border" with explicit white-foreground note; dropdown items list re-verified against the live `BOOSTER_LINKS` constant.
+
+**Homepage Get Involved band: muted → mavs-green** (`2ad7ca1`).
+- `app/page.tsx`: the second section on the homepage (between HeroCarousel and Latest News) wrapping the 6-card quick-links grid flipped from `bg-muted/40` to `bg-mavs-green`; its h2 ("Get Involved") gained `text-white`. The 6 cards inside (`bg-white border border-border` with `text-mavs-navy` icon and `text-foreground` label, navy hover border + shadow) are unchanged.
+- `content_map_v2.md` § Home: "Quick Links band" renamed to "Get Involved band" in section 3 to match the live h2 + the new color treatment is documented inline. The "Open question" paragraph about icons was retitled accordingly.
+
+**Heads-up for future passes.**
+- The hero image on `/boosters` (StaticHero) renders a second `<img>` referencing `mhs-logo.png` at `h-12 w-12` with no circular background. The header's white-disc treatment was deliberately scoped to the header — flag if/when we want to apply it everywhere.
+- The 6 Get Involved cards still use `bg-white` against the new green band, which works. If we ever switch the cards to a darker fill, revisit the navy hover-border treatment (low contrast against navy text on a dark card).
 
 ## The pivot (2026-05-16)
 
