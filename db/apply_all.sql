@@ -2241,3 +2241,24 @@ UPDATE rosters SET pdf_storage_path = 'documents/rosters/freshman-2025.pdf'
 -- UPDATEing individual (team_level, team_designation) rows.
 UPDATE rosters SET schedule_pdf_storage_path = 'documents/schedules/2025-26.pdf'
   WHERE year = '2025-26';
+
+-- ===
+-- db/migrations/039_update_coach_wallin.sql
+-- ===
+
+-- Migration 039: Update Coach Wallin's name + role.
+-- Spec: docs/specs/commit_print_view_pdfs_spec.md Part 2 (2026-05-19).
+--
+-- Pre-migration state (confirmed via SELECT before applying):
+--   name           = 'Coach Wallin'
+--   role           = 'Position Coach'
+--   role_category  = 'position_coach'
+--
+-- Spec wording note: spec says "position" but the column is `role`. Updating `role`.
+-- Head-coach check: role_category is 'position_coach', not 'head' — no slot clearing
+-- needed. Wallin stays in the Position Coaches section.
+
+UPDATE coaches
+SET name = 'Douglas Wallin',
+    role = 'Defensive Line Coach'
+WHERE id = 'a4e36da9-6371-4400-a9c7-dbed6ddce0fa';
