@@ -81,7 +81,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             width={48}
             height={48}
             priority
-            className="h-10 w-10 object-contain"
+            className="h-10 w-10 object-contain rounded-full bg-white p-0.5"
           />
           <span className="font-black uppercase tracking-tight text-white text-sm sm:text-base">
             <span className="hidden md:inline">McNeil Mavericks Football</span>
