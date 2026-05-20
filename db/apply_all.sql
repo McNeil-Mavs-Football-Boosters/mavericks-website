@@ -2262,3 +2262,16 @@ UPDATE coaches
 SET name = 'Douglas Wallin',
     role = 'Defensive Line Coach'
 WHERE id = 'a4e36da9-6371-4400-a9c7-dbed6ddce0fa';
+
+-- ===
+-- db/migrations/040_fix_freshmen_pdf_path.sql
+-- ===
+
+-- Migration 040: Fix freshman roster PDF path to use 'freshmen' (plural).
+-- Migration 038 seeded 'freshman-2025.pdf' (singular, matching the team_level enum),
+-- but the uploaded file in Storage is 'freshmen-2025.pdf' (plural, matching the
+-- source PDF filename). Per Jeremy's preference, the storage filename stays plural.
+
+UPDATE rosters
+SET pdf_storage_path = 'documents/rosters/freshmen-2025.pdf'
+WHERE year = '2025-26' AND team_level = 'freshman';
