@@ -3,9 +3,9 @@ import { ExternalLink } from "lucide-react";
 
 import { GameCard } from "@/components/schedule/game-card";
 import { GamesTable } from "@/components/schedule/games-table";
-import { PrintButton } from "@/components/schedule/print-button";
-import { PrintFooter } from "@/components/schedule/print-footer";
+import { PrintViewLink } from "@/components/shared/PrintViewLink";
 import { getGamesForTeam } from "@/lib/queries/games";
+import { getRosterForTeam } from "@/lib/queries/rosters";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 
 const DESIGNATION_TITLES: Record<string, string> = {
@@ -34,11 +34,18 @@ export default async function FreshmanGameSchedulePage({
     ? `Freshman ${designationTitle}`
     : "Freshman";
 
-  const games = await getGamesForTeam({
-    year: current_year,
-    level: "freshman",
-    designation: designationTitle,
-  });
+  const [games, roster] = await Promise.all([
+    getGamesForTeam({
+      year: current_year,
+      level: "freshman",
+      designation: designationTitle,
+    }),
+    getRosterForTeam({
+      year: current_year,
+      level: "freshman",
+      designation: designationTitle,
+    }),
+  ]);
 
   return (
     <section>
@@ -60,7 +67,9 @@ export default async function FreshmanGameSchedulePage({
             </p>
           ) : null}
         </div>
-        <PrintButton />
+        <PrintViewLink
+          storagePath={roster?.schedule_pdf_storage_path ?? null}
+        />
       </header>
 
       {games.length > 0 ? (
@@ -94,7 +103,6 @@ export default async function FreshmanGameSchedulePage({
         </div>
       )}
 
-      <PrintFooter />
     </section>
   );
 }

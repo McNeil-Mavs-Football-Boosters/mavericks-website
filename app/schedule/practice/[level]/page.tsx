@@ -2,8 +2,6 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { PrintButton } from "@/components/schedule/print-button";
-import { PrintFooter } from "@/components/schedule/print-footer";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -49,11 +47,10 @@ export default async function PracticeSchedulePage({
 
   return (
     <section>
-      <header className="mb-6 flex items-start justify-between gap-4">
+      <header className="mb-6">
         <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           {current_year} {teamLabel} Practice Schedule
         </h1>
-        <PrintButton />
       </header>
 
       {body ? (
@@ -68,7 +65,6 @@ export default async function PracticeSchedulePage({
         </div>
       )}
 
-      <PrintFooter />
     </section>
   );
 }

@@ -3,8 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { PlayerTable } from "@/components/roster/player-table";
-import { PrintButton } from "@/components/schedule/print-button";
-import { PrintFooter } from "@/components/schedule/print-footer";
+import { PrintViewLink } from "@/components/shared/PrintViewLink";
 import { getPlayersForRoster, getRosterForTeam } from "@/lib/queries/rosters";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 
@@ -42,7 +41,7 @@ export default async function RosterLevelPage({
         <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           {current_year} {levelTitle} Roster
         </h1>
-        <PrintButton />
+        <PrintViewLink storagePath={roster?.pdf_storage_path ?? null} />
       </header>
 
       {body ? (
@@ -62,7 +61,6 @@ export default async function RosterLevelPage({
         </div>
       )}
 
-      <PrintFooter />
     </section>
   );
 }

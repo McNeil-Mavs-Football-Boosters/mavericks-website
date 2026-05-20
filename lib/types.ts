@@ -65,6 +65,8 @@ export interface Roster {
   body: string;
   source_note: string | null;
   active: boolean;
+  pdf_storage_path: string | null;
+  schedule_pdf_storage_path: string | null;
 }
 
 export interface Player {
