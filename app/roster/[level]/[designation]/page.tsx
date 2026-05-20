@@ -29,8 +29,8 @@ export default async function FreshmanRosterPage({
 
   const showDesignation = freshman_has_blue;
   const teamLabel = showDesignation
-    ? `Freshman ${designationTitle}`
-    : "Freshman";
+    ? `Freshmen ${designationTitle}`
+    : "Freshmen";
 
   const roster = await getRosterForTeam({
     year: current_year,

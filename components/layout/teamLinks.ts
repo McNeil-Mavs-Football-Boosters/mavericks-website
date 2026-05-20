@@ -6,10 +6,10 @@ export function buildScheduleLinks(freshmanHasBlue: boolean): NavLink[] {
     { href: "/schedule/games/jv", label: "JV" },
     ...(freshmanHasBlue
       ? [
-          { href: "/schedule/games/freshman/green", label: "Freshman Green" },
-          { href: "/schedule/games/freshman/blue", label: "Freshman Blue" },
+          { href: "/schedule/games/freshman/green", label: "Freshmen Green" },
+          { href: "/schedule/games/freshman/blue", label: "Freshmen Blue" },
         ]
-      : [{ href: "/schedule/games/freshman/green", label: "Freshman" }]),
+      : [{ href: "/schedule/games/freshman/green", label: "Freshmen" }]),
   ];
 }
 
@@ -19,9 +19,9 @@ export function buildRosterLinks(freshmanHasBlue: boolean): NavLink[] {
     { href: "/roster/jv", label: "JV" },
     ...(freshmanHasBlue
       ? [
-          { href: "/roster/freshman/green", label: "Freshman Green" },
-          { href: "/roster/freshman/blue", label: "Freshman Blue" },
+          { href: "/roster/freshman/green", label: "Freshmen Green" },
+          { href: "/roster/freshman/blue", label: "Freshmen Blue" },
         ]
-      : [{ href: "/roster/freshman/green", label: "Freshman" }]),
+      : [{ href: "/roster/freshman/green", label: "Freshmen" }]),
   ];
 }

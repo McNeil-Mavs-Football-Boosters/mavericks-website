@@ -31,8 +31,8 @@ export default async function FreshmanGameSchedulePage({
 
   const showDesignation = freshman_has_blue;
   const teamLabel = showDesignation
-    ? `Freshman ${designationTitle}`
-    : "Freshman";
+    ? `Freshmen ${designationTitle}`
+    : "Freshmen";
 
   const [games, roster] = await Promise.all([
     getGamesForTeam({

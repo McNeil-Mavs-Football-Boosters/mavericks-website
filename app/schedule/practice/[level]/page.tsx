@@ -8,7 +8,7 @@ import { createServerClient } from "@/lib/supabase/server";
 const LEVEL_TITLES: Record<string, string> = {
   varsity: "Varsity",
   jv: "JV",
-  freshman: "Freshman",
+  freshman: "Freshmen",
 };
 
 type PracticeRow = {
@@ -29,7 +29,7 @@ export default async function PracticeSchedulePage({
 
   const teamLabel =
     level === "freshman" && freshman_has_blue
-      ? "Freshman Green & Blue"
+      ? "Freshmen Green & Blue"
       : levelTitle;
 
   const supabase = createServerClient();
