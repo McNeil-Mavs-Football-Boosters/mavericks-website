@@ -135,9 +135,9 @@ export default async function Home() {
         tiles={carousel.tiles}
       />
 
-      <section className="bg-muted/40">
+      <section className="bg-mavs-green">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-2xl font-bold uppercase tracking-tight mb-6 text-center">
+          <h2 className="text-2xl font-bold uppercase tracking-tight mb-6 text-center text-white">
             Get Involved
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
