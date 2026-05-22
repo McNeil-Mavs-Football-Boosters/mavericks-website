@@ -108,10 +108,16 @@ Same across all routes.
    - Each card: title, starts_at, location, "Learn more →"
    - Empty state: hide the section entirely
 
-6. **Sponsors strip** — heading "Thank You to Our Sponsors", "See all sponsors →" → `/sponsors`
-   - Horizontal scrolling row of sponsor logos
-   - All logos sized uniformly on home (tier hierarchy lives on `/sponsors` proper)
+6. **Sponsors strip** — quiet pre-footer thank-you band (restyled 2026-05-22)
+   - Small-caps heading "OUR {current_year} SPONSORS" (`text-xs md:text-sm uppercase tracking-widest text-gray-600 font-semibold`); "See all sponsors →" inline at the right on desktop, stacks below on mobile (same small-caps style, lighter weight) — links to `/sponsors`
+   - Single flex row, wraps on mobile (no horizontal scroll). Generous gap (`gap-8 md:gap-12`)
+   - Logo size `h-10 md:h-12`, `items-center` for visually-balanced aspect ratios
+   - Section padding `py-8 md:py-12`, transparent background
+   - Each logo wrapped in `<a target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">` when `website_url` present
+   - All active current-year sponsors render here (not just the carousel-featured 3)
+   - Visual goal: quiet thank-you, not a marketing section. Big sponsor moments live in the hero carousel and on `/sponsors`.
    - Query: `SELECT * FROM sponsors WHERE active = true AND year = site_settings.current_year ORDER BY sort_order, name`
+   - Logo URL: `publicStorageUrl(logo_url, 'sponsor-logos')` (logos stored as bare filenames in the `sponsor-logos` bucket)
    - Empty state: hide the section entirely
 
 7. **Footer** (see site-wide above)

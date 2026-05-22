@@ -103,6 +103,8 @@ All four fields required.
 ```
 `sponsor_name` and `logo_storage_path` required. `tagline` optional.
 
+**Updated 2026-05-22:** `sponsor_spotlight` payload now includes optional `website_url` (clickable logos) and optional `logo_bucket` (defaults to `site-images`, set to `sponsor-logos` when reading from that bucket). The `publicStorageUrl` helper now takes an optional bucket arg. See `commit_sponsors_seed_and_carousel_spec_v2.md`.
+
 The page renders each tile type differently; see "Frontend rendering" below.
 
 ### Seed

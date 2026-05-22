@@ -19,7 +19,7 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-05-20 — Header band + Get Involved repainted)
+## Status (2026-05-22 — Sponsors seed + carousel two-pool rotation)
 
 **Commit B fully shipped end-to-end** (2026-05-17). **Booster Phase 1 slices 1 + 2 shipped on top** (2026-05-18 and 2026-05-19). **Homepage HeroCarousel + canonical-PDF Print View links shipped end-to-end** in the late-day 2026-05-19 session. Every public route in the v2 spec route map renders real data or 404s per spec. The old `window.print()` "Print" buttons on roster/schedule pages have been **replaced** with "Print View" links to the official PDFs (the same handouts parents get at meetings); practice schedules no longer have any print affordance — browser Cmd-P only. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
@@ -51,7 +51,8 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 | **Homepage Hero Carousel — full 3-turn rollout** | ✅ done | `279f47a` (mig 036 tables + 3 headline_cta seed) + `0cd6c51` (StaticHero extract, mounted on /boosters) + `4ef9154` (mig 037 six bg image seeds) + `6944994` (apply_all.sql regen pattern doc fix) + `efe2113` (HeroCarousel client component + next.config.ts images.remotePatterns) + `8b35446` (object-top crop + +10% section height). Spec: `specs/commit_homepage_hero_carousel_spec.md`. |
 | **Print View PDFs + Coach Wallin update** | ✅ done | `c919aa3` (mig 038 documents bucket config + pdf_storage_path/schedule_pdf_storage_path on rosters + PrintViewLink component + 5-page swap + PrintButton/PrintFooter deletion) + `cd27abb` (mig 039 Wallin → Douglas Wallin, Defensive Line Coach) + `4705b8b` (mig 040 freshmen plural path fix). Spec: `specs/commit_print_view_pdfs_spec.md`. |
 | **Freshman → Freshmen UI rename** | ✅ done | `a27a08c`. Every user-visible "Freshman" label flipped to "Freshmen" (collective noun). DB enum value `team_level = 'freshman'`, URL slugs `/roster/freshman/{green,blue}`, and code identifiers (`freshman_has_blue`, `FreshmanRosterPage`) deliberately kept singular. |
-| 5. Public collection routes (expanded) | in progress | `/boosters/join` + `/boosters/members` live; `news/sponsors` + remaining `/boosters/*` (sponsor, volunteer, committees, board, events, documents, donate) still pending. |
+| **Sponsors seed + carousel two-pool rotation + homepage strip restyle** | ✅ done | `732209c`. Migration 041 (renumbered from spec's 039) seeds 7 sponsors at 2025-26 (Rudy's MVP + 6 Golds, 3 featured), relabels `sponsorship_tiers` 2026-27 → 2025-26 (mig 030 miss), adds 1 `headline_cta` ("Become a Sponsor") + 3 `sponsor_spotlight` tiles. HeroCarousel rewritten for two-pool alternating rotation. `publicStorageUrl(path, bucket)` gained optional bucket arg. Homepage sponsors strip restyled small-caps, `h-10 md:h-12`, no horizontal scroll. Spec: `specs/commit_sponsors_seed_and_carousel_spec_v2.md`. |
+| 5. Public collection routes (expanded) | in progress | `/boosters/join` + `/boosters/members` live; sponsors **data** seeded but `/sponsors` page itself still pending (homepage strip + carousel render the data). Remaining: `/news`, `/sponsors` page, `/boosters/sponsor`, `/boosters/donate`, `/boosters/volunteer`, `/boosters/committees`, `/boosters/board`, `/boosters/events`, `/boosters/documents`. |
 | 6–20 | pending | See `specs/build_plan_v2.md`. Step 6 (admin auth + CRUD) is the next gating item before officers can edit content. |
 
 **Staging URL** (no SSO wall as of Step 4b push): `https://mavericks-website-jeremy-vest-s-projects.vercel.app`. Stable alias; per-deployment URLs follow the `mavericks-website-<hash>-jeremy-vest-s-projects.vercel.app` pattern. Per the prior CLAUDE.md, Deployment Protection was set to ON — Step 4b smoke tests returned 200 across the board, so the protection may have been disabled at some point. Re-check before assuming.
@@ -215,6 +216,41 @@ Two small visual passes, three commits. No data, no schema, no spec contract cha
 **Heads-up for future passes.**
 - The hero image on `/boosters` (StaticHero) renders a second `<img>` referencing `mhs-logo.png` at `h-12 w-12` with no circular background. The header's white-disc treatment was deliberately scoped to the header — flag if/when we want to apply it everywhere.
 - The 6 Get Involved cards still use `bg-white` against the new green band, which works. If we ever switch the cards to a darker fill, revisit the navy hover-border treatment (low contrast against navy text on a dark card).
+
+## Build progress 2026-05-22 — Sponsors seed + carousel two-pool rotation + cross-bucket logo helper
+
+Single commit `732209c`. Spec: `specs/commit_sponsors_seed_and_carousel_spec_v2.md`.
+
+**Migration 041 (renumbered from spec's 039)** — `041_sponsors_seed.sql`. Numbering: spec assumed 039 was the next slot, but `039_update_coach_wallin.sql` and `040_fix_freshmen_pdf_path.sql` shipped 2026-05-19, so 041 was the actual next sequential.
+
+- **Pre-step: relabeled `sponsorship_tiers` from `2026-27` → `2025-26`.** Migration 030's football-year split missed this table; `content_map_v2.md` reads tiers by `current_year` (= 2025-26), so the `tier_id` lookups below would have hit NULL. Same hygiene fix migration 030 applied to rosters/practice/coaches/games — captured inline in this migration with a comment, plus reversed in `041_rollback.sql`. After UPDATE, all 5 tier rows (MVP/Diamond/Platinum/Gold/Blue) live at year 2025-26.
+- Inserted 7 sponsors at year `2025-26`: Rudy's BBQ (MVP, featured), AutoNation Chevrolet West Austin (Gold, featured), Sunflower Bank (Gold, featured), LUV Braces (Gold), Dave's Ultimate Automotive (Gold), TKO Heating and Air (Gold), Laurie Flood, Realtor (Gold). `logo_url` stored as bare filename (e.g. `rudys-bbq.png`); frontend builds the full URL via `publicStorageUrl(logo_url, 'sponsor-logos')`. `featured = true` on the first 3; sort_order 1–7. The sponsors table was empty pre-migration (preflight confirmed) so no `logo_url` convention reconciliation was needed.
+- Inserted 1 new `headline_cta` hero tile at sort_order 4: "Become a Sponsor" / "Five tiers, real visibility. Reach every Mavs family from August through December." / CTA "Sponsorship Info" → `/boosters/sponsor`. Pool A is now 4 tiles.
+- Inserted 3 `sponsor_spotlight` hero tiles at sort_order 101–103 for the 3 featured sponsors. Payload shape gained two optional fields per spec: `logo_bucket` (set to `sponsor-logos` on all 3 rows; renderer defaults to `site-images` when omitted, preserving any future tiles in that bucket) and `website_url` (carousel logo becomes a clickable `<a target="_blank">`). `tagline` is null on all 3.
+- Preflight verified all 7 logo files exist at the root of the `sponsor-logos` bucket (storage.objects query). 7 returned, 0 missing.
+- `041_rollback.sql` reverses both INSERTs and the tier year relabel. Skipped by the `db/apply_all.sql` regen pattern (`*_rollback.sql` guard).
+
+**Helper change: `lib/storage.ts`.** `publicStorageUrl(path, bucket = "site-images")`. Default arg preserves all existing call sites (hero backgrounds, anything else assuming `site-images`). Three new callers in this commit pass the bucket explicitly: the homepage sponsors strip (`'sponsor-logos'`), and the carousel sponsor_spotlight renderer (`payload.logo_bucket ?? 'site-images'`). `lib/types.ts` `SponsorSpotlightPayload` extended with optional `logo_bucket: string | null` and `website_url: string | null`.
+
+**HeroCarousel two-pool rotation.** `components/home/HeroCarousel.tsx` rewritten — the foreground rotation no longer flat-cycles a single `tiles` array. At render time `useMemo` splits the prop into `ctaTiles` (headline_cta) and `sponsorTiles` (sponsor_spotlight). State: `ctaIndex`, `sponsorIndex`, `activePool: 'cta' | 'sponsor'`. Initial pool is `'cta'` when CTAs exist, else `'sponsor'`. Per-tick logic at the unchanged 11000ms interval matches the spec § "Rotation logic" — when leaving the sponsor pool the sponsor pointer advances first so the next visit shows the next sponsor; when both pools are non-empty the CTA pointer also advances on each swap so pair drift gives the spec's intended `CTA1 → S1 → CTA2 → S2 → CTA3 → S3 → CTA4 → S1 → CTA1 → S2 → ...` cadence with 4 CTAs and 3 sponsors. Empty-pool fallbacks: zero-tile case unchanged (no foreground, no scrim); single-pool case rotates that pool only; both-empty falls through to no foreground. The `tile.id`-keyed cross-fade was replaced with a single rendered tile selected from the active pool. Sponsor_spotlight renderer reads bucket via `payload.logo_bucket ?? 'site-images'` and wraps the logo in `<a target="_blank" rel="noopener noreferrer">` when `payload.website_url` is present. Sponsor-name text below the logo stays plain (not linked) per spec.
+
+**Homepage sponsors strip restyle** (`app/page.tsx`). The section is now a quiet pre-footer thank-you band, not a marketing section:
+- Heading: `Our {current_year} Sponsors` (interpolated from site_settings → "Our 2025-26 Sponsors") in small caps — `text-xs md:text-sm uppercase tracking-widest text-gray-600 font-semibold`.
+- "See all sponsors →" link inline at right on desktop (`md:items-center md:justify-between`), stacks below on mobile. Same small-caps style, slightly lighter weight.
+- Logo row: flex-wrap (no horizontal scroll), `gap-8 md:gap-12`, `items-center` for aspect-ratio balance.
+- Logo height: `h-10 md:h-12` (was `h-16`). Section padding: `py-8 md:py-12` (was `py-12`).
+- Each logo wrapped in `<a href={website_url} target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">` when present. Same link convention as the carousel.
+- Logos rendered via `publicStorageUrl(s.logo_url, 'sponsor-logos')` so bare-filename storage works.
+- All 7 active sponsors render here, not just the featured 3.
+
+**`/sponsors` page not built (deliberately skipped this commit).** The spec assumed it existed per `content_map_v2.md`, but `app/sponsors/` was never created (Step 5 still pending). The spec explicitly says "/sponsors page itself is unchanged," so no code changes were made to add it. The 4 in-app links to `/sponsors` (header, mobile nav, footer, homepage "See all sponsors →") all 404 today; this is unchanged from pre-commit state. Logged as a Step 5 follow-up in `followups.md`. The new "Become a Sponsor" CTA in the carousel similarly targets `/boosters/sponsor`, which also 404s today (matching the existing `/boosters/donate` and `/boosters/volunteer` CTA-target pattern from the previous carousel — also logged).
+
+**Other notes.**
+- The pre-existing `react-hooks/set-state-in-effect` lint warning on `setReducedMotion(mql.matches)` carried over to the rewritten HeroCarousel (same code, same line). Already tracked in `followups.md`.
+- `db/apply_all.sql` regenerated to include migration 041 (`*_rollback.sql` skipped per the established guard).
+- Preflight queries from spec § "Preflight verification" all returned expected counts: 5 tier rows at 2026-27 pre-relabel (spec expected 1+1 at 2025-26 — caught the relabel-needed condition), 0 sponsors at 2025-26, 3 active headline_cta tiles. Post-INSERT verification: 7 sponsors at 2025-26 (3 featured), 3 sponsor_spotlight tiles, 4 headline_cta tiles.
+
+**Spec deviations documented inline in `specs/commit_sponsors_seed_and_carousel_spec_v2.md` "As-shipped" block at the top of the file.**
 
 ## The pivot (2026-05-16)
 

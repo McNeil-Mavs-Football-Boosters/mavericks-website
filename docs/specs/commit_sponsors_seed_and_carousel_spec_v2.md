@@ -2,6 +2,16 @@
 
 Written 2026-05-22. Updated 2026-05-22 to use the existing `sponsor-logos` bucket instead of a new `site-images/sponsors/` folder. Four changes shipped together as one commit:
 
+## As-shipped (2026-05-22, commit `732209c`)
+
+Three deviations from the spec text below, made during implementation:
+
+1. **Migration number renumbered to `041`** (spec assumed `039`). `039_update_coach_wallin.sql` and `040_fix_freshmen_pdf_path.sql` shipped on 2026-05-19 in the Print View PDFs work, so the next sequential slot was 041. Rollback at `db/migrations/041_rollback.sql`.
+2. **`sponsorship_tiers` year relabeled in the same migration.** Preflight found 5 tier rows still stamped `2026-27` — migration 030's football-year split (2026-27 → 2025-26 on rosters/practice/coaches/games) missed `sponsorship_tiers`. Per `content_map_v2.md`, the `/sponsors` and homepage sponsor queries read by `current_year` (= 2025-26), so the `tier_id` lookups in this seed would have hit NULL. Migration 041 prefixes the inserts with `update sponsorship_tiers set year='2025-26' where year='2026-27';`, which is the same hygiene fix migration 030 already applied to the four other football-stamped tables. Rollback re-labels back to `2026-27`.
+3. **`/sponsors` page does not exist yet.** The spec assumed the page was already built per `content_map_v2.md`, but `app/sponsors/` was never created (Step 5 still pending in `docs/CLAUDE.md`). No code changes were made to add it — the spec explicitly says "/sponsors page itself is unchanged." All in-app links to `/sponsors` (header, mobile nav, footer, homepage "See all sponsors →") 404 today; this is unchanged from the pre-commit state. Building the route is tracked as a Step 5 follow-up. The "Become a Sponsor" CTA in the carousel similarly links to `/boosters/sponsor`, also a 404 today, matching the existing `/boosters/donate` and `/boosters/volunteer` CTA-target pattern in the previous carousel.
+
+Everything else shipped as specced. Acceptance criteria 1–8 verified against the staging URL on commit. Criterion 9 (Lighthouse a11y ≥ 90) not yet run.
+
 1. **Seed migration**: 7 sponsors for `2025-26` (1 placeholder MVP + 6 last-year Golds), 1 new "Become a Sponsor" headline_cta tile, 3 sponsor_spotlight tiles for the featured sponsors.
 2. **HeroCarousel JS change**: foreground rotation splits tiles into two pools (`headline_cta` and `sponsor_spotlight`) and alternates between them every tick.
 3. **Helper change for cross-bucket reads**: the carousel currently reads from `site-images` via `publicStorageUrl(path)`. Sponsor logos live in `sponsor-logos`. A small helper update lets the sponsor_spotlight tile read from a different bucket.
