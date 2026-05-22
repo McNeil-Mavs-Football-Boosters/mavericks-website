@@ -38,18 +38,21 @@ type SponsorTile = {
   name: string;
   logo_url: string | null;
   website_url: string | null;
+  tier_id: string | null;
 };
 
 type HomeData = {
   news: NewsCard[];
   events: EventCard[];
   sponsors: SponsorTile[];
+  mvpTierId: string | null;
 };
 
 const EMPTY_HOME: HomeData = {
   news: [],
   events: [],
   sponsors: [],
+  mvpTierId: null,
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -69,7 +72,7 @@ async function loadHome(): Promise<HomeData> {
     const supabase = createServerClient();
     const nowIso = new Date().toISOString();
 
-    const [newsRes, eventsRes, sponsorsRes] = await Promise.all([
+    const [newsRes, eventsRes, sponsorsRes, mvpTierRes] = await Promise.all([
       supabase
         .from("news_posts")
         .select("id, slug, title, excerpt, featured_image_url, published_at")
@@ -87,19 +90,32 @@ async function loadHome(): Promise<HomeData> {
         .returns<EventCard[]>(),
       supabase
         .from("sponsors")
-        .select("id, name, logo_url, website_url")
+        .select("id, name, logo_url, website_url, tier_id")
         .eq("active", true)
         .eq("year", current_year)
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true })
         .returns<SponsorTile[]>(),
+      supabase
+        .from("sponsorship_tiers")
+        .select("id")
+        .eq("year", current_year)
+        .eq("active", true)
+        .eq("name", "MVP")
+        .maybeSingle(),
     ]);
+
+    if (mvpTierRes.error) {
+      console.error("Failed to load MVP tier:", mvpTierRes.error);
+    }
 
     return {
       news: newsRes.error || !newsRes.data ? [] : newsRes.data,
       events: eventsRes.error || !eventsRes.data ? [] : eventsRes.data,
       sponsors:
         sponsorsRes.error || !sponsorsRes.data ? [] : sponsorsRes.data,
+      mvpTierId:
+        mvpTierRes.error || !mvpTierRes.data ? null : mvpTierRes.data.id,
     };
   } catch {
     return EMPTY_HOME;
@@ -121,13 +137,53 @@ function buildQuickLinks(currentYear: string): Array<{
   ];
 }
 
+function SponsorStripLogo({
+  sponsor,
+  sizeClass,
+}: {
+  sponsor: SponsorTile;
+  sizeClass: string;
+}) {
+  const logoSrc = sponsor.logo_url
+    ? publicStorageUrl(sponsor.logo_url, "sponsor-logos")
+    : null;
+  if (!logoSrc) return null;
+  const inner = (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={logoSrc}
+      alt={sponsor.name}
+      className={`${sizeClass} w-auto h-auto object-contain`}
+    />
+  );
+  return sponsor.website_url ? (
+    <a
+      href={sponsor.website_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:opacity-80 transition-opacity"
+      aria-label={`Visit ${sponsor.name}`}
+    >
+      {inner}
+    </a>
+  ) : (
+    inner
+  );
+}
+
 export default async function Home() {
   const { current_year } = await getSiteSettingsCore();
-  const [{ news, events, sponsors }, carousel] = await Promise.all([
+  const [{ news, events, sponsors, mvpTierId }, carousel] = await Promise.all([
     loadHome(),
     loadHeroCarouselData(),
   ]);
   const quickLinks = buildQuickLinks(current_year);
+  const topTierSponsors = mvpTierId
+    ? sponsors.filter((s) => s.tier_id === mvpTierId)
+    : [];
+  const otherSponsors = mvpTierId
+    ? sponsors.filter((s) => s.tier_id !== mvpTierId)
+    : sponsors;
 
   return (
     <>
@@ -252,46 +308,39 @@ export default async function Home() {
       ) : null}
 
       {sponsors.length > 0 ? (
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 mb-6">
-            <h2 className="text-xs md:text-sm uppercase tracking-widest text-gray-600 font-semibold">
-              Our {current_year} Sponsors
-            </h2>
+        <section className="container mx-auto px-4 py-12 md:py-16">
+          <h2 className="text-2xl md:text-3xl font-bold text-mavs-navy text-center mb-10">
+            Thank You to Our 2025-2026 Sponsors!
+          </h2>
+          {topTierSponsors.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-center gap-12 mb-8">
+              {topTierSponsors.map((s) => (
+                <SponsorStripLogo
+                  key={s.id}
+                  sponsor={s}
+                  sizeClass="max-w-[220px] max-h-20"
+                />
+              ))}
+            </div>
+          ) : null}
+          {otherSponsors.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+              {otherSponsors.map((s) => (
+                <SponsorStripLogo
+                  key={s.id}
+                  sponsor={s}
+                  sizeClass="max-w-[160px] max-h-12"
+                />
+              ))}
+            </div>
+          ) : null}
+          <div className="text-center mt-10">
             <Link
               href="/sponsors"
-              className="text-xs md:text-sm uppercase tracking-widest text-gray-600 hover:text-mavs-navy font-medium"
+              className="text-mavs-navy font-semibold uppercase tracking-wide text-sm hover:text-mavs-green transition-colors"
             >
-              See all sponsors →
+              See All Sponsors →
             </Link>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-            {sponsors.map((s) => {
-              const inner = s.logo_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={publicStorageUrl(s.logo_url, "sponsor-logos")}
-                  alt={s.name}
-                  className="h-10 md:h-12 w-auto object-contain"
-                />
-              ) : (
-                <span className="text-sm text-muted-foreground font-medium">
-                  {s.name}
-                </span>
-              );
-              return s.website_url ? (
-                <a
-                  key={s.id}
-                  href={s.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:opacity-80 transition-opacity"
-                >
-                  {inner}
-                </a>
-              ) : (
-                <span key={s.id}>{inner}</span>
-              );
-            })}
           </div>
         </section>
       ) : null}
