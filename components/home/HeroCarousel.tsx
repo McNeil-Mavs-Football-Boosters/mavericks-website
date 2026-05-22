@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { publicStorageUrl } from "@/lib/storage";
@@ -18,12 +18,28 @@ type HeroCarouselProps = {
   tiles: HeroForegroundTile[];
 };
 
+type ActivePool = "cta" | "sponsor";
+
 const BG_INTERVAL_MS = 7000;
 const FG_INTERVAL_MS = 11000;
 
 export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
+  const { ctaTiles, sponsorTiles } = useMemo(() => {
+    const cta: HeroForegroundTile[] = [];
+    const sponsor: HeroForegroundTile[] = [];
+    for (const tile of tiles) {
+      if (tile.tile_type === "headline_cta") cta.push(tile);
+      else if (tile.tile_type === "sponsor_spotlight") sponsor.push(tile);
+    }
+    return { ctaTiles: cta, sponsorTiles: sponsor };
+  }, [tiles]);
+
   const [bgIndex, setBgIndex] = useState(0);
-  const [tileIndex, setTileIndex] = useState(0);
+  const [ctaIndex, setCtaIndex] = useState(0);
+  const [sponsorIndex, setSponsorIndex] = useState(0);
+  const [activePool, setActivePool] = useState<ActivePool>(() =>
+    ctaTiles.length > 0 ? "cta" : "sponsor",
+  );
   const [isHovered, setIsHovered] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -57,7 +73,7 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
 
   const shouldAnimate = !reducedMotion && !isHovered && !isHidden;
 
-  // Background rotation.
+  // Background rotation — independent of foreground.
   useEffect(() => {
     if (!shouldAnimate) return;
     if (backgrounds.length <= 1) return;
@@ -69,21 +85,46 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
     };
   }, [shouldAnimate, backgrounds.length]);
 
-  // Foreground rotation.
+  // Foreground rotation — two-pool alternation.
   useEffect(() => {
     if (!shouldAnimate) return;
-    if (tiles.length <= 1) return;
+    const totalTiles = ctaTiles.length + sponsorTiles.length;
+    if (totalTiles <= 1) return;
     const id = window.setInterval(() => {
-      setTileIndex((i) => (i + 1) % tiles.length);
+      setActivePool((pool) => {
+        if (pool === "cta") {
+          if (sponsorTiles.length > 0) {
+            return "sponsor";
+          }
+          // No sponsors — stay in cta and advance.
+          setCtaIndex((i) => (i + 1) % ctaTiles.length);
+          return "cta";
+        }
+        // Leaving sponsor: advance sponsor pointer first.
+        setSponsorIndex((i) => (i + 1) % sponsorTiles.length);
+        if (ctaTiles.length > 0) {
+          setCtaIndex((i) => (i + 1) % ctaTiles.length);
+          return "cta";
+        }
+        return "sponsor";
+      });
     }, FG_INTERVAL_MS);
     return () => {
       window.clearInterval(id);
     };
-  }, [shouldAnimate, tiles.length]);
+  }, [shouldAnimate, ctaTiles.length, sponsorTiles.length]);
 
   const hasBackgrounds = backgrounds.length > 0;
-  const hasTiles = tiles.length > 0;
+  const hasTiles = ctaTiles.length > 0 || sponsorTiles.length > 0;
   const showScrim = hasBackgrounds && hasTiles;
+
+  const currentTile: HeroForegroundTile | null = hasTiles
+    ? activePool === "cta" && ctaTiles.length > 0
+      ? ctaTiles[ctaIndex] ?? null
+      : sponsorTiles.length > 0
+        ? sponsorTiles[sponsorIndex] ?? null
+        : (ctaTiles[ctaIndex] ?? null)
+    : null;
 
   return (
     <section
@@ -121,22 +162,15 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
         />
       ) : null}
 
-      {hasTiles ? (
+      {currentTile ? (
         <div className="relative z-10 flex min-h-[55vh] md:min-h-[77vh] items-center justify-center px-6">
           <div className="relative w-full max-w-5xl">
-            {tiles.map((tile, idx) => (
-              <div
-                key={tile.id}
-                className={`${
-                  idx === 0 ? "relative" : "absolute inset-0"
-                } flex items-center justify-center transition-opacity duration-1000 ${
-                  idx === tileIndex ? "opacity-100" : "opacity-0"
-                }`}
-                aria-hidden={idx === tileIndex ? undefined : true}
-              >
-                <TileBody tile={tile} />
-              </div>
-            ))}
+            <div
+              key={currentTile.id}
+              className="flex items-center justify-center transition-opacity duration-1000 opacity-100"
+            >
+              <TileBody tile={currentTile} />
+            </div>
           </div>
         </div>
       ) : null}
@@ -183,19 +217,41 @@ function SponsorSpotlightTile({
 }) {
   const hasTagline =
     typeof payload.tagline === "string" && payload.tagline.length > 0;
+  const bucket = payload.logo_bucket ?? "site-images";
+  const logoSrc = publicStorageUrl(payload.logo_storage_path, bucket);
+  const websiteUrl =
+    typeof payload.website_url === "string" && payload.website_url.length > 0
+      ? payload.website_url
+      : null;
+  /* eslint-disable @next/next/no-img-element */
+  // Plain <img> on purpose: sponsor logos are arbitrary sizes from a public
+  // bucket; next/image's intrinsic-sizing helps less than letting the natural
+  // ratio render.
+  const logo = (
+    <img
+      src={logoSrc}
+      alt={payload.sponsor_name}
+      className="h-24 md:h-32 mt-4 mx-auto"
+    />
+  );
+  /* eslint-enable @next/next/no-img-element */
   return (
     <div className="text-white text-center">
       <p className="uppercase tracking-wide text-sm font-bold opacity-80">
         Thanks to our sponsor
       </p>
-      {/* Plain <img> on purpose: sponsor logos are arbitrary sizes from a public bucket;
-          next/image's intrinsic-sizing helps less here than letting the natural ratio render. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={publicStorageUrl(payload.logo_storage_path)}
-        alt={payload.sponsor_name}
-        className="h-24 md:h-32 mt-4 mx-auto"
-      />
+      {websiteUrl ? (
+        <a
+          href={websiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block hover:opacity-80 transition-opacity"
+        >
+          {logo}
+        </a>
+      ) : (
+        logo
+      )}
       <p className="mt-4 text-lg font-bold">{payload.sponsor_name}</p>
       {hasTagline ? (
         <p className="text-white/80 italic mt-1">{payload.tagline}</p>

@@ -155,7 +155,9 @@ export interface HeadlineCtaPayload {
 export interface SponsorSpotlightPayload {
   sponsor_name: string;
   logo_storage_path: string;
+  logo_bucket?: string | null;
   tagline?: string | null;
+  website_url?: string | null;
 }
 
 export type HeroForegroundTilePayload =

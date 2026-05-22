@@ -11,6 +11,7 @@ import {
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
+import { publicStorageUrl } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
@@ -251,26 +252,26 @@ export default async function Home() {
       ) : null}
 
       {sponsors.length > 0 ? (
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold uppercase tracking-tight">
-              Thank You to Our Sponsors
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 mb-6">
+            <h2 className="text-xs md:text-sm uppercase tracking-widest text-gray-600 font-semibold">
+              Our {current_year} Sponsors
             </h2>
             <Link
               href="/sponsors"
-              className="text-sm font-medium text-mavs-navy hover:underline"
+              className="text-xs md:text-sm uppercase tracking-widest text-gray-600 hover:text-mavs-navy font-medium"
             >
               See all sponsors →
             </Link>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-8">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             {sponsors.map((s) => {
               const inner = s.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={s.logo_url}
+                  src={publicStorageUrl(s.logo_url, "sponsor-logos")}
                   alt={s.name}
-                  className="h-16 w-auto object-contain"
+                  className="h-10 md:h-12 w-auto object-contain"
                 />
               ) : (
                 <span className="text-sm text-muted-foreground font-medium">
@@ -283,6 +284,7 @@ export default async function Home() {
                   href={s.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="hover:opacity-80 transition-opacity"
                 >
                   {inner}
                 </a>
