@@ -19,7 +19,7 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-05-22 — Sponsors seed + carousel two-pool rotation)
+## Status (2026-05-22 — /sponsors page built; sponsors data + rendering complete)
 
 **Commit B fully shipped end-to-end** (2026-05-17). **Booster Phase 1 slices 1 + 2 shipped on top** (2026-05-18 and 2026-05-19). **Homepage HeroCarousel + canonical-PDF Print View links shipped end-to-end** in the late-day 2026-05-19 session. Every public route in the v2 spec route map renders real data or 404s per spec. The old `window.print()` "Print" buttons on roster/schedule pages have been **replaced** with "Print View" links to the official PDFs (the same handouts parents get at meetings); practice schedules no longer have any print affordance — browser Cmd-P only. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
 
@@ -52,7 +52,8 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 | **Print View PDFs + Coach Wallin update** | ✅ done | `c919aa3` (mig 038 documents bucket config + pdf_storage_path/schedule_pdf_storage_path on rosters + PrintViewLink component + 5-page swap + PrintButton/PrintFooter deletion) + `cd27abb` (mig 039 Wallin → Douglas Wallin, Defensive Line Coach) + `4705b8b` (mig 040 freshmen plural path fix). Spec: `specs/commit_print_view_pdfs_spec.md`. |
 | **Freshman → Freshmen UI rename** | ✅ done | `a27a08c`. Every user-visible "Freshman" label flipped to "Freshmen" (collective noun). DB enum value `team_level = 'freshman'`, URL slugs `/roster/freshman/{green,blue}`, and code identifiers (`freshman_has_blue`, `FreshmanRosterPage`) deliberately kept singular. |
 | **Sponsors seed + carousel two-pool rotation + homepage strip restyle** | ✅ done | `732209c`. Migration 041 (renumbered from spec's 039) seeds 7 sponsors at 2025-26 (Rudy's MVP + 6 Golds, 3 featured), relabels `sponsorship_tiers` 2026-27 → 2025-26 (mig 030 miss), adds 1 `headline_cta` ("Become a Sponsor") + 3 `sponsor_spotlight` tiles. HeroCarousel rewritten for two-pool alternating rotation. `publicStorageUrl(path, bucket)` gained optional bucket arg. Homepage sponsors strip restyled small-caps, `h-10 md:h-12`, no horizontal scroll. Spec: `specs/commit_sponsors_seed_and_carousel_spec_v2.md`. |
-| 5. Public collection routes (expanded) | in progress | `/boosters/join` + `/boosters/members` live; sponsors **data** seeded but `/sponsors` page itself still pending (homepage strip + carousel render the data). Remaining: `/news`, `/sponsors` page, `/boosters/sponsor`, `/boosters/donate`, `/boosters/volunteer`, `/boosters/committees`, `/boosters/board`, `/boosters/events`, `/boosters/documents`. |
+| **`/sponsors` public route** | ✅ done | `5ed2b4d`. Server component (force-dynamic) at `app/sponsors/page.tsx` + `[catchall]` 404. Tier-grouped (MVP→Blue), hide-if-empty per tier, "Other Supporters" catch-all for `tier_id IS NULL`. Logo heights `h-60 / h-48 / h-40 / h-32 / h-24` by tier. Page-header "Become a Sponsor →" + footer card "See Sponsorship Options" both `<Link href="/boosters/sponsor">`. Footer button uses `text-white on bg-mavs-green` (spec said navy-on-green; that fails WCAG AA). Spec: `specs/sponsors_page_spec.md`. |
+| 5. Public collection routes (expanded) | in progress | `/boosters/join` + `/boosters/members` + `/sponsors` live. Remaining: `/news`, `/boosters/sponsor`, `/boosters/donate`, `/boosters/volunteer`, `/boosters/committees`, `/boosters/board`, `/boosters/events`, `/boosters/documents`. |
 | 6–20 | pending | See `specs/build_plan_v2.md`. Step 6 (admin auth + CRUD) is the next gating item before officers can edit content. |
 
 **Staging URL** (no SSO wall as of Step 4b push): `https://mavericks-website-jeremy-vest-s-projects.vercel.app`. Stable alias; per-deployment URLs follow the `mavericks-website-<hash>-jeremy-vest-s-projects.vercel.app` pattern. Per the prior CLAUDE.md, Deployment Protection was set to ON — Step 4b smoke tests returned 200 across the board, so the protection may have been disabled at some point. Re-check before assuming.
@@ -251,6 +252,38 @@ Single commit `732209c`. Spec: `specs/commit_sponsors_seed_and_carousel_spec_v2.
 - Preflight queries from spec § "Preflight verification" all returned expected counts: 5 tier rows at 2026-27 pre-relabel (spec expected 1+1 at 2025-26 — caught the relabel-needed condition), 0 sponsors at 2025-26, 3 active headline_cta tiles. Post-INSERT verification: 7 sponsors at 2025-26 (3 featured), 3 sponsor_spotlight tiles, 4 headline_cta tiles.
 
 **Spec deviations documented inline in `specs/commit_sponsors_seed_and_carousel_spec_v2.md` "As-shipped" block at the top of the file.**
+
+## Build progress 2026-05-22 (later) — `/sponsors` public route
+
+Single commit `5ed2b4d`. Spec: `specs/sponsors_page_spec.md`. Closes the "/sponsors page doesn't exist" item logged earlier the same day. Built via parallel-subagent pattern (one general-purpose agent for the page; parent did concern-review + smoke tests). No DB changes.
+
+**`app/sponsors/page.tsx`** (server component, `export const dynamic = "force-dynamic"`, ~210 lines). Single page-level fetch via `createServerClient` (matches existing public-route security pattern — followups.md tracks the anon-client rotation across all routes; this page joins that consolidation). `Promise.all` over `sponsorship_tiers` + `sponsors` for `current_year=2025-26`, both `.eq('active', true)`, both `.order('sort_order')`. Groups sponsors by `tier_id` into a Map; `tier_id IS NULL` rows collected into `unaffiliatedSponsors` (currently empty under the seed).
+
+Section order: page header → MVP → Diamond → Platinum → Gold → Blue → Other Supporters → footer CTA card. Each tier section guarded by sponsor-count > 0 — empty tiers don't render their h2 at all. Tier-to-height map by `tier.name`: MVP `h-60`, Diamond `h-48`, Platinum `h-40`, Gold `h-32`, Blue `h-24`, unknown → `h-32` fallback. Uniform height within a tier; `object-contain` preserves logo aspect ratio inside the bound. With the current seed: MVP renders Rudy's at `h-60`, Gold renders 6 logos at `h-32`, Diamond/Platinum/Blue/Other Supporters all collapsed. Verified via curl against staging — section h2s for MVP and Gold present, none for the empty tiers.
+
+`SponsorCard` is inline within page.tsx. Each card is a `<div>` wrapper with the logo `<img>` inside an `<a target="_blank" rel="noopener noreferrer" aria-label={\`Visit ${name}\`}>` — link only on the logo, no sponsor-name text below (Jeremy 2026-05-22: logos carry their own brand recognition; the per-row name text would have added noise). Plain `<img>` instead of `next/image` (same convention as the homepage strip and the carousel sponsor_spotlight tile). Defensive `if (!sponsor.logo_url) return null` guard at the top of SponsorCard since `logo_url` is nullable in the schema; under the seed every row has a logo so the branch is dead in practice. Used `&apos;` in the empty-state copy to satisfy `react/no-unescaped-entities`.
+
+Page-header "Become a Sponsor →" CTA and footer-card "See Sponsorship Options" CTA both route through `<Link href="/boosters/sponsor">` (not raw `<a href>` as the spec drafted — internal nav goes through next/link for prefetch + no full-page-reload, matching every other internal nav on the site). `/boosters/sponsor` still 404s — same pre-existing state, separate commit. Empty state when `sponsors.length === 0` renders standalone (no page header above it, no footer card) per spec § "Empty state."
+
+**`app/sponsors/[catchall]/page.tsx`** — unconditional `notFound()`. 4-line file. Matches `/coaches/[catchall]/page.tsx` and `/resources/[catchall]/page.tsx` so `/sponsors/foo` returns 404 instead of falling through to the dynamic catchall miss path. Verified via curl: `/sponsors` 200, `/sponsors/foo` 404.
+
+**Spec deviation applied during build (pushback-driven).** Footer CTA card button spec'd `bg-mavs-green text-mavs-navy`. After the 2026-05-17 brand pass `mavs-green` became `#1E541E` (darker per the McNeil HS style guide) — contrast ratio with `#011858` navy text is ~1.3:1, well below WCAG AA's 4.5:1 (and below the 3:1 large-text floor too). Acceptance criterion #9 requires Lighthouse a11y ≥ 90; the spec'd colors would have failed it. Built with `bg-mavs-green text-white hover:bg-mavs-green/90` instead — keeps the green-accent intent, gets to AA. Logged inline in the spec; no doc thrash needed. Two other concerns I raised before dispatch and applied: internal links via `<Link>` not raw `<a>` (above), and inline types in the page file (Sponsor + SponsorshipTier interfaces local to page.tsx) so no extra surface in `lib/types.ts` for a page-specific shape.
+
+**Verification against staging URL** (`/sponsors`):
+- 200 OK; `/sponsors/foo` 404.
+- 7 sponsor logos referenced via `https://<project>.supabase.co/storage/v1/object/public/sponsor-logos/<filename>` — all 7 expected files present in HTML.
+- Logo heights: 1 × `h-60` (Rudy's), 6 × `h-32` (Golds). No other heights.
+- Section h2s present: "MVP Sponsors", "Gold Sponsors", "Want to Join Them in 2026-27?" — Diamond/Platinum/Blue/Other-Supporters not present (correct — those tiers are empty under the seed).
+- Year subhead: "2025-26 Season" (React streams as two text segments separated by an HTML comment; correctly assembled in the DOM).
+- 7 sponsor `website_url` anchors with `target="_blank" rel="noopener noreferrer"`.
+- 2 `/boosters/sponsor` `<Link>` references (page header + footer card).
+- "Become a Sponsor →" and "See Sponsorship Options" labels both present.
+- `npx tsc --noEmit` clean. `npx eslint app/sponsors/page.tsx` clean.
+- Lighthouse a11y not run from CLI; browser-side check deferred (not blocking).
+
+**Heads-up for future passes.**
+- `/sponsors` is the first public route to render `<img>` directly from the `sponsor-logos` bucket. `next.config.ts` `images.remotePatterns` already whitelists `*.supabase.co` under `/storage/v1/object/public/**` so even if we ever swap to `next/image` it will work without a config change.
+- The defensive `logo_url == null` guard in SponsorCard is dead code under the current seed. Leave it in place — admin CRUD will eventually allow rows without logos before upload completes; the guard prevents broken image icons in that gap.
 
 ## The pivot (2026-05-16)
 
