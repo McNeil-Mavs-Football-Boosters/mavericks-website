@@ -29,24 +29,24 @@ interface SponsorshipTier {
   year: string;
 }
 
-const TIER_HEIGHTS: Record<string, string> = {
-  MVP: "h-60",
-  Diamond: "h-48",
-  Platinum: "h-40",
-  Gold: "h-32",
-  Blue: "h-24",
+const TIER_SIZE_CLASSES: Record<string, string> = {
+  MVP: "max-h-60 max-w-[440px]",
+  Diamond: "max-h-48 max-w-[360px]",
+  Platinum: "max-h-40 max-w-[320px]",
+  Gold: "max-h-32 max-w-[280px]",
+  Blue: "max-h-24 max-w-[200px]",
 };
 
-function tierMaxHeight(tierName: string): string {
-  return TIER_HEIGHTS[tierName] ?? "h-32";
+function tierSizeClasses(tierName: string): string {
+  return TIER_SIZE_CLASSES[tierName] ?? "max-h-32 max-w-[280px]";
 }
 
 function SponsorCard({
   sponsor,
-  maxHeight,
+  sizeClasses,
 }: {
   sponsor: Sponsor;
-  maxHeight: string;
+  sizeClasses: string;
 }) {
   if (!sponsor.logo_url) return null;
   const logoSrc = publicStorageUrl(sponsor.logo_url, "sponsor-logos");
@@ -55,7 +55,7 @@ function SponsorCard({
     <img
       src={logoSrc}
       alt={sponsor.name}
-      className={`${maxHeight} w-auto object-contain`}
+      className={`${sizeClasses} w-auto h-auto object-contain`}
     />
   );
   return (
@@ -169,7 +169,7 @@ export default async function SponsorsPage() {
       {tiers.map((tier) => {
         const tierSponsors = sponsorsByTier.get(tier.id);
         if (!tierSponsors || tierSponsors.length === 0) return null;
-        const maxHeight = tierMaxHeight(tier.name);
+        const sizeClasses = tierSizeClasses(tier.name);
         return (
           <section
             key={tier.id}
@@ -184,7 +184,7 @@ export default async function SponsorsPage() {
                 <SponsorCard
                   key={sponsor.id}
                   sponsor={sponsor}
-                  maxHeight={maxHeight}
+                  sizeClasses={sizeClasses}
                 />
               ))}
             </div>
@@ -204,7 +204,7 @@ export default async function SponsorsPage() {
               <SponsorCard
                 key={sponsor.id}
                 sponsor={sponsor}
-                maxHeight="h-24"
+                sizeClasses="max-h-24 max-w-[200px]"
               />
             ))}
           </div>
