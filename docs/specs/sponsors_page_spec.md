@@ -2,13 +2,15 @@
 
 Written 2026-05-22. Builds the missing `/sponsors` public route. Today the route 404s; the homepage strip heading link, the footer "Sponsors" link, and the new `/sponsors` footer CTA card all point at a page that doesn't exist.
 
-## As-shipped (2026-05-22, commit `5ed2b4d`)
+## As-shipped (2026-05-22, commits `5ed2b4d` + `f52b72e`)
 
-Three deviations applied during build:
+Initial build (`5ed2b4d`) with three deviations:
 
-1. **Footer CTA card button is `bg-mavs-green text-white`, not the spec's `bg-mavs-green text-mavs-navy`.** Post-brand-pass `mavs-green` is `#1E541E` (darker per the McNeil HS style guide); navy text on that is ~1.3:1 contrast — fails WCAG AA and would have failed acceptance criterion #9 (Lighthouse a11y ≥ 90). White text on the same green clears AA at the large-bold size used.
-2. **Internal `/boosters/sponsor` CTAs use `<Link>` from `next/link`, not raw `<a href>`.** Matches the rest of the site's internal nav (prefetch, no full-page reload). External `website_url` links stay as `<a target="_blank">`.
-3. **A `/sponsors/[catchall]/page.tsx` companion route added** (unconditional `notFound()`). Sibling routes `/coaches` and `/resources` both have this — `/sponsors/foo` returns 404 instead of falling through.
+1. **Footer CTA card button is `bg-mavs-green text-white`**, not the spec's `bg-mavs-green text-mavs-navy`. Post-brand-pass `mavs-green` is `#1E541E`; navy text on that is ~1.3:1 contrast, fails WCAG AA, would have failed acceptance #9 (Lighthouse a11y ≥ 90). White text on the same green clears AA at the large-bold size used.
+2. **Internal `/boosters/sponsor` CTAs use `<Link>` from `next/link`**, not raw `<a href>`. Matches the rest of the site's internal nav (prefetch, no full-page reload). External `website_url` links stay as `<a target="_blank">`.
+3. **A `/sponsors/[catchall]/page.tsx` companion route was added** (unconditional `notFound()`). Sibling routes `/coaches` and `/resources` both have this — `/sponsors/foo` returns 404 instead of falling through.
+
+Post-ship sizing rewrite (`f52b72e`, same day): switched per-tier logo sizing from height-only (`h-60` / `h-48` / `h-40` / `h-32` / `h-24`) to max-height + max-width bounding-box pairs as documented in section 2 below (`max-h-60 max-w-[440px]` through `max-h-24 max-w-[200px]`). Reason: Sunflower Bank at 384×42 source would render hundreds of pixels wide under height-only sizing; width caps preserve hierarchy while preventing horizontal blowouts. The "Other Supporters" fallback class moved from `"h-24"` to `"max-h-24 max-w-[200px]"` in the same edit. Lookup helper renamed `tierMaxHeight` → `tierSizeClasses`; SponsorCard prop renamed `maxHeight` → `sizeClasses`; img className gained `w-auto h-auto` so `object-contain` scales within the bounding box.
 
 `Sponsor` and `SponsorshipTier` types live inline in `app/sponsors/page.tsx` rather than in `lib/types.ts` (page-specific shape, no other consumer). Acceptance criteria 1–8, 10 verified against staging via curl; criterion 9 (Lighthouse a11y) not yet run from a browser.
 
@@ -107,34 +109,36 @@ Tier section markup:
   </h2>
   <div class="h-0.5 w-12 bg-mavs-green mb-8"></div>
   <div class="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-    {tierSponsors.map(sponsor => <SponsorCard sponsor={sponsor} maxHeight={tierMaxHeight(tier)} />)}
+    {tierSponsors.map(sponsor => <SponsorCard sponsor={sponsor} sizeClasses={tierSizeClasses(tier)} />)}
   </div>
 </section>
 ```
 
 The top border uses `border-mavs-green/30` (semi-transparent green) instead of `border-gray-200` for a subtle brand accent between tiers. The small green underline (h-0.5 w-12 bg-mavs-green) under each tier heading mirrors the page title treatment for visual rhythm.
 
-**Tier-to-logo-height mapping** (matches content_map_v2 line 314 "smaller logo sizes as tier decreases"):
+**Tier-to-bounding-box mapping** (matches content_map_v2 line 314 "smaller logo sizes as tier decreases"). Each tier uses a max-height AND max-width pair, not just a height cap. Width caps prevent extreme-aspect logos (e.g., Sunflower Bank at 384×42) from rendering hundreds of pixels wide:
 
-| Tier | Logo max height |
-|---|---|
-| MVP | 240px (`h-60`) |
-| Diamond | 192px (`h-48`) |
-| Platinum | 160px (`h-40`) |
-| Gold | 128px (`h-32`) |
-| Blue | 96px (`h-24`) |
+| Tier | Max height | Max width | Tailwind classes |
+|---|---|---|---|
+| MVP | 240px | 440px | `max-h-60 max-w-[440px]` |
+| Diamond | 192px | 360px | `max-h-48 max-w-[360px]` |
+| Platinum | 160px | 320px | `max-h-40 max-w-[320px]` |
+| Gold | 128px | 280px | `max-h-32 max-w-[280px]` |
+| Blue | 96px | 200px | `max-h-24 max-w-[200px]` |
 
-Map by tier name with a switch or lookup object. If a future tier name doesn't match, fall back to `h-32` (Gold default) and don't crash.
+Map by tier name with a switch or lookup object that returns the full class string (e.g., `'max-h-32 max-w-[280px]'`). If a future tier name doesn't match, fall back to the Gold values and don't crash.
+
+**Sizing rationale:** without width caps, Sunflower Bank at Gold tier would render 128 × (384/42) = 1170px wide — disastrous. With the width cap, Sunflower at Gold renders 280 × 30.6, AutoNation renders 280 × 88, Rudy's BBQ (had it stayed at Gold) renders 248 × 128. Hierarchy preserved, no horizontal blowouts.
 
 ### 3. SponsorCard component (inline or extracted)
 
 ```
-function SponsorCard({ sponsor, maxHeight }: { sponsor: Sponsor; maxHeight: string }) {
+function SponsorCard({ sponsor, sizeClasses }: { sponsor: Sponsor; sizeClasses: string }) {
   const logoSrc = publicStorageUrl(sponsor.logo_url, 'sponsor-logos');
   const inner = (
     <img src={logoSrc}
          alt={sponsor.name}
-         class={`${maxHeight} w-auto object-contain`} />
+         class={`${sizeClasses} w-auto h-auto object-contain`} />
   );
   return (
     <div class="flex items-center justify-center">
@@ -153,7 +157,8 @@ function SponsorCard({ sponsor, maxHeight }: { sponsor: Sponsor; maxHeight: stri
 ```
 
 Notes:
-- `object-contain` keeps logo aspect ratio inside the bounded height
+- `sizeClasses` is the full Tailwind string from the tier mapping (e.g., `'max-h-32 max-w-[280px]'`)
+- `w-auto h-auto` on the img lets `object-contain` scale within the max-w/max-h bounding box
 - No sponsor name text below the logo (Jeremy's call 2026-05-22; logos carry their own brand recognition, name text adds visual noise)
 - `alt` text on the logo image and `aria-label` on the link wrapper preserve accessibility
 - Only the logo is the link; nothing else clickable in the card
@@ -169,12 +174,12 @@ If `unaffiliatedSponsors.length > 0`, render after the last tier section:
   </h2>
   <div class="h-0.5 w-12 bg-mavs-green mb-8"></div>
   <div class="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-    {unaffiliatedSponsors.map(s => <SponsorCard sponsor={s} maxHeight="h-24" />)}
+    {unaffiliatedSponsors.map(s => <SponsorCard sponsor={s} sizeClasses="max-h-24 max-w-[200px]" />)}
   </div>
 </section>
 ```
 
-Same `h-24` size as Blue tier. With current seed: this section is empty and hidden. Future sponsors with `tier_id IS NULL` will land here.
+Same `max-h-24 max-w-[200px]` size as Blue tier. With current seed: this section is empty and hidden. Future sponsors with `tier_id IS NULL` will land here.
 
 ### 5. Footer CTA card
 
@@ -241,7 +246,7 @@ The current security followup in `followups.md` says public pages use `createSer
 ## Acceptance criteria
 
 1. `/sponsors` returns 200, not 404.
-2. With current seed (1 MVP Rudy's + 6 Gold + 0 Diamond/Platinum/Blue): MVP section shows Rudy's logo at h-60, Gold section shows 6 logos at h-32, Diamond/Platinum/Blue sections do not render (no empty headings).
+2. With current seed (1 MVP Rudy's + 6 Gold + 0 Diamond/Platinum/Blue): MVP section shows Rudy's logo inside the 440×240 bounding box, Gold section shows 6 logos inside the 280×128 bounding box (each logo's actual rendered size depends on its aspect ratio — Sunflower will be short and wide; the others will be closer to filling their box). Diamond/Platinum/Blue sections do not render (no empty headings).
 3. Each logo is a working link to the sponsor's `website_url`, opens in new tab.
 4. "Become a Sponsor →" button in the page header links to `/boosters/sponsor` (which still 404s — that's fine, separate commit).
 5. Footer CTA card "See Sponsorship Options" button also links to `/boosters/sponsor`.
@@ -279,7 +284,7 @@ Revert the commit. The new route disappears, `/sponsors` returns to 404. No data
 
 ## Decisions confirmed by Jeremy 2026-05-22
 
-1. **Logo size scale:** 240/192/160/128/96px for MVP/Diamond/Platinum/Gold/Blue. Uniform within tier, larger tier = larger logo. "Give people value for what they paid."
+1. **Logo size scale:** bounding-box per tier (max-height + max-width pair). MVP 440×240, Diamond 360×192, Platinum 320×160, Gold 280×128, Blue 200×96. Uniform within tier, larger tier = larger box. Width caps added 2026-05-22 evening after the homepage strip work confirmed extreme-aspect logos like Sunflower Bank need both dimensions constrained.
 2. **Sponsor name below logo:** NO. Logos carry their own brand recognition. Schema unchanged so a future admin can re-enable per-row if wanted.
 3. **Footer CTA copy:** "Want to Join Them in 2026-27?" headline with recruitment-angle body copy. Recruitment is the page's secondary purpose.
 4. **Subhead format:** "2025-26 Season" — last year's season prominent so 2026-27 prospects see the thank-you context.

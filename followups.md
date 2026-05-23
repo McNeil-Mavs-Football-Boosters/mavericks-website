@@ -19,7 +19,7 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] **No white-on-transparent horseshoe variant** in the brand pack. `docs/W SHOE.png` is the white-horse-on-navy-horseshoe lockup (not pure white); `docs/MHS Text White Outline.png` is text-only. `/boosters/join` (slice 1 Turn 2, 2026-05-18) uses the existing full-color `public/brand/mhs-logo.png` on the green banner as a compromise — the white horse still pops on green but the green mane blends into the background. Ask the designer for a true white horseshoe (or white horseshoe + horse silhouette) on transparent PNG for use on dark / colored backgrounds; drop into `public/brand/mhs-horseshoe-white.png` and swap the import on the join banner.
 
 ## Routes still 404 (Step 5)
-- [x] ~~Build `/sponsors` page.~~ Done 2026-05-22, commit `5ed2b4d`. `app/sponsors/page.tsx` (server component, force-dynamic) + `app/sponsors/[catchall]/page.tsx` (notFound). Tier-grouped list, hide-if-empty per tier, MVP→Blue scale (h-60 / h-48 / h-40 / h-32 / h-24), "Other Supporters" fallback for `tier_id IS NULL`, page-header + footer CTA both `<Link href="/boosters/sponsor">`. Footer CTA card uses `bg-mavs-green text-white` (not the spec's navy-on-green, which would fail WCAG AA). Spec: `specs/sponsors_page_spec.md`.
+- [x] ~~Build `/sponsors` page.~~ Done 2026-05-22, commit `5ed2b4d` + sizing rewrite `f52b72e`. `app/sponsors/page.tsx` (server component, force-dynamic) + `app/sponsors/[catchall]/page.tsx` (notFound). Tier-grouped list, hide-if-empty per tier, MVP→Blue bounding boxes (`max-h-60 max-w-[440px]` → `max-h-24 max-w-[200px]`; rewrite from initial height-only to width-cap-aware after Sunflower's 384×42 aspect surfaced the horizontal-blowout risk), "Other Supporters" fallback for `tier_id IS NULL`, page-header + footer CTA both `<Link href="/boosters/sponsor">`. Footer CTA card uses `bg-mavs-green text-white` (not the spec's navy-on-green, which would fail WCAG AA). Spec: `specs/sponsors_page_spec.md`.
 - [ ] **Build `/boosters/sponsor` page** — sales page for tier perks. The new "Become a Sponsor" `headline_cta` tile shipped 2026-05-22 targets this URL. Spec at `content_map_v2.md` `/boosters/sponsor` section. Tiers are in DB now (5 rows at year 2025-26 after migration 041's relabel).
 - [ ] **Build `/boosters/donate` page** — existing carousel CTA already targets this. 404 today.
 - [ ] **Build `/boosters/volunteer` page** — existing carousel CTA already targets this. 404 today.
@@ -34,6 +34,11 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [x] ~~SE Tier 1 capture: sponsor logos.~~ Placeholder set in place 2026-05-22, commit `732209c` / migration 041 — Rudy's (MVP) + 6 last-year Golds (AutoNation, Sunflower, LUV Braces, Dave's, TKO, Laurie Flood). Real 2026-27 sponsors swap in via admin (or a follow-up migration) once Kendra confirms at the June 2 board meeting.
 - [ ] Confirm interim head coach contact at June 2 board meeting. That person owns football-side website content.
 - [ ] Decide on additional coaches to seed beyond Wallin and Hale (Fanara, Hermes, Dubois pending verification).
+
+## Visual checks pending (need browser, not CLI)
+- [ ] **Sunflower Bank logo readability** at extreme aspect ratio (384×42 source). Homepage strip clamps to ~160×17.5; `/sponsors` Gold tier clamps to ~280×30.6. Browser eyeball confirms whether either reads as the Sunflower wordmark or just a horizontal stripe. If unreadable: (a) crop the source PNG to a tighter aspect, (b) add per-sponsor size override, or (c) bump the width cap for the affected tier. Logged 2026-05-22.
+- [ ] **Lighthouse a11y ≥ 90** on `/`, `/sponsors` — not yet run from a browser. Acceptance criteria #9 on both `sponsors_page_spec.md` and `homepage_sponsors_strip_restyle_spec.md`.
+- [ ] **Console-error sweep** on `/` and `/sponsors`. Can't see them from curl.
 
 ## Pre-cutover ops
 - [ ] Second super_admin account for Carol with 2FA + recovery codes.

@@ -2,6 +2,8 @@
 
 Written 2026-05-22. Updated 2026-05-22 to use the existing `sponsor-logos` bucket instead of a new `site-images/sponsors/` folder. Four changes shipped together as one commit:
 
+**Updated 2026-05-22 (afternoon):** sponsor_spotlight carousel tiles reverted in commit `8b50d58` (migration 043 deletes the 3 tiles; carousel's two-pool logic falls back to single-pool CTA-only). Homepage strip restyled per `homepage_sponsors_strip_restyle_spec.md` (commit `827cf0e`, two-row tier-partitioned layout). `sponsors.featured` flag reset to false for all 2025-26 rows (migration 044 / commit `ed002da`) since nothing reads it anymore.
+
 ## As-shipped (2026-05-22, commit `732209c`)
 
 Three deviations from the spec text below, made during implementation:

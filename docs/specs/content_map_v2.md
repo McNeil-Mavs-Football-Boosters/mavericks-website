@@ -108,17 +108,19 @@ Same across all routes.
    - Each card: title, starts_at, location, "Learn more →"
    - Empty state: hide the section entirely
 
-6. **Sponsors strip** — quiet pre-footer thank-you band (restyled 2026-05-22)
-   - Small-caps heading "OUR {current_year} SPONSORS" (`text-xs md:text-sm uppercase tracking-widest text-gray-600 font-semibold`); "See all sponsors →" inline at the right on desktop, stacks below on mobile (same small-caps style, lighter weight) — links to `/sponsors`
-   - Single flex row, wraps on mobile (no horizontal scroll). Generous gap (`gap-8 md:gap-12`)
-   - Logo size `h-10 md:h-12`, `items-center` for visually-balanced aspect ratios
-   - Section padding `py-8 md:py-12`, transparent background
-   - Each logo wrapped in `<a target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">` when `website_url` present
-   - All active current-year sponsors render here (not just the carousel-featured 3)
-   - Visual goal: quiet thank-you, not a marketing section. Big sponsor moments live in the hero carousel and on `/sponsors`.
-   - Query: `SELECT * FROM sponsors WHERE active = true AND year = site_settings.current_year ORDER BY sort_order, name`
+6. **Sponsors strip** — two-row thank-you band (restyled 2026-05-22 PM, supersedes the morning's small-caps strip)
+   - Centered h2 heading "Thank You to Our 2025-2026 Sponsors!" (`text-2xl md:text-3xl font-bold text-mavs-navy text-center`). Mixed case; exclamation point kept. Reads warmer than the morning's small-caps left-aligned label.
+   - **Row 1** — MVP-tier sponsors only at `max-w-[220px] max-h-20` per logo, `flex flex-wrap items-center justify-center gap-12 mb-8`. Today: Rudy's alone.
+   - **Row 2** — everyone else (Diamond / Platinum / Gold / Blue / Other) at `max-w-[160px] max-h-12`, `flex flex-wrap items-center justify-center gap-8 md:gap-12`. Today: 6 Golds.
+   - "See All Sponsors →" centered link below logos in `mt-10` block, navy uppercase tracking-wide, links to `/sponsors`.
+   - Section padding `py-12 md:py-16`. Larger vertical breathing room than the original strip; reads as a section, not a footer band.
+   - Each logo wrapped in `<a target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">` when `website_url` present. Plain `<img>` (not next/image) — same convention as carousel + /sponsors.
+   - Partition by tier name: `loadHome()` fetches the MVP `sponsorship_tiers.id` alongside sponsors and partitions client-side by `tier_id === mvpTierId`. Fallback when MVP id is null: everything renders in Row 2 (safe degradation).
+   - **`featured` flag no longer drives placement.** Migration 044 reset all sponsors to `featured = false`; the column stays in the schema for future admin-driven badging (e.g. "featured sponsor of the month") but is not read by any current code path.
+   - Query: `SELECT id, name, logo_url, website_url, tier_id FROM sponsors WHERE active = true AND year = site_settings.current_year ORDER BY sort_order, name` + a parallel `SELECT id FROM sponsorship_tiers WHERE year=current_year AND active=true AND name='MVP'`
    - Logo URL: `publicStorageUrl(logo_url, 'sponsor-logos')` (logos stored as bare filenames in the `sponsor-logos` bucket)
    - Empty state: hide the section entirely
+   - **Known visual risk:** Sunflower Bank source is 384×42 (extreme aspect). At `max-w-[160px] max-h-12` she clamps to ~160×17.5 — small but acceptable. If field feedback says she's unreadable: (a) crop the source PNG, (b) add a per-sponsor size override, or (c) bump the Row 2 width cap. Recheck on `/sponsors` too — the Gold-tier bounding box there gives Sunflower ~280×30.6, more visible.
 
 7. **Footer** (see site-wide above)
 
