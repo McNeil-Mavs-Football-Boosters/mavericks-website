@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 
 import { HeroCarousel } from "@/components/home/HeroCarousel";
+import { SponsorStripLogo } from "@/components/sponsors/SponsorStripLogo";
 import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
-import { publicStorageUrl } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
@@ -135,40 +135,6 @@ function buildQuickLinks(currentYear: string): Array<{
     { label: `${currentYear} Schedule`, href: "/schedule", Icon: CalendarDays },
     { label: `${currentYear} Roster`, href: "/roster", Icon: Users },
   ];
-}
-
-function SponsorStripLogo({
-  sponsor,
-  sizeClass,
-}: {
-  sponsor: SponsorTile;
-  sizeClass: string;
-}) {
-  const logoSrc = sponsor.logo_url
-    ? publicStorageUrl(sponsor.logo_url, "sponsor-logos")
-    : null;
-  if (!logoSrc) return null;
-  const inner = (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src={logoSrc}
-      alt={sponsor.name}
-      className={`${sizeClass} w-auto h-auto object-contain`}
-    />
-  );
-  return sponsor.website_url ? (
-    <a
-      href={sponsor.website_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="hover:opacity-80 transition-opacity"
-      aria-label={`Visit ${sponsor.name}`}
-    >
-      {inner}
-    </a>
-  ) : (
-    inner
-  );
 }
 
 export default async function Home() {
