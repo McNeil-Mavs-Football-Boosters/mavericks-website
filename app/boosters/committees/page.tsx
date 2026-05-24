@@ -73,29 +73,34 @@ export default async function BoostersCommitteesPage() {
   return (
     <>
       {/* 1. Hero */}
-      <section className="bg-mavs-navy text-white py-12 md:py-16 relative overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center md:text-left md:max-w-3xl">
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              Booster Club Committees
-            </h1>
-            <div className="h-1 w-20 bg-mavs-green mt-3 mx-auto md:mx-0"></div>
-            <p className="text-lg md:text-xl mt-4 text-white/90">
-              Ongoing, seasonal, and one-time roles. Every committee needs help
-              — find where you fit.
-            </p>
+      <section className="bg-mavs-navy text-white py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+            <Image
+              src="/brand/mhs-logo.png"
+              alt=""
+              width={80}
+              height={80}
+              priority
+              className="h-16 w-16 md:h-20 md:w-20 object-contain shrink-0 rounded-full bg-white p-1 mx-auto md:mx-0"
+            />
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
+                Booster Club Committees
+              </h1>
+              <div className="h-1 w-20 bg-mavs-green mt-3 mx-auto"></div>
+              <p className="text-lg md:text-xl mt-4 text-white/90">
+                Ongoing, seasonal, and one-time roles. Every committee needs
+                help — find where you fit.
+              </p>
+            </div>
+            <Link
+              href="/boosters/volunteer"
+              className="bg-mavs-green text-white px-6 py-3 font-bold uppercase hover:bg-mavs-green/90 transition-colors inline-block whitespace-nowrap shrink-0 mx-auto md:mx-0"
+            >
+              Volunteer →
+            </Link>
           </div>
-        </div>
-
-        {/* Horseshoe accent — decorative, right side, hidden on mobile */}
-        <div className="hidden md:block absolute right-8 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
-          <Image
-            src="/brand/mhs-horseshoe.jpg"
-            alt=""
-            width={180}
-            height={180}
-            className="object-contain"
-          />
         </div>
       </section>
 
