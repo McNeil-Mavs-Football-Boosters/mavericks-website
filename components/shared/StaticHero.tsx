@@ -13,7 +13,7 @@ export function StaticHero({ hero }: StaticHeroProps) {
 
   return (
     <section
-      className={`relative isolate w-full min-h-[60vh] md:min-h-[70vh] flex items-center justify-center text-center text-white ${
+      className={`relative isolate w-full flex items-center justify-center text-center text-white ${
         hasHeroImage ? "" : "bg-mavs-navy"
       }`}
     >
@@ -33,7 +33,7 @@ export function StaticHero({ hero }: StaticHeroProps) {
         </>
       ) : null}
 
-      <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="mx-auto max-w-3xl px-6 py-12 md:py-16">
         <h1 className="text-4xl font-black uppercase tracking-tight sm:text-5xl md:text-6xl">
           {hero.hero_headline}
         </h1>
