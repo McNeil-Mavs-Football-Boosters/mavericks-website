@@ -165,39 +165,16 @@ export default function BoostersVolunteerPage() {
           {OPPORTUNITIES.map((opportunity) => {
             const Icon = opportunity.icon;
             const isCommittee = opportunity.title === "Joining a Committee";
+            const cardClass =
+              "relative bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow block";
 
-            if (isCommittee) {
-              return (
-                <Link
-                  key={opportunity.title}
-                  href="/boosters/committees"
-                  className="relative bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow block"
-                >
-                  <ArrowUpRight
-                    aria-hidden="true"
-                    className="absolute top-4 right-4 text-mavs-navy"
-                    size={20}
-                  />
-                  <Icon
-                    aria-hidden="true"
-                    size={32}
-                    className="text-mavs-navy mb-3"
-                  />
-                  <h3 className="font-bold text-lg text-mavs-navy">
-                    {opportunity.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mt-2">
-                    {opportunity.description}
-                  </p>
-                </Link>
-              );
-            }
-
-            return (
-              <div
-                key={opportunity.title}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-              >
+            const cardBody = (
+              <>
+                <ArrowUpRight
+                  aria-hidden="true"
+                  className="absolute top-4 right-4 text-mavs-navy"
+                  size={20}
+                />
                 <Icon
                   aria-hidden="true"
                   size={32}
@@ -209,7 +186,31 @@ export default function BoostersVolunteerPage() {
                 <p className="text-gray-600 text-sm mt-2">
                   {opportunity.description}
                 </p>
-              </div>
+              </>
+            );
+
+            if (isCommittee) {
+              return (
+                <Link
+                  key={opportunity.title}
+                  href="/boosters/committees"
+                  className={cardClass}
+                >
+                  {cardBody}
+                </Link>
+              );
+            }
+
+            return (
+              <a
+                key={opportunity.title}
+                href={VOLUNTEER_FORM_URL}
+                target="_blank"
+                rel="noopener"
+                className={cardClass}
+              >
+                {cardBody}
+              </a>
             );
           })}
         </div>
