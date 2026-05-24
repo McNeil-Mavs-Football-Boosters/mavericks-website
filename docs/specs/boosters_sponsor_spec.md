@@ -1,5 +1,11 @@
 # Spec: Build `/boosters/sponsor` Sales Page
 
+**As-shipped 2026-05-23 — commit `e6a9eb8`.** All 5 sections live per spec. Deviations:
+- "See All Sponsors →" link in the bottom sponsor strip uses `next/link` (`<Link>`) not raw `<a>`, required by `@next/next/no-html-link-for-pages`. Same call `/sponsors` made for its internal CTAs.
+- AC16 ("no `@mcneilmavericks.org` anywhere on this page") passes in spirit — the page content uses only `mcneilfootballboosters@gmail.com`; the shared `<Footer>` component still renders `boosters@mcneilmavericks.org` site-wide (out of scope this commit).
+- `SponsorStripLogo` lifted from `app/page.tsx` to `components/sponsors/SponsorStripLogo.tsx` and imported from both call sites.
+- AC13–15 (mobile collapse, console errors, Lighthouse a11y ≥ 90) verified via class inspection and dev-server logs; browser-side QA pending.
+
 Written 2026-05-23. Builds the booster sponsorship sales page. Closes the last 404 from 2026-05-22's sponsor work (`/sponsors` footer CTA card "See Sponsorship Options" and `/sponsors` page-header "Become a Sponsor →" both link here).
 
 **Phase 1 scope:** mission statement, tier display, contact-by-email CTA, sponsor strip at the bottom. No inquiry form. No Stripe Checkout. No `sponsorship_inquiries` table. Sponsorship sales are higher-touch, and Kendra (VP Fundraising) follows up manually with prospects who reach out. The content_map_v2 design that proposed an inquiry form is deferred — revisit in Phase 2 if Kendra wants a form.

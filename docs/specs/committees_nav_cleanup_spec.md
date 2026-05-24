@@ -1,5 +1,14 @@
 # Spec: Booster Club Nav Cleanup + `/boosters/committees` Page
 
+**As-shipped 2026-05-23 — commits `c7668d6` (initial) + `4e3f21c` (hero rework).** All three tasks live. Deviations:
+- **Migration renumbered 044 → 045.** Slot 044 was taken by `044_reset_sponsors_featured.sql` (shipped 2026-05-22). Files: `db/migrations/045_committees_full_descriptions.sql` + `045_rollback.sql`. Same renumber pattern as past specs (030→034, 039→041).
+- **`BOOSTER_LINKS` is duplicated** in `components/layout/Header.tsx:15-25` AND `components/layout/MobileNav.tsx:22-32`, not the single shared constant the spec assumed (line 78, 87). Edited both identically to keep desktop + mobile in sync. Worth lifting to a shared module at the next nav edit.
+- **AC6 fails by spec error**: `/boosters/board` returns 404, not 200 — there is no `app/boosters/board/` route file in the codebase. The Board nav entry was a broken link before this commit; the spec's "Do NOT remove the `/boosters/board` route file itself" guidance had nothing to remove. Decide later: build the route, or leave board-on-`/boosters` as the sole surface.
+- **AC19 ≈ pass**: 10/11 descriptions exceed 80 chars; Fundraisers is exactly 80 ("Oversee any board-determined fundraisers. Coordinate with Social Media. Ongoing." = 80). All 11 strings match the spec verbatim; only the `desc_len > 80` assertion is off-by-one for that row.
+- **Hero rework (`4e3f21c`)**: Jeremy reviewed the initial hero and called the navy-on-navy horseshoe at `opacity-20` unreadable + title alignment off. Replaced with `mhs-logo.png` in a `rounded-full bg-white p-1` disc on the left (matches Header treatment for navy bg), centered `flex-1 text-center` title block, and a green "Volunteer →" button on the right linking `/boosters/volunteer`. Section dropped `relative overflow-hidden`; mobile stacks vertically.
+- **Asset no-op**: `public/brand/mhs-horseshoe.jpg` already existed with identical MD5 to `docs/MHS Horseshoe Color.jpg`. The spec's `cp` step was redundant. (Asset is now unused on this page after the hero rework; left in place for future use.)
+- **Cadence badge contrast unchanged**: shipped with `bg-mavs-green/10 text-mavs-green`. If browser QA shows it as too faint, swap to `bg-mavs-green text-white`.
+
 Written 2026-05-23. Three small changes shipped as one commit:
 
 1. Header dropdown: rename "Join" → "Join the Club!" (header dropdown only)
