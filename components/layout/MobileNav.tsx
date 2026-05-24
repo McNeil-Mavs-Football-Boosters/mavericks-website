@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
 
 import {
+  BOOSTER_LINKS,
   buildRosterLinks,
   buildScheduleLinks,
   type NavLink,
@@ -18,18 +19,6 @@ interface MobileNavProps {
 
 const TOP_LINK_CLASS =
   "text-lg font-bold uppercase tracking-wide py-3 border-b border-border last:border-b-0 text-foreground hover:text-mavs-navy";
-
-const BOOSTER_LINKS: NavLink[] = [
-  { href: "/boosters", label: "About the Booster Club" },
-  { href: "/boosters/join", label: "Join the Club!" },
-  { href: "/boosters/members", label: "Members" },
-  { href: "/boosters/sponsor", label: "Sponsorship Opportunities" },
-  { href: "/boosters/volunteer", label: "Volunteer" },
-  { href: "/boosters/committees", label: "Committees" },
-  { href: "/boosters/events", label: "Calendar / Events" },
-  { href: "/boosters/documents", label: "Documents" },
-  { href: "/boosters/donate", label: "Donate" },
-];
 
 type AccordionName = "schedule" | "roster" | "boosters";
 
