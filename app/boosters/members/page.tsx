@@ -18,6 +18,9 @@
 // "Sarah Van Buren" sorts under "Buren"). Couples with different surnames
 // sort under Parent 1's surname.
 
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import { BOOSTER_FORM_URL } from "@/lib/constants";
 import {
   getBoosterMembers,
@@ -110,6 +113,16 @@ export default async function BoostersMembersPage() {
               ? `Thank you to the ${totalMembers} families who power Mavericks football.`
               : "Thank you to everyone who powers Mavericks football."}
           </p>
+          <div className="mt-8 flex justify-center">
+            <Button
+              size="lg"
+              nativeButton={false}
+              className="bg-white text-mavs-navy hover:bg-white/90"
+              render={<Link href="/boosters/join" />}
+            >
+              JOIN THE CLUB! →
+            </Button>
+          </div>
         </div>
       </section>
 
