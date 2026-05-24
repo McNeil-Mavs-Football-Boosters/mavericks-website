@@ -145,6 +145,15 @@ export interface BoardMember {
   updated_at: string;
 }
 
+export interface Committee {
+  id: string;
+  name: string;
+  description: string;
+  cadence: "ongoing" | "seasonal" | "one_time";
+  contact_email: string | null;
+  sort_order: number;
+}
+
 export interface HeadlineCtaPayload {
   headline: string;
   subhead: string;

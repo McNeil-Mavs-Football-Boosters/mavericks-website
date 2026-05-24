@@ -14,12 +14,11 @@ import {
 
 const BOOSTER_LINKS: NavLink[] = [
   { href: "/boosters", label: "About the Booster Club" },
-  { href: "/boosters/join", label: "Join" },
+  { href: "/boosters/join", label: "Join the Club!" },
   { href: "/boosters/members", label: "Members" },
   { href: "/boosters/sponsor", label: "Sponsorship Opportunities" },
   { href: "/boosters/volunteer", label: "Volunteer" },
   { href: "/boosters/committees", label: "Committees" },
-  { href: "/boosters/board", label: "Board" },
   { href: "/boosters/events", label: "Calendar / Events" },
   { href: "/boosters/documents", label: "Documents" },
   { href: "/boosters/donate", label: "Donate" },
