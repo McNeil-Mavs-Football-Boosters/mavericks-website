@@ -147,21 +147,25 @@ export default async function SponsorsPage() {
   return (
     <>
       {/* Page header */}
-      <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-mavs-navy">
-              Our Sponsors
-            </h1>
-            <div className="h-1 w-20 bg-mavs-green mt-3"></div>
-            <p className="text-lg text-gray-600 mt-3">{current_year} Season</p>
+      <section className="bg-mavs-navy text-white">
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight">
+                Our Sponsors
+              </h1>
+              <div className="h-1 w-20 bg-mavs-green mt-3"></div>
+              <p className="text-lg text-white/80 mt-3">
+                {current_year} Season
+              </p>
+            </div>
+            <Link
+              href="/boosters/sponsor"
+              className="bg-mavs-green text-white px-6 py-3 font-bold uppercase hover:bg-mavs-green/90 transition-colors inline-block"
+            >
+              Become a Sponsor →
+            </Link>
           </div>
-          <Link
-            href="/boosters/sponsor"
-            className="bg-mavs-navy text-white px-6 py-3 font-bold uppercase hover:bg-mavs-navy/90 transition-colors inline-block"
-          >
-            Become a Sponsor →
-          </Link>
         </div>
       </section>
 
