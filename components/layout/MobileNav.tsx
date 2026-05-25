@@ -97,8 +97,8 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
             onItemClick={onClose}
           />
 
-          <Link href="/news" onClick={onClose} className={TOP_LINK_CLASS}>
-            News
+          <Link href="/events" onClick={onClose} className={TOP_LINK_CLASS}>
+            Events
           </Link>
           <Link href="/sponsors" onClick={onClose} className={TOP_LINK_CLASS}>
             Sponsors

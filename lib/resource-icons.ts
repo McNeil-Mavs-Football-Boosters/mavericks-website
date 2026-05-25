@@ -3,6 +3,8 @@ import {
   ClipboardList,
   ExternalLink,
   FileText,
+  Mail,
+  Newspaper,
   Play,
   type LucideProps,
 } from "lucide-react";
@@ -14,6 +16,8 @@ const ICON_BY_HINT: Record<string, LucideIcon> = {
   pdf: FileText,
   form: ClipboardList,
   video: Play,
+  mail: Mail,
+  newspaper: Newspaper,
 };
 
 export function iconForHint(hint: string | null): LucideIcon {

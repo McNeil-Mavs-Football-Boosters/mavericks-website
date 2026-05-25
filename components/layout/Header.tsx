@@ -116,10 +116,10 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
           />
 
           <Link
-            href="/news"
+            href="/events"
             className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
-            News
+            Events
           </Link>
           <Link
             href="/sponsors"

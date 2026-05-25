@@ -33,7 +33,5 @@ export const BOOSTER_LINKS: NavLink[] = [
   { href: "/boosters/sponsor", label: "Sponsorship Opportunities" },
   { href: "/boosters/volunteer", label: "Volunteer" },
   { href: "/boosters/committees", label: "Committees" },
-  { href: "/boosters/events", label: "Calendar / Events" },
-  { href: "/boosters/documents", label: "Documents" },
   { href: "/boosters/donate", label: "Donate" },
 ];

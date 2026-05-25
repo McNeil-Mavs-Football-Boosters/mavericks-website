@@ -48,8 +48,10 @@ Written 2026-05-16. **Supersedes the original `content_map.md`** (which was stru
 Same across all routes.
 
 - Logo + wordmark on the left, links to `/` (the logo serves as the Home link — no standalone Home entry). Desktop: "McNeil Mavericks Football". Mobile (<768px): "Mavs Football".
-- Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, News, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column.)
-- Booster Club dropdown items: About the Booster Club, Join, Members, Sponsorship Opportunities, Volunteer, Committees, Board, Calendar / Events, Documents, Donate.
+- Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, Events, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column. News was removed from the top-level row 2026-05-25 — /news is still live and reachable via the Forms & Links page under the "News and Communications" section.)
+- Booster Club dropdown items: About the Booster Club, Join the Club!, Members, Sponsorship Opportunities, Volunteer, Committees, Donate. (7 items as of 2026-05-25: Calendar / Events promoted to top-level Events; Documents dropped; Board was removed earlier and the route was never built.)
+- Events top-level link points to `/events` (route not built yet — placeholder 404). Booster Club dropdown no longer carries a calendar link.
+- Footer SITE_LINKS already diverges from the top-level nav (curated set: Schedule, Boosters, Join, Sponsors, Donate, Privacy — no News, no Events). Left as-is in the 2026-05-25 nav restructure; decide separately whether to add Events.
 - Sticky on scroll, McNeil navy background, no bottom border. Wordmark and nav links render white (dropdown caret and mobile hamburger icon also white). Dropdown panels and the mobile drawer panel remain white with navy text.
 - Mobile: hamburger opens a full-height drawer with the same top-level items; Booster Club is an accordion in the drawer.
 - No login link in public nav. `/admin` is unlinked.
@@ -355,9 +357,9 @@ Same across all routes.
    - Each item: label (clickable to url), description below in smaller text, icon based on `icon_hint`
    - Hide section if no rows
 
-3. **Communications** (`resource_section = 'communications'`)
-   - Heading: "Communications"
-   - Same item rendering. HUDL and SportsYou land here.
+3. **News and Communications** (`resource_section = 'communications'`)
+   - Heading: "News and Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 when News left the top-level nav.
+   - Same item rendering. As of 2026-05-25: MavMail (`icon_hint='mail'`, sort_order=-2) at top, News → `/news` (`icon_hint='newspaper'`, sort_order=-1) second, then HUDL (1), then SportsYou (2). Negative sort_orders used so MavMail/News float to the top without renumbering HUDL/SportsYou.
 
 4. **Resources** (`resource_section = 'resources'`)
    - Heading: "Resources"
