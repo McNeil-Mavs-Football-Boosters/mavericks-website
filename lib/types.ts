@@ -188,3 +188,19 @@ export interface HeroForegroundTile {
   sort_order: number;
   active: boolean;
 }
+
+export interface EventRow {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  location: string | null;
+  location_url: string | null;
+  signup_url: string | null;
+  cover_image_url: string | null;
+  status: "draft" | "published" | "cancelled";
+  featured: boolean;
+  updated_at: string;
+}

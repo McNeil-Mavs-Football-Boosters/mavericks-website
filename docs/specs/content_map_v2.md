@@ -20,6 +20,9 @@ Written 2026-05-16. **Supersedes the original `content_map.md`** (which was stru
 | `/news` | Article index | Public |
 | `/news/[slug]` | Individual article | Public |
 | `/sponsors` | Tiered sponsor list | Public |
+| `/events` | Booster events — List + Month views | Public |
+| `/events/[slug]` | Individual event detail page | Public |
+| `/events.ics` | Public ICS feed of published events (slice 2) | Public |
 | `/resources` | "Forms & Links" links | Public |
 | `/boosters` | Booster club landing | Boosters |
 | `/boosters/join` | Membership signup with Stripe | Boosters |
@@ -28,8 +31,6 @@ Written 2026-05-16. **Supersedes the original `content_map.md`** (which was stru
 | `/boosters/volunteer` | Volunteer opportunities | Boosters |
 | `/boosters/committees` | Committee descriptions | Boosters |
 | `/boosters/board` | Board members for current year | Boosters |
-| `/boosters/events` | Booster-organized events | Boosters |
-| `/boosters/documents` | Bylaws, IRS letter, minutes | Boosters |
 | `/boosters/donate` | Donation form | Boosters |
 | `/about` | About the website + contact | Utility |
 | `/privacy` | Privacy policy | Utility |
@@ -50,7 +51,7 @@ Same across all routes.
 - Logo + wordmark on the left, links to `/` (the logo serves as the Home link — no standalone Home entry). Desktop: "McNeil Mavericks Football". Mobile (<768px): "Mavs Football".
 - Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, Events, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column. News was removed from the top-level row 2026-05-25; no /news page is planned, so there is no nav entry for it anywhere.)
 - Booster Club dropdown items: About the Booster Club, Join the Club!, Members, Sponsorship Opportunities, Volunteer, Committees, Donate. (7 items as of 2026-05-25: Calendar / Events promoted to top-level Events; Documents dropped; Board was removed earlier and the route was never built.)
-- Events top-level link points to `/events` (route not built yet — placeholder 404). Booster Club dropdown no longer carries a calendar link.
+- Events top-level link points to `/events` (List + Month views; full spec in `events_page_spec.md`). Booster Club dropdown no longer carries a calendar link.
 - Footer SITE_LINKS already diverges from the top-level nav (curated set: Schedule, Boosters, Join, Sponsors, Donate, Privacy — no News, no Events). Left as-is in the 2026-05-25 nav restructure; decide separately whether to add Events.
 - Sticky on scroll, McNeil navy background, no bottom border. Wordmark and nav links render white (dropdown caret and mobile hamburger icon also white). Dropdown panels and the mobile drawer panel remain white with navy text.
 - Mobile: hamburger opens a full-height drawer with the same top-level items; Booster Club is an accordion in the drawer.
@@ -104,7 +105,7 @@ Same across all routes.
    - Each card: featured_image_url (or default), title, published_at, excerpt
    - Empty state: hide the section entirely
 
-5. **Upcoming Events** — heading "Upcoming Events", "View calendar →" → `/boosters/events`
+5. **Upcoming Events** — heading "Upcoming Events", "View calendar →" → `/events`
    - This is **booster events**, not games. Games have their own home section above.
    - Query: `SELECT * FROM events WHERE status = 'published' AND starts_at > now() ORDER BY starts_at ASC LIMIT 5`
    - Each card: title, starts_at, location, "Learn more →"
@@ -649,43 +650,11 @@ Submit creates a `sponsorship_inquiries` row (new table — flag to add to schem
 
 ---
 
-### `/boosters/events`
+### `/events`, `/events/[slug]`, `/events.ics`
 
-**Purpose:** booster-organized events. NOT football games (those live on `/schedule`). Banquet, photo shoot, pool party, pep rally, etc.
-
-**Sections, top to bottom:**
-
-1. **Page header**
-   - Title: "Booster Calendar"
-   - Subhead: "Events organized by the booster club"
-
-2. **Upcoming events**
-   - Query: `SELECT * FROM events WHERE status = 'published' AND starts_at > now() ORDER BY starts_at ASC`
-   - Each card: cover_image_url, title, starts_at, location, description excerpt, "Learn more →" button if `signup_url` or detail page
-
-3. **Past events** (collapsible section)
-   - Query: same but `starts_at < now()`, limit 10
-   - Smaller cards, "View all past events →" link if more than 10
+Top-level events surface — promoted out of `/boosters/events` on 2026-05-25. Full design in **`docs/specs/events_page_spec.md`**. Two views (List default + Month), Upcoming/Past filter pills, navy header band matching `/sponsors`. Detail page at `/events/[slug]` with 404 on unknown-slug or non-published status. `/events.ics` is a public ICS feed of published events for "Subscribe to calendar" (slice 2; shape-only button in slice 1). The deprecated `/boosters/events` + `/boosters/events/[slug]` routes were not deleted (they never existed on disk); the dropdown link was removed in the 2026-05-25 nav restructure.
 
 **Data sources:** events.
-
-**Empty state:** "No upcoming events scheduled. Check back as we plan the 2026-27 season."
-
----
-
-### `/boosters/events/[slug]`
-
-**Purpose:** individual event detail page.
-
-**Sections:**
-
-1. Cover image (if present)
-2. Title, starts_at, ends_at, location, location_url (clickable map link)
-3. Full description (markdown rendered)
-4. Sign-up CTA → external `signup_url` (SignUpGenius typically)
-5. Back to calendar link
-
-**404 if slug not found or status not published.**
 
 ---
 
@@ -819,7 +788,7 @@ Quick reference for which tables each public route reads from. Useful for unders
 | `/boosters/volunteer` | volunteer_opportunities, site_settings |
 | `/boosters/committees` | committees, board_members |
 | `/boosters/board` | board_members, site_settings |
-| `/boosters/events` + `/[slug]` | events |
+| `/events` + `/[slug]` + `/events.ics` | events |
 | `/boosters/documents` | documents |
 | `/boosters/donate` | (form only — no DB read needed) |
 | `/about` | site_settings |
