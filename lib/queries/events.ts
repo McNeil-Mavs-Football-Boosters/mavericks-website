@@ -58,6 +58,34 @@ export async function getEventsInRange(
   return (data ?? []) as EventRow[];
 }
 
+export async function getEventsForIcsFeed(): Promise<EventRow[]> {
+  const supabase = createServerClient();
+  const now = new Date();
+  const oneYearAgo = new Date(
+    now.getFullYear() - 1,
+    now.getMonth(),
+    now.getDate(),
+  ).toISOString();
+  const twoYearsAhead = new Date(
+    now.getFullYear() + 2,
+    now.getMonth(),
+    now.getDate(),
+  ).toISOString();
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("status", "published")
+    .gte("starts_at", oneYearAgo)
+    .lte("starts_at", twoYearsAhead)
+    .order("starts_at", { ascending: true });
+
+  if (error) {
+    console.error("[queries/events] getEventsForIcsFeed failed", error);
+    return [];
+  }
+  return (data ?? []) as EventRow[];
+}
+
 export async function getEventBySlug(slug: string): Promise<EventRow | null> {
   const supabase = createServerClient();
   const { data, error } = await supabase

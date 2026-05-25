@@ -3,7 +3,7 @@ import { toZonedTime } from "date-fns-tz";
 
 import EventListView from "@/components/events/EventListView";
 import EventMonthView from "@/components/events/EventMonthView";
-import SubscribeButtonShape from "@/components/events/SubscribeButtonShape";
+import { SubscribeCalendarButton } from "@/components/events/SubscribeCalendarButton";
 import { CHICAGO_TZ } from "@/lib/events-format";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +114,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             </Link>
           </div>
           <div className="self-end sm:self-auto">
-            <SubscribeButtonShape />
+            <SubscribeCalendarButton />
           </div>
         </div>
       </section>
