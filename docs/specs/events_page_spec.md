@@ -2,6 +2,34 @@
 
 Written 2026-05-25. Builds the new top-level `/events` route.
 
+## As-shipped 2026-05-25
+
+Shipped in three commits on `main`:
+- `2b79991` — slice 1 (List + Month views, detail page, migration 048 seed)
+- `fd7dfcb` — slice 2 (Subscribe popover client component + ICS Route Handler)
+- `bb889db` — same-day polish: migration 050 fixes parent-meeting start to 6:30 PM CDT (end stays at 8:30 PM → 2-hour meeting), and the Past list gained month-year subheadings ("DECEMBER 2025", "AUGUST 2025") via an extracted `MonthGroupedList` component reused by both Upcoming and Past lists.
+
+**Deviations from this spec:**
+- Step 3 (`rm -rf app/boosters/events/`) was a no-op — the directory never existed. The dropdown link removed earlier on 2026-05-25 in commit `c7668d6` had always pointed at a 404.
+- Rollback filename used repo convention (`048_rollback.sql`) instead of the spec's `048_events_seed_rollback.sql`.
+- `date-fns` was not in deps when spec said "verify before adding". Added both `date-fns@^4` and `date-fns-tz@^3` — the latter required because Vercel runs UTC and `formatInTimeZone(d, 'America/Chicago', ...)` is the only correct path for wall-clock display.
+- Open questions defaulted to spec recommendations: navy chips, 10 past events, ICS feed range 1y past + 2y future.
+- Could not run the live icalendar.org/validator from the build environment; manual structural validation against RFC 5545 (CRLF, 75-octet folding, TEXT escaping, UTC `YYYYMMDDTHHMMSSZ`) passed. Google Calendar subscribe confirmed working by Jeremy in his browser; Apple `webcal://` and Outlook flows not yet user-verified.
+- Subscribe button: `<SubscribeCalendarButton>` chose the `origin`-non-empty render-conditional over a `mounted` flag so SSR avoids emitting malformed calendar URLs without tripping the `react-hooks/set-state-in-effect` lint rule.
+
+**Files of record:**
+- Page: `app/events/page.tsx`
+- Components: `components/events/EventListView.tsx`, `EventMonthView.tsx`, `SubscribeCalendarButton.tsx`
+- Detail: `app/events/[slug]/page.tsx` + `app/events/[slug]/[catchall]/page.tsx`
+- ICS: `app/events.ics/route.ts`
+- Queries: `lib/queries/events.ts` (`getUpcomingEvents`, `getPastEvents`, `getEventsInRange`, `getEventBySlug`, `getEventsForIcsFeed`)
+- Time helpers: `lib/events-format.ts` (all `America/Chicago` via `date-fns-tz`)
+- Type: `EventRow` in `lib/types.ts`
+- Seeds: migrations 048 (3 events) + 050 (time fix)
+
+---
+
+
 **Reads with:**
 - `content_map_v2.md` — old `/boosters/events` section (being deprecated by this spec)
 - `schema.md` — `events` table definition
