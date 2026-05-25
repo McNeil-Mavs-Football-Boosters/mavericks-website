@@ -360,7 +360,7 @@ Same across all routes.
 
 3. **News & Communications** (`resource_section = 'communications'`)
    - Heading: "News & Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 (commit f11c5f4).
-   - Same item rendering. As of 2026-05-25 (migration 047): MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM.", then HUDL (1), then SportsYou (2). The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them.
+   - Same item rendering. As of 2026-05-25: MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM." (migration 047), then HUDL (1), then SportsYou (2), then McNeil Mavericks Football Parents (Facebook Group) (`icon_hint='facebook'`, sort_order=3, migration 049). The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them. `icon_hint='facebook'` is a new lowercase hint registered in `lib/resource-icons.tsx` — lucide-react v1.x dropped brand glyphs (trademark), so the registry holds an inline SVG mirroring the Footer.tsx Facebook component.
 
 4. **Resources** (`resource_section = 'resources'`)
    - Heading: "Resources"
