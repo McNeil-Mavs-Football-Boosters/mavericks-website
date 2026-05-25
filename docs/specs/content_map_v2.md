@@ -48,7 +48,7 @@ Written 2026-05-16. **Supersedes the original `content_map.md`** (which was stru
 Same across all routes.
 
 - Logo + wordmark on the left, links to `/` (the logo serves as the Home link — no standalone Home entry). Desktop: "McNeil Mavericks Football". Mobile (<768px): "Mavs Football".
-- Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, Events, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column. News was removed from the top-level row 2026-05-25 — /news is still live and reachable via the Forms & Links page under the "News and Communications" section.)
+- Primary nav on the right, in order: Schedule, Roster, Coaches & Trainers, Booster Club ▼, Events, Sponsors, Forms & Links. (About is not in primary nav; it lives in the footer right column. News was removed from the top-level row 2026-05-25; no /news page is planned, so there is no nav entry for it anywhere.)
 - Booster Club dropdown items: About the Booster Club, Join the Club!, Members, Sponsorship Opportunities, Volunteer, Committees, Donate. (7 items as of 2026-05-25: Calendar / Events promoted to top-level Events; Documents dropped; Board was removed earlier and the route was never built.)
 - Events top-level link points to `/events` (route not built yet — placeholder 404). Booster Club dropdown no longer carries a calendar link.
 - Footer SITE_LINKS already diverges from the top-level nav (curated set: Schedule, Boosters, Join, Sponsors, Donate, Privacy — no News, no Events). Left as-is in the 2026-05-25 nav restructure; decide separately whether to add Events.
@@ -357,9 +357,9 @@ Same across all routes.
    - Each item: label (clickable to url), description below in smaller text, icon based on `icon_hint`
    - Hide section if no rows
 
-3. **News and Communications** (`resource_section = 'communications'`)
-   - Heading: "News and Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 when News left the top-level nav.
-   - Same item rendering. As of 2026-05-25: MavMail (`icon_hint='mail'`, sort_order=-2) at top, News → `/news` (`icon_hint='newspaper'`, sort_order=-1) second, then HUDL (1), then SportsYou (2). Negative sort_orders used so MavMail/News float to the top without renumbering HUDL/SportsYou.
+3. **News & Communications** (`resource_section = 'communications'`)
+   - Heading: "News & Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 (commit f11c5f4).
+   - Same item rendering. As of 2026-05-25 (migration 047): MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM.", then HUDL (1), then SportsYou (2). The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them.
 
 4. **Resources** (`resource_section = 'resources'`)
    - Heading: "Resources"

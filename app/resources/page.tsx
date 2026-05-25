@@ -8,7 +8,7 @@ type SectionKey = ResourceLink["section"];
 
 const SECTION_ORDER: ReadonlyArray<{ key: SectionKey; heading: string }> = [
   { key: "registration_forms", heading: "Registration & Forms" },
-  { key: "communications", heading: "News and Communications" },
+  { key: "communications", heading: "News & Communications" },
   { key: "resources", heading: "Resources" },
   { key: "stadiums", heading: "Stadiums & Directions" },
   { key: "other", heading: "Other" },
