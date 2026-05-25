@@ -1,5 +1,23 @@
 # /boosters/volunteer Spec
 
+## As-shipped 2026-05-24
+
+Built across two commits + same-session polish, all on `main`, pushed:
+
+- **`3212912`** — Initial build. All 5 sections, both Sign Up CTAs wired to `VOLUNTEER_FORM_URL`, 11 cards. Card #7 ("Joining a Committee") the only clickable card → `/boosters/committees` with `ArrowUpRight` corner.
+- **`cd51932`** — Same-session feedback: all 10 non-committee cards now also link to `VOLUNTEER_FORM_URL` (`target="_blank" rel="noopener"`). All 11 cards gain the `ArrowUpRight` corner for consistent affordance. Card #7 stays internal-link to `/boosters/committees`.
+
+**Spec deviations**:
+
+- **`VOLUNTEER_FORM_URL` was NOT already in `lib/constants.ts`** at spec-write time (spec § Form URL claimed it was). Added in `3212912` alongside the page.
+- **Card affordance**: spec § 3 said card #7 is "the only one that links somewhere" and "Other cards are static — they're descriptive, the Sign Up button is the action." Live behavior: all 11 cards link. Card #7 → `/boosters/committees`, the other 10 → Google form. Driven by Jeremy 2026-05-24 immediately post-deploy.
+- **Logo size**: spec didn't specify size, only `rounded-full bg-white p-0.5`. Initial agent picked 64px (would have read smaller than committees' 80px hero logo). Bumped to 80px (`h-16 w-16 md:h-20 md:w-20`) pre-commit to match the committees hero visual weight. Kept spec's `p-0.5` (deliberately thinner disc than committees' `p-1`).
+
+**Closes** (per spec § Route, all verified post-deploy):
+
+- Booster Club header dropdown → "Volunteer" no longer 404s.
+- `/boosters/committees` bottom CTA card now lands on the live page.
+
 ## Goal
 Single page that explains why volunteering matters, lists ways to help, and pushes visitors to the volunteer interest Google Form.
 
