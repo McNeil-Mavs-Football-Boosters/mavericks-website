@@ -57,13 +57,15 @@ export default async function EventListView({ filter }: EventListViewProps) {
   );
 }
 
-function UpcomingList({ events }: { events: EventRow[] }) {
+function MonthGroupedList({ events }: { events: EventRow[] }) {
   // Precompute per-row "show heading" flags so the JSX render is pure (no
-  // closure mutation between iterations).
+  // closure mutation between iterations). Works for both ascending
+  // (Upcoming) and descending (Past) ordering — boundaries are detected
+  // by change in month-key relative to the previous row.
   const monthKeys = events.map((e) => chicagoMonthKey(e.starts_at));
   const showHeadings = monthKeys.map((key, i) => i === 0 || key !== monthKeys[i - 1]);
   return (
-    <div className="mt-2">
+    <>
       {events.map((event, i) => (
         <div key={event.id}>
           {showHeadings[i] ? (
@@ -74,16 +76,22 @@ function UpcomingList({ events }: { events: EventRow[] }) {
           <EventRowCard event={event} />
         </div>
       ))}
+    </>
+  );
+}
+
+function UpcomingList({ events }: { events: EventRow[] }) {
+  return (
+    <div className="mt-2">
+      <MonthGroupedList events={events} />
     </div>
   );
 }
 
 function PastList({ events }: { events: EventRow[] }) {
   return (
-    <div className="mt-6">
-      {events.map((event) => (
-        <EventRowCard key={event.id} event={event} />
-      ))}
+    <div className="mt-2">
+      <MonthGroupedList events={events} />
       <p className="text-sm text-muted-foreground mt-6">
         Showing 10 most recent events.
       </p>
