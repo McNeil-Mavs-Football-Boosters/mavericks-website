@@ -10,3 +10,6 @@ export const DONATION_FORM_URL =
 export const DONATION_SHEET_ID = "1Dk-qdY0SiK1YlG9hPmEV7V__e1j2UoojJI3H6rYLmOI";
 
 export const VENMO_HANDLE = "@McNeil-Football";
+
+export const CLEAR_BAG_POLICY_URL =
+  "https://www.roundrockisd.org/page/clear-bag-policy";

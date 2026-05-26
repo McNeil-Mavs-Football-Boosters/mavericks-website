@@ -449,6 +449,26 @@ Five commits:
 - **The legacy SportsEngine privacy text was never customized** for McNeil — it's literal boilerplate referring to "league or team or youth sports organization ('Organization')". A real Phase-1 policy should at minimum (a) name the org, (b) describe the actual data flows (Google Form responses → service-account read; contact form → Resend; future Stripe → webhook → Supabase), and (c) drop the SE-era "Services are powered by SportsEngine" framing entirely. The minimum-viable strip we did is correct-by-omission but uninformative.
 - **`/boosters/donate` detail section in `content_map_v2.md` (lines 692–717) still describes the original Stripe-Checkout flow.** Annotated with a "Phase 1 reality" note in this session (same pattern used for `/boosters/join` and `/boosters/members` after their pivots).
 
+## Build progress 2026-05-25 (late evening) — resource links: Game Photos, Clear Bag Policy, MHS website
+
+One commit, one migration, one new icon registry entry, two schedule-page edits.
+
+- **Migration 051** (`051_resources_add_game_photos_clear_bag_mhs.sql` + `051_rollback.sql`). Three `resource_links` INSERTs:
+  - **Game Photos** → `communications`, sort_order=4, `icon_hint='photo'`, family-sourced photo doc (Google Doc URL). Placed below the Facebook Parents Group (sort_order=3). Sits with sibling community-content channels (MavMail / SportsYou / FB Parents Group). Pushed back briefly on "Resources vs Communications" — Communications is right; the doc is community-engagement content, not a static reference.
+  - **Clear Bag Policy** → `stadiums`, sort_order=2, `icon_hint='external'`, RRISD district policy. Slotted directly after Kelly Reeves Athletic Complex (sort_order=1). Spec § /resources updated to note that non-stadium policy rows fit this section too — same "what you need to know to attend a game" bucket.
+  - **McNeil High School** → `resources`, sort_order=1, `icon_hint='external'`, institutional link. First seeded row in the previously empty Resources section.
+- **Icon registry** (`lib/resource-icons.tsx`). New `photo` hint → lucide `Camera`. Picked Camera over `ImageIcon` because at the section's small icon size, Camera reads as "photography activity" (matching the FB-Group sibling above it) better than the picture-frame glyph.
+- **Clear Bag Policy advisory on game schedule pages.** **Pushback**: Jeremy asked for `/schedule/varsity` only, but the RRISD clear bag policy is district-wide for all athletic events — JV and freshman game-goers (same parents/family) hit the same enforcement at the same venues. Cost of broader placement is one line in two files. Shipped the advisory on **all four games URLs** (varsity, jv, freshman/green, freshman/blue) by editing both `app/schedule/games/[level]/page.tsx` and `app/schedule/games/[level]/[designation]/page.tsx`. Not on practice pages — no spectators there. Markup: a sibling `<p className="mt-1 text-xs print:hidden">` with `text-muted-foreground hover:text-mavs-navy hover:underline`, one step smaller and lighter than the MaxPreps link directly above it. `CLEAR_BAG_POLICY_URL` added to `lib/constants.ts`. Both files now import it.
+- **Smoke tests against the dev server**:
+  - `/resources` renders Game Photos with a Camera icon, Clear Bag Policy under Stadiums & Directions, McNeil High School under Resources (section was previously empty; heading now appears).
+  - `/schedule/games/varsity`, `/jv`, `/freshman/green` all show the "Clear bag policy →" line below the MaxPreps subhead.
+  - `/schedule/practice/varsity` does NOT show the line. Verified.
+- `db/apply_all.sql` regenerated (forward-only; `*_rollback.sql` guard).
+
+Pickup notes.
+- **Path naming wrinkle.** Jeremy referenced `/schedule/varsity` in the request; actual route is `/schedule/games/varsity`. The /schedule layout primes settings + renders the Game/Practice toggle; the `[level]/page.tsx` handles varsity + jv, the `[level]/[designation]/page.tsx` handles freshman Green/Blue. If you ever want a third schedule-wide advisory, the layout file is the right place; for game-only advisories, the two page files are correct.
+- **Kelly Reeves address verification** is still an open `followups.md` item. Unaffected by this commit — the Clear Bag Policy is policy-level, not stadium-specific.
+
 ## Build progress 2026-05-25 (late evening) — homepage tweaks: Volunteer/Donate swap, carousel speeds, pause-on-hover removal, Upcoming Events restyle
 
 Five small commits on `main`, all pushed. No data/schema changes.

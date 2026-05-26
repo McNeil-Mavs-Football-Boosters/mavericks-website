@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { GameCard } from "@/components/schedule/game-card";
 import { GamesTable } from "@/components/schedule/games-table";
 import { PrintViewLink } from "@/components/shared/PrintViewLink";
+import { CLEAR_BAG_POLICY_URL } from "@/lib/constants";
 import { getGamesForTeam } from "@/lib/queries/games";
 import { getRosterForTeam } from "@/lib/queries/rosters";
 import { getSiteSettingsCore } from "@/lib/site-settings";
@@ -66,6 +67,16 @@ export default async function FreshmanGameSchedulePage({
               </a>
             </p>
           ) : null}
+          <p className="mt-1 text-xs print:hidden">
+            <a
+              href={CLEAR_BAG_POLICY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-mavs-navy hover:underline"
+            >
+              Clear bag policy →
+            </a>
+          </p>
         </div>
         <PrintViewLink
           storagePath={roster?.schedule_pdf_storage_path ?? null}

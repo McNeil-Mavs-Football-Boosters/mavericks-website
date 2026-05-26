@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import {
+  Camera,
   ClipboardList,
   ExternalLink,
   FileText,
@@ -40,6 +41,7 @@ const ICON_BY_HINT: Record<string, LucideIcon> = {
   mail: Mail,
   newspaper: Newspaper,
   facebook: Facebook,
+  photo: Camera,
 };
 
 export function iconForHint(hint: string | null): LucideIcon {

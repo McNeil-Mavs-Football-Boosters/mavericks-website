@@ -142,6 +142,7 @@ Same across all routes.
 1. **Page header**
    - Title: "[current_year] Schedule" (e.g., "2026-27 Schedule")
    - Subhead with MaxPreps CTA: "Live scores and stats →" linking to `site_settings.maxpreps_team_url` (opens in new tab)
+   - Below the MaxPreps subhead, a small advisory line: "Clear bag policy →" linking to `CLEAR_BAG_POLICY_URL` (`https://www.roundrockisd.org/page/clear-bag-policy`) in `lib/constants.ts`. `text-xs text-muted-foreground hover:text-mavs-navy hover:underline`; one step smaller and lighter than the MaxPreps link so the policy reads as subordinate but visible. Shown on every games page (varsity / jv / freshman Green / freshman Blue); **not** on practice pages. RRISD's clear bag policy applies district-wide to all athletic events, not varsity-only.
 
 2. **Anchor nav** (sticky below page header, optional)
    - "Jump to: Varsity · JV · Freshman"
@@ -360,15 +361,17 @@ Same across all routes.
 
 3. **News & Communications** (`resource_section = 'communications'`)
    - Heading: "News & Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 (commit f11c5f4).
-   - Same item rendering. As of 2026-05-25: MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM." (migration 047), then HUDL (1), then SportsYou (2), then McNeil Mavericks Football Parents (Facebook Group) (`icon_hint='facebook'`, sort_order=3, migration 049). The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them. `icon_hint='facebook'` is a new lowercase hint registered in `lib/resource-icons.tsx` — lucide-react v1.x dropped brand glyphs (trademark), so the registry holds an inline SVG mirroring the Footer.tsx Facebook component.
+   - Same item rendering. As of 2026-05-25 (late evening): MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM." (migration 047), then HUDL (1), then SportsYou (2), then McNeil Mavericks Football Parents (Facebook Group) (`icon_hint='facebook'`, sort_order=3, migration 049), then Game Photos (`icon_hint='photo'`, sort_order=4, migration 051) — family-sourced photo doc, sibling to the Facebook Parents Group. The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them. `icon_hint='facebook'` and `icon_hint='photo'` are new lowercase hints registered in `lib/resource-icons.tsx` — `photo` maps to lucide `Camera`; `facebook` is an inline SVG (lucide-react v1.x dropped brand glyphs).
 
 4. **Resources** (`resource_section = 'resources'`)
    - Heading: "Resources"
    - Workouts, conditioning, fall parent meeting docs
+   - As of 2026-05-25 (late evening): McNeil High School (`icon_hint='external'`, sort_order=1, migration 051) — institutional link, first seeded row in this section.
 
 5. **Stadiums** (`resource_section = 'stadiums'`)
    - Heading: "Stadiums & Directions"
-   - Each item is a stadium row: name, address (in description), Google Maps link
+   - Each item is a stadium row: name, address (in description), Google Maps link. Non-stadium policy rows (e.g., Clear Bag Policy) live here too — they share the same "what you need to know to attend a game" mental bucket.
+   - As of 2026-05-25 (late evening): Kelly Reeves Athletic Complex (sort_order=1) + Clear Bag Policy (`icon_hint='external'`, sort_order=2, migration 051).
 
 6. **Other** (`resource_section = 'other'`)
    - Catch-all for things that don't fit the other sections
