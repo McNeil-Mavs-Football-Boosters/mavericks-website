@@ -41,10 +41,10 @@ export default function AboutPage() {
               General questions:
             </span>{" "}
             <a
-              href="mailto:boosters@mcneilmavericks.org"
+              href="mailto:mcneilfootballboosters@gmail.com"
               className="text-mavs-navy hover:underline"
             >
-              boosters@mcneilmavericks.org
+              mcneilfootballboosters@gmail.com
             </a>
           </li>
           <li>
@@ -63,10 +63,10 @@ export default function AboutPage() {
               Membership questions:
             </span>{" "}
             <a
-              href="mailto:boosters@mcneilmavericks.org"
+              href="mailto:mcneilfootballboosters@gmail.com"
               className="text-mavs-navy hover:underline"
             >
-              boosters@mcneilmavericks.org
+              mcneilfootballboosters@gmail.com
             </a>
           </li>
           <li>

@@ -185,10 +185,10 @@ export default async function BoostersJoinPage() {
         <p className="mt-4 text-sm text-muted-foreground">
           Questions? Contact{" "}
           <a
-            href="mailto:boosters@mcneilmavericks.org"
+            href="mailto:mcneilfootballboosters@gmail.com"
             className="text-mavs-navy hover:underline"
           >
-            boosters@mcneilmavericks.org
+            mcneilfootballboosters@gmail.com
           </a>
           .
         </p>

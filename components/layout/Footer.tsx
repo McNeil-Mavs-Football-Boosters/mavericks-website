@@ -70,7 +70,7 @@ const FALLBACK_SETTINGS: SiteSettings = {
   display_name: "McNeil Mavericks Football Booster Club",
   ein: "",
   mailing_address: null,
-  primary_contact_email: "boosters@mcneilmavericks.org",
+  primary_contact_email: "mcneilfootballboosters@gmail.com",
   school_affiliation_disclaimer:
     "This website is maintained by the McNeil Maverick Football Booster Club and is not a part of McNeil High School or Round Rock ISD. Neither McNeil High School nor Round Rock ISD is responsible for the content or opinions within this website.",
   facebook_football_url: null,

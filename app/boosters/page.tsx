@@ -24,7 +24,7 @@ const SETTINGS_DEFAULTS: Pick<
 > = {
   legal_name: "McNeil Maverick Football Booster Club",
   ein: "26-4231242",
-  primary_contact_email: "boosters@mcneilmavericks.org",
+  primary_contact_email: "mcneilfootballboosters@gmail.com",
   mailing_address: null,
 };
 
