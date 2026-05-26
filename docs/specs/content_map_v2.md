@@ -163,7 +163,7 @@ Same across all routes.
 **Data sources:** site_settings, games.
 
 **Implementation notes:**
-- Mobile: tables collapse to cards (each row becomes a stacked card). Don't try to make a 7-column table work on a 375px viewport.
+- Mobile: tables collapse to cards (each row becomes a stacked card). Don't try to make a 6-column table work on a 375px viewport.
 - Print stylesheet: clean print-friendly version. Coaches and parents will print these.
 - ICS export: optional. Skip Phase 1, revisit if requested. The MaxPreps link covers the "I want this on my calendar" use case.
 

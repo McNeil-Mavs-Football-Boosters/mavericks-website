@@ -492,7 +492,9 @@ One commit, one migration (`052_resources_and_games_backfill.sql` + `052_rollbac
 - **JV / freshman 2025 results not backfilled.** SA1 only researched varsity. JV/F results aren't typically on MaxPreps; would need to ask coaches or pull from SportsYou archives. Open if Jeremy wants.
 - **Home/away seed discrepancies** (Stony Point Sep 26 + Cedar Ridge Oct 24) — SA1 vs migration 032 disagree. SA1 is from MaxPreps game-level data, which is usually authoritative. Worth a separate cleanup pass if Jeremy notices the row tint / badge feels wrong on those two games.
 - **Maps URL format**: the `maps/search/?api=1&query=...` form is the Google-documented stable API. Short links (`maps.app.goo.gl`) can expire. Stick with API-1 form for all future location_urls.
-- **`watch_url` semantics expanded.** Previously: "external link icon if set." Now: "Result-cell Watch link if non-final, right-column icon if final." Documented in `content_map_v2.md` § /schedule.
+- **`watch_url` semantics expanded.** Previously: "external link icon if set." Now: "Result-cell Watch link if non-final." Documented in `content_map_v2.md` § /schedule.
+
+**Follow-up commit `b4590af` — Watch column removed entirely.** Jeremy's review on the rendered varsity page: with the Watch-in-Result behavior covering Hutto, the right-side Watch column was empty for all 11 rows and read as dead weight. Dropped from desktop (`components/schedule/games-table.tsx` — table is now 6 columns; Notes subtitle row `colSpan` bumped from 7 to 6) and mobile (`components/schedule/game-card.tsx` — icon block beside ResultCell removed). `ExternalLink` import dropped from both files. `content_map_v2.md` § /schedule updated to "6 columns" + a note that final games with `watch_url` are an open question deferred until a real use case arises. The point-in-time "What's live as of Commit B Deliverable E" snapshot below (which says "7-column layout") was deliberately left alone — it documents what shipped at that milestone, not current state.
 
 ## Build progress 2026-05-25 (late evening) — resource links: Game Photos, Clear Bag Policy, MHS website
 
