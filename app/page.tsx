@@ -130,8 +130,8 @@ function buildQuickLinks(currentYear: string): Array<{
   return [
     { label: "Join the Club", href: "/boosters/join", Icon: UserPlus },
     { label: "Sponsor the Team", href: "/boosters/sponsor", Icon: Handshake },
-    { label: "Make a Donation", href: "/boosters/donate", Icon: HeartHandshake },
     { label: "Volunteer", href: "/boosters/volunteer", Icon: HandHelping },
+    { label: "Make a Donation", href: "/boosters/donate", Icon: HeartHandshake },
     { label: `${currentYear} Schedule`, href: "/schedule", Icon: CalendarDays },
     { label: `${currentYear} Roster`, href: "/roster", Icon: Users },
   ];

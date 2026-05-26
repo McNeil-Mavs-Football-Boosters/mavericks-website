@@ -20,8 +20,8 @@ type HeroCarouselProps = {
 
 type ActivePool = "cta" | "sponsor";
 
-const BG_INTERVAL_MS = 7000;
-const FG_INTERVAL_MS = 11000;
+const BG_INTERVAL_MS = 8000;
+const FG_INTERVAL_MS = 5500;
 
 export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
   const { ctaTiles, sponsorTiles } = useMemo(() => {
