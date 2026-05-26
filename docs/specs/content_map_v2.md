@@ -427,7 +427,7 @@ Same across all routes.
    - Link to `/privacy`
 
 6. **Section nav** — list of all booster sub-pages
-   - About, Join, Members, Sponsorship, Volunteer, Committees, Board, Calendar, Documents, Donate
+   - Join, Members, Sponsorship Opportunities, Volunteer, Committees, Calendar / Events, Donate (7 cards as of 2026-05-25 evening — Board + Documents removed as both 404'd; Calendar / Events repointed to top-level `/events`)
    - Just plain text links, no icons. The header dropdown is the primary nav.
 
 **Data sources:** site_settings.
@@ -690,6 +690,10 @@ Top-level events surface — promoted out of `/boosters/events` on 2026-05-25. F
 ---
 
 ### `/boosters/donate`
+
+**Phase 1 reality (shipped 2026-05-25, see `specs/boosters_donate_spec.md`):** the Stripe-Checkout flow described below is **Phase 2+**. Shipped instead: green hero with Become-a-Member cross-sell, intro prose, 6-card amount grid → single donation Google Form, server-rendered "Thank You to Our Donors" list pulled from the Form-responses sheet via the same service-account JWT used by `/boosters/members`. Treasurer manually verifies each Venmo (`@McNeil-Football`) or mailed-check payment in the sheet (`Payment Received = Yes` + `Payment Received Date` columns) before the row appears on the public list. ISR `revalidate=300`. Anonymous donors render as "Anonymous". Empty state when no rows are confirmed. 20-cap "Show more" placeholder for the future archive page. Bottom navy CTA cross-sells to `/boosters/join`. Form URL + Sheet ID live in `lib/constants.ts` (`DONATION_FORM_URL`, `DONATION_SHEET_ID`); `VENMO_HANDLE` also lifted to a constant.
+
+**Original Phase 2 spec follows:**
 
 **Purpose:** donation form. Standalone from membership. Most donors here are not signing up for a tier.
 

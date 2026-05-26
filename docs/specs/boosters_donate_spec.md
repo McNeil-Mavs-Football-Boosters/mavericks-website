@@ -2,6 +2,23 @@
 
 Written 2026-05-25. Phase 1 pattern matches /boosters/join (Google Form CTA) and /boosters/members (Sheets-backed list). No Stripe in Phase 1; Venmo is the working payment channel. Treasurer verifies each payment manually in the linked Google Sheet before any donation appears on the public list.
 
+## As-shipped 2026-05-25 (evening)
+
+Both turns shipped same day as the spec was written. Five commits: `a1352a5` (Turn 2 ship — page + sheets module + constants + spec) → `ff1dfa3` (hero CTA repurposed) plus two privacy-page commits that landed in the same session (`c72db1e`, `b7f4e5e`) and one /boosters Booster Section grid cleanup (`541cf96`) that orphaned-link follow-up surfaced. Live at `/boosters/donate`.
+
+**Deviations from the spec, in order they came up:**
+
+- **Hero CTA repurposed.** Spec § Layout 1 calls for a navy `DONATE →` button in the hero linking to `DONATION_FORM_URL`. Post-deploy Jeremy's call: the hero DONATE button was redundant with the 6 amount cards directly below it. Repurposed as a cross-sell to membership — label is now `BECOME A MEMBER →`, links to `/boosters/join` via Next `<Link>` (internal, not new tab). The 6 amount-card buttons still hit `DONATION_FORM_URL`. Bottom navy `JOIN THE CLUB →` CTA unchanged.
+- **Collect-email setting flipped.** Spec § Turn 1 form settings says `Collect email addresses: on (required, with verification disabled)`. Apps Script's `setCollectEmail(true)` maps to **verified-only** mode (forces Google sign-in), which the spec explicitly didn't want. Live form runs with **collect-email off** + a **manual "Email" Short Answer item** with email-format validation, matching the volunteer-form pattern. Side benefit: lets the logo image item sit at the top of the form (with collect-email on, the email field is pinned above every other item including images).
+- **Sheet column placement.** Spec § Turn 1 "Linked Google Sheet" assumes treasurer columns J/K/L. After adding the manual Email field, Forms appended its response column to J and the script-written treasurer headers shifted to K/L/M. Functionally fine: `lib/sheets/donations.ts` finds columns by header name, not position. Range `'Form Responses 1'!A:L` still covers everything needed (`Payment Received` at K, `Payment Received Date` at L; `Treasurer Notes` at M is intentionally never read).
+- **Stale auto-collect column "B" preserved (hidden).** Old "Email Address" form-bound column from the brief moment collect-email was on can't be deleted from the sheet (Forms refuses). Hidden via right-click → Hide column. No functional impact.
+- **Yes/No data validation on Payment Received** is sheet-side, not script-side. Added manually via Sheet UI: Data → Data validation → Dropdown `Yes`,`No` → Reject input on invalid. Validation rule follows the column if it ever shifts again.
+- **Apps Script generator** lives at `MavericksWebsite/scripts/create-donation-form.gs` (outside repo, same pattern as the volunteer form). The script's `setCollectEmail(true)` is now a **known-bad default** — anyone re-running needs to flip to `false` + add a manual Email Short Answer item to match the live form. Currently a manual post-run editor step Jeremy did; not yet baked into the script.
+
+**Spec sections still authoritative as-shipped:** intro prose (verbatim), the 6 amount cards (order + labels + green button at bottom), Thank You list rendering (name + amount + dedication + month/year + dividers), empty-state copy + button, 20-cap Show more placeholder, bottom navy CTA. ISR `revalidate = 300`. Inline `DonationRow` component at top of page file. All exactly per spec.
+
+## Original spec follows
+
 Supersedes the `/boosters/donate` stub in `content_map_v2.md` (which described the Phase 2 Stripe-Checkout flow). The Phase 2 swap-out plan is documented at the bottom.
 
 ## Goal
