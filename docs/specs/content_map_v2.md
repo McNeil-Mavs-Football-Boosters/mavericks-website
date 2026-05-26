@@ -152,8 +152,8 @@ Same across all routes.
    - Heading: "Varsity Schedule"
    - Table columns: Date | Opponent | Location | Home/Away | Time | Result | Watch
    - Each row maps to a `games` row with `team_level = 'varsity'`, ordered by `game_date ASC`
-   - "Result" column: shows "W 35-14" / "L 21-28" if `result_status = 'final'`; "—" otherwise; "Cancelled" / "Postponed" / "TBD" per status
-   - "Watch" column: external link icon if `watch_url IS NOT NULL`; otherwise empty
+   - "Result" column: shows "W 35-14" / "L 21-28" if `result_status = 'final'`; "Cancelled" / "Postponed" / "TBD" per status; otherwise — *if the game has a non-null `watch_url`* — renders "Watch →" linking to `watch_url`; else em-dash. The Watch-in-Result behavior covers games we want to surface a broadcast/stream link on without populating a score (e.g., the last game of a backfilled season, see migration 052).
+   - "Watch" column: external link icon if `watch_url IS NOT NULL` **and `result_status = 'final'`** — i.e., the right-column icon is only shown when the Result cell isn't already rendering "Watch →". Single affordance per row.
    - "Notes" rendered as a small subtitle row under the matchup row when populated (Homecoming, Senior Night, Scrimmage, etc.)
    - Empty state: card showing "Varsity schedule coming soon. Check MaxPreps for current details." with MaxPreps CTA
 
@@ -361,17 +361,18 @@ Same across all routes.
 
 3. **News & Communications** (`resource_section = 'communications'`)
    - Heading: "News & Communications" (UI string in `app/resources/page.tsx` SECTION_ORDER; the DB enum value `communications` is unchanged). Renamed from "Communications" on 2026-05-25 (commit f11c5f4).
-   - Same item rendering. As of 2026-05-25 (late evening): MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM." (migration 047), then HUDL (1), then SportsYou (2), then McNeil Mavericks Football Parents (Facebook Group) (`icon_hint='facebook'`, sort_order=3, migration 049), then Game Photos (`icon_hint='photo'`, sort_order=4, migration 051) — family-sourced photo doc, sibling to the Facebook Parents Group. The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above HUDL/SportsYou without renumbering them. `icon_hint='facebook'` and `icon_hint='photo'` are new lowercase hints registered in `lib/resource-icons.tsx` — `photo` maps to lucide `Camera`; `facebook` is an inline SVG (lucide-react v1.x dropped brand glyphs).
+   - Same item rendering. As of 2026-05-26: MavMail (`icon_hint='mail'`, sort_order=-2) at top with description "McNeil High School's weekly newsletter. Published most Sundays at 5PM." (migration 047), then SportsYou (2), then McNeil Mavericks Football Parents (Facebook Group) (`icon_hint='facebook'`, sort_order=3, migration 049), then Game Photos (`icon_hint='photo'`, sort_order=4, migration 051) — family-sourced photo doc, sibling to the Facebook Parents Group. HUDL was relocated to the Resources section in migration 052 (the team film/conditioning platform fits "resources" better than "communications"). The standalone News entry → `/news` from migration 046 was dropped in 047 — no /news page is planned. Negative sort_order on MavMail keeps it above the rest without renumbering. `icon_hint='facebook'` and `icon_hint='photo'` are lowercase hints registered in `lib/resource-icons.tsx` — `photo` maps to lucide `Camera`; `facebook` is an inline SVG (lucide-react v1.x dropped brand glyphs).
 
 4. **Resources** (`resource_section = 'resources'`)
    - Heading: "Resources"
-   - Workouts, conditioning, fall parent meeting docs
-   - As of 2026-05-25 (late evening): McNeil High School (`icon_hint='external'`, sort_order=1, migration 051) — institutional link, first seeded row in this section.
+   - Workouts, conditioning, fall parent meeting docs, institutional links.
+   - As of 2026-05-26: McNeil High School (sort_order=1, migration 051) + HUDL (sort_order=2, migration 052 — relocated from News & Communications).
 
 5. **Stadiums** (`resource_section = 'stadiums'`)
    - Heading: "Stadiums & Directions"
-   - Each item is a stadium row: name, address (in description), Google Maps link. Non-stadium policy rows (e.g., Clear Bag Policy) live here too — they share the same "what you need to know to attend a game" mental bucket.
-   - As of 2026-05-25 (late evening): Kelly Reeves Athletic Complex (sort_order=1) + Clear Bag Policy (`icon_hint='external'`, sort_order=2, migration 051).
+   - Each item is a stadium row: name, address (in description), Google Maps link (Maps API `?api=1&query=<address>` form — stable canonical URL, no short-link expiration).
+   - **Clear bag policy** renders as a small subordinate link directly under the stadium list — `text-xs` muted gray, hover navy + underline. Passed in from `app/resources/page.tsx` via the `<ResourceSection footer={...}>` slot (added in migration 052's accompanying code change). URL lives in `CLEAR_BAG_POLICY_URL` (`lib/constants.ts`). The same link also renders below the MaxPreps subhead on `/schedule/games/*`; both surfaces read from the same constant.
+   - As of 2026-05-26: Kelly Reeves Athletic Complex (KRAC) (sort_order=1, KRAC parenthetical added 052) + House Park (sort_order=2, migration 052 — 1301 Shoal Creek Blvd, Austin / Anderson HS home) + Dragon Stadium (sort_order=3, migration 052 — 300 N Lake Creek Dr, Round Rock HS home).
 
 6. **Other** (`resource_section = 'other'`)
    - Catch-all for things that don't fit the other sections

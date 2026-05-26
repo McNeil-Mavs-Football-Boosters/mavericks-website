@@ -1,4 +1,5 @@
 import { ResourceSection } from "@/components/resources/resource-section";
+import { CLEAR_BAG_POLICY_URL } from "@/lib/constants";
 import { getResourceLinks } from "@/lib/queries/resource-links";
 import type { ResourceLink } from "@/lib/types";
 
@@ -51,6 +52,20 @@ export default async function ResourcesPage() {
               key={key}
               heading={heading}
               links={grouped.get(key) ?? []}
+              footer={
+                key === "stadiums" ? (
+                  <p className="mt-3 text-xs">
+                    <a
+                      href={CLEAR_BAG_POLICY_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-mavs-navy hover:underline"
+                    >
+                      Clear bag policy →
+                    </a>
+                  </p>
+                ) : undefined
+              }
             />
           ))}
         </div>

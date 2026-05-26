@@ -97,7 +97,7 @@ export function GameCard({ game }: { game: Game }) {
 
       <div className="mt-2 flex items-center gap-3 text-sm">
         <ResultCell game={game} />
-        {game.watch_url ? (
+        {game.watch_url && game.result_status === "final" ? (
           <a
             href={game.watch_url}
             target="_blank"

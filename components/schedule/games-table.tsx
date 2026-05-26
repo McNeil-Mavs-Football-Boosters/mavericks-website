@@ -119,7 +119,7 @@ export function GamesTable({ games }: { games: Game[] }) {
                       <ResultCell game={game} />
                     </td>
                     <td className="py-3 pr-4 align-top">
-                      {game.watch_url ? (
+                      {game.watch_url && game.result_status === "final" ? (
                         <a
                           href={game.watch_url}
                           target="_blank"

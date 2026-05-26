@@ -449,6 +449,51 @@ Five commits:
 - **The legacy SportsEngine privacy text was never customized** for McNeil — it's literal boilerplate referring to "league or team or youth sports organization ('Organization')". A real Phase-1 policy should at minimum (a) name the org, (b) describe the actual data flows (Google Form responses → service-account read; contact form → Resend; future Stripe → webhook → Supabase), and (c) drop the SE-era "Services are powered by SportsEngine" framing entirely. The minimum-viable strip we did is correct-by-omission but uninformative.
 - **`/boosters/donate` detail section in `content_map_v2.md` (lines 692–717) still describes the original Stripe-Checkout flow.** Annotated with a "Phase 1 reality" note in this session (same pattern used for `/boosters/join` and `/boosters/members` after their pivots).
 
+## Build progress 2026-05-26 — KRAC rename + 2 new stadiums + 2025 varsity score backfill + Watch-in-Result + Clear Bag subordinate link
+
+One commit, one migration (`052_resources_and_games_backfill.sql` + `052_rollback.sql`), code edits across `components/resources/resource-section.tsx`, `app/resources/page.tsx`, `components/schedule/result-cell.tsx`, `components/schedule/games-table.tsx`, `components/schedule/game-card.tsx`. Two research subagents fanned in parallel (varsity scores from MaxPreps; stadium addresses + Maps URLs).
+
+**Migration 052 changes (single transaction):**
+1. **HUDL relocated** from `communications` → `resources`. Film/conditioning platform fit "resources" better than "communications" once Game Photos landed alongside MavMail / SportsYou / FB Parents as the canonical comms channels. Sort_order=2 in resources, just below McNeil High School (sort_order=1).
+2. **Kelly Reeves Athletic Complex renamed** to "Kelly Reeves Athletic Complex (KRAC)". Parents and players use the acronym in passing; the parenthetical disambiguates without dropping the formal name.
+3. **Clear Bag Policy row deleted** from `resource_links`. The /resources page now renders a small subordinate link below the Stadiums list instead — `text-xs text-muted-foreground hover:text-mavs-navy hover:underline`. Matches the schedule-page treatment from migration 051's session. URL stays in `CLEAR_BAG_POLICY_URL` (`lib/constants.ts`) — single source of truth.
+4. **House Park + Dragon Stadium** added as stadium rows. Addresses verified by subagent: House Park = 1301 Shoal Creek Blvd, Austin TX (AISD, Anderson HS home); Dragon Stadium = 300 N Lake Creek Dr, Round Rock TX (Round Rock HS home — note RRHS main campus is 201 Deepwood Dr; the stadium itself has a different address per TexasBob.com). Google Maps URLs use the canonical API-1 search form (`https://www.google.com/maps/search/?api=1&query=...`); skipped short-link `maps.app.goo.gl` URLs because those can expire or be rate-limited.
+5. **2025-26 varsity scores backfilled** for 9 of 11 games. Source: MaxPreps verified by SA1 across SI High School / KXAN / VYPE / KDH News cross-references. Final 6-4 regular-season record; no playoffs (5th in 25-6A, top-4 advance). Final scores:
+   - 28-56 L vs Weiss (away)
+   - 34-28 W vs Lake Belton (home)
+   - 70-45 W vs Westwood (home, Homecoming)
+   - 17-31 L at Round Rock (away)
+   - 56-21 W vs Stony Point (seed says home @ Dragon Stadium — SA1 says away; data discrepancy noted, didn't fix home/away)
+   - 17-14 W at Vandegrift (away) — school-historic upset of #14 Vandegrift
+   - 45-42 W vs Vista Ridge (home)
+   - 35-38 L vs Cedar Ridge (seed says away @ KRAC — SA1 says home; data discrepancy noted)
+   - 42-21 W vs Manor (home, Senior Night)
+6. **Hutto (last game, 2025-11-07) left as `result_status='scheduled'`** with no score; `watch_url='https://www.youtube.com/@iHSFan'` set. The Result cell renders "Watch →" instead of em-dash; the right-column Watch icon is now suppressed on non-final rows so the row carries one Watch affordance, not two.
+7. **Aug 21 Anderson @ House Park left as scheduled with no score.** SA1 didn't find a MaxPreps result; per the migration 032 build log this was a non-district season opener or scrimmage. Em-dash is honest; leave for admin CRUD to backfill if needed.
+8. **`games.location_url` populated** for every 2025-26 game at the 3 known stadiums (KRAC / House Park / Dragon Stadium) across all team levels. 10 rows updated total (3 varsity + 1 jv + 2 freshman at House Park... actually: 3 varsity KRAC + 3 varsity Dragon Stadium + 1 varsity + 1 jv + 2 freshman House Park = 10). No schema change required — column existed since v2 schema.
+
+**Code changes:**
+- `components/resources/resource-section.tsx` — added optional `footer?: ReactNode` prop. Rendered after the link list, inside the section. Used today only by the Stadiums section; other sections pass nothing.
+- `app/resources/page.tsx` — passes a Clear-bag-policy `<p>` as the footer for the `stadiums` section. Imports `CLEAR_BAG_POLICY_URL` from `lib/constants.ts`.
+- `components/schedule/result-cell.tsx` — new branch at the top: if `result_status !== "final"` AND `watch_url` is set, render `<a>Watch →</a>` (navy semibold, hover underline, print:text-black). Falls through to existing W/L/Cancelled/Postponed/TBD/em-dash logic otherwise.
+- `components/schedule/games-table.tsx` + `components/schedule/game-card.tsx` — the right-column Watch icon now also gates on `result_status === "final"`. Non-final + watch_url cases route through ResultCell instead. One affordance per row.
+
+**Push-backs raised in the session:**
+- *None worth a redirect.* The original ask said "may require a schema change to hold that link, idk" for the stadium directions — no schema change needed; `games.location_url` already existed.
+- Two home/away discrepancies between the migration-032 seed and MaxPreps surfaced but I deliberately didn't fix them in this commit (out of scope; Jeremy can decide whether MaxPreps or the original PDF is authoritative).
+
+**Smoke tests against dev server:**
+- `/resources` — section order unchanged (Reg & Forms, News & Comm, Resources, Stadiums & Directions), KRAC label includes "(KRAC)", House Park + Dragon Stadium render under Stadiums, Clear bag policy small link below the list, HUDL now under Resources, Game Photos still under News.
+- `/schedule/games/varsity` — W/L scores render (verified Westwood "W 70-45" in markup), Hutto row shows "Watch →" in Result cell, no right-column icon on Hutto, KRAC/Dragon Stadium/House Park games link the location to Google Maps.
+- `/schedule/games/jv` + `/schedule/games/freshman/green` — no scores (not backfilled), em-dashes, Clear bag advisory still below MaxPreps link, location_url anchors render where applicable.
+- `/schedule/practice/varsity` — Clear bag advisory NOT present (correct).
+
+**Pickup notes:**
+- **JV / freshman 2025 results not backfilled.** SA1 only researched varsity. JV/F results aren't typically on MaxPreps; would need to ask coaches or pull from SportsYou archives. Open if Jeremy wants.
+- **Home/away seed discrepancies** (Stony Point Sep 26 + Cedar Ridge Oct 24) — SA1 vs migration 032 disagree. SA1 is from MaxPreps game-level data, which is usually authoritative. Worth a separate cleanup pass if Jeremy notices the row tint / badge feels wrong on those two games.
+- **Maps URL format**: the `maps/search/?api=1&query=...` form is the Google-documented stable API. Short links (`maps.app.goo.gl`) can expire. Stick with API-1 form for all future location_urls.
+- **`watch_url` semantics expanded.** Previously: "external link icon if set." Now: "Result-cell Watch link if non-final, right-column icon if final." Documented in `content_map_v2.md` § /schedule.
+
 ## Build progress 2026-05-25 (late evening) — resource links: Game Photos, Clear Bag Policy, MHS website
 
 One commit, one migration, one new icon registry entry, two schedule-page edits.
