@@ -40,7 +40,6 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
   const [activePool, setActivePool] = useState<ActivePool>(() =>
     ctaTiles.length > 0 ? "cta" : "sponsor",
   );
-  const [isHovered, setIsHovered] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -71,7 +70,7 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
     };
   }, []);
 
-  const shouldAnimate = !reducedMotion && !isHovered && !isHidden;
+  const shouldAnimate = !reducedMotion && !isHidden;
 
   // Background rotation — independent of foreground.
   useEffect(() => {
@@ -131,8 +130,6 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
       className={`relative isolate w-full min-h-[55vh] md:min-h-[77vh] overflow-hidden ${
         hasBackgrounds ? "" : "bg-mavs-navy"
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {hasBackgrounds
         ? backgrounds.map((bg, idx) => (
