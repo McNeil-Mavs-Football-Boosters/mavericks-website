@@ -150,10 +150,10 @@ Same across all routes.
 
 3. **Varsity Schedule** (`<section id="varsity">`)
    - Heading: "Varsity Schedule"
-   - Table columns: Date | Opponent | Location | Home/Away | Time | Result | Watch
+   - Table columns: Date | Opponent | Location | Home/Away | Time | Result (6 columns; the dedicated Watch column was removed 2026-05-26 — broadcast/stream links are now surfaced inside the Result cell for non-final games via the Watch-in-Result behavior below)
    - Each row maps to a `games` row with `team_level = 'varsity'`, ordered by `game_date ASC`
    - "Result" column: shows "W 35-14" / "L 21-28" if `result_status = 'final'`; "Cancelled" / "Postponed" / "TBD" per status; otherwise — *if the game has a non-null `watch_url`* — renders "Watch →" linking to `watch_url`; else em-dash. The Watch-in-Result behavior covers games we want to surface a broadcast/stream link on without populating a score (e.g., the last game of a backfilled season, see migration 052).
-   - "Watch" column: external link icon if `watch_url IS NOT NULL` **and `result_status = 'final'`** — i.e., the right-column icon is only shown when the Result cell isn't already rendering "Watch →". Single affordance per row.
+   - No dedicated Watch column — final games with `watch_url` are an open question (do we want to surface a post-game replay link separately?). Defer until a real use case arises; for now the column is gone and the Result cell carries the only Watch affordance.
    - "Notes" rendered as a small subtitle row under the matchup row when populated (Homecoming, Senior Night, Scrimmage, etc.)
    - Empty state: card showing "Varsity schedule coming soon. Check MaxPreps for current details." with MaxPreps CTA
 

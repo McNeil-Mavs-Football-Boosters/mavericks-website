@@ -1,5 +1,3 @@
-import { ExternalLink } from "lucide-react";
-
 import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -95,19 +93,8 @@ export function GameCard({ game }: { game: Game }) {
         )}
       </div>
 
-      <div className="mt-2 flex items-center gap-3 text-sm">
+      <div className="mt-2 text-sm">
         <ResultCell game={game} />
-        {game.watch_url && game.result_status === "final" ? (
-          <a
-            href={game.watch_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Watch ${game.opponent} game`}
-            className="inline-flex text-mavs-navy hover:text-mavs-navy-dark"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        ) : null}
       </div>
 
       {hasNotes ? (

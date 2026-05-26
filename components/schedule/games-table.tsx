@@ -1,5 +1,4 @@
 import { Fragment } from "react";
-import { ExternalLink } from "lucide-react";
 
 import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -57,7 +56,6 @@ export function GamesTable({ games }: { games: Game[] }) {
               <th scope="col" className="py-2 pr-4 font-medium">Home/Away</th>
               <th scope="col" className="py-2 pr-4 font-medium">Time</th>
               <th scope="col" className="py-2 pr-4 font-medium">Result</th>
-              <th scope="col" className="py-2 pr-4 font-medium">Watch</th>
             </tr>
           </thead>
           <tbody>
@@ -118,24 +116,11 @@ export function GamesTable({ games }: { games: Game[] }) {
                     <td className="py-3 pr-4 align-top whitespace-nowrap">
                       <ResultCell game={game} />
                     </td>
-                    <td className="py-3 pr-4 align-top">
-                      {game.watch_url && game.result_status === "final" ? (
-                        <a
-                          href={game.watch_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Watch ${game.opponent} game`}
-                          className="inline-flex text-mavs-navy hover:text-mavs-navy-dark print:hidden"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      ) : null}
-                    </td>
                   </tr>
                   {hasNotes ? (
                     <tr className={cn("border-b border-border", rowTint)}>
                       <td
-                        colSpan={7}
+                        colSpan={6}
                         className="pb-3 pr-4 pl-0 text-xs italic text-muted-foreground print:text-black"
                       >
                         {game.notes}
