@@ -19,6 +19,10 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-05-26 — pre-board-review cleanup + email-alias swap to gmail + Square pivot in specs)
+
+**Today's headline:** pre-meeting review pass before tonight's board demo, plus a docs-only swap of the Phase 2 payment provider from Stripe → Square after Jeremy discovered the booster club already has a Square account. Site is demo-ready. See "Build progress 2026-05-26 (afternoon)" below for the full punch list. Older status preserved verbatim below.
+
 ## Status (2026-05-25 (evening) — `/boosters/donate` Phase 1 shipped + Booster Section grid cleanup + privacy port)
 
 **Commit B fully shipped end-to-end** (2026-05-17). **Booster Phase 1 slices 1 + 2 shipped on top** (2026-05-18 and 2026-05-19). **Homepage HeroCarousel + canonical-PDF Print View links shipped end-to-end** in the late-day 2026-05-19 session. Every public route in the v2 spec route map renders real data or 404s per spec. The old `window.print()` "Print" buttons on roster/schedule pages have been **replaced** with "Print View" links to the official PDFs (the same handouts parents get at meetings); practice schedules no longer have any print affordance — browser Cmd-P only. McNeil HS official brand identity applied site-wide (navy primary, Lato type). Year fields split into `current_year` (football) and `current_board_year` (board), decoupled. Cutover target: July 13–20 with fallback to July 27. SE renewal lapses 2026-07-31.
@@ -530,6 +534,41 @@ Other notes.
 - **`formatDate` helper in `app/page.tsx`** is now News-only; it stayed because News still renders `published_at` through it. Don't delete.
 - The carousel's `setReducedMotion(mql.matches)` synchronous-setState-in-effect lint (`react-hooks/set-state-in-effect`) is still tracked in `followups.md`. Untouched by the pause-on-hover removal.
 
+## Build progress 2026-05-26 (afternoon) — pre-board-review cleanup + boosters@.org swap + Stripe→Square pivot in specs
+
+Three threads, same afternoon, all pushed before tonight's board demo at the May meeting.
+
+**Thread A — pre-meeting review + fix-before-meeting punch list (`bb9ddf8`).** Fanned 4 parallel subagents over the site (brand/visual, links/routes, content/copy, followups). No blockers found. Three fixes worth doing pre-demo were executed:
+
+- **Latest News section removed from homepage** (`app/page.tsx`). The section was gated on `news.length > 0` so it was hidden today (no published news_posts), but the View-all link pointed at `/news` and per-post cards pointed at `/news/[slug]` — neither route was ever built. Cleanest to drop until admin CRUD ships and real news content is editable. Removed: the section JSX, the `news_posts` Supabase query in `loadHome()`, `NewsCard` local type, `formatDate()` helper (was News-only after the 2026-05-25 late-evening EventRow refactor), and the `news` field on `HomeData`/`EMPTY_HOME`. 81-line diff, typecheck clean. **Supersedes the 2026-05-25 late-evening note "formatDate ... Don't delete" — News no longer exists so the helper is gone too.**
+- **`/boosters/committees` cadence badge contrast** (`app/boosters/committees/page.tsx:23`). `bg-mavs-green/10 text-mavs-green` was ~3.1:1, failing WCAG AA. Spec had pre-approved the fallback `bg-mavs-green text-white` (~10.4:1). Swapped.
+- **`followups.md`** — closed 3 stale items (`/boosters/donate` shipped 5/25, 2025 varsity results seeded via mig 052 this morning, console-error sweep cleared post-donate). Closed the PII xlsx item too.
+- **PII xlsx moved out of repo tree** — `docs/Football Player & Guardian Name - 2025.xlsx` was gitignored but sitting untracked, one `git add -f` away from a public-repo leak. Moved to `~/Projects/BoosterClub/MavericksWebsite/private-data/Football Player & Guardian Name - 2025.xlsx` (sibling of `secrets/`, outside the repo).
+
+**Thread B — temporary boosters@ → gmail swap (`6dc1d38` + migration 053 applied).** Jeremy realized the `boosters@mcneilmavericks.org` alias shown across the site will confuse the board during tonight's review — the .org alias isn't wired through Cloudflare Email Routing yet, so emails to it bounce. Temporary swap of every user-facing surface to `mcneilfootballboosters@gmail.com` (the master Gmail Jeremy controls). 053_rollback.sql restores .org when J9 (Cloudflare Email Routing) ships.
+
+- **Code (6 files)**: `app/contact/contact-form.tsx` (error message), `app/resources/page.tsx` (empty-state copy, currently unreachable but consistent), `app/about/page.tsx` (General questions + Membership questions list items only — `sponsorship@` and `webmaster@` left alone per Jeremy's explicit call), `app/boosters/join/page.tsx` (closing CTA), `app/boosters/page.tsx` SETTINGS_DEFAULTS fallback, `components/layout/Footer.tsx` FALLBACK_SETTINGS fallback.
+- **Migration 053 + rollback** — `db/migrations/053_temporary_swap_contact_email_to_gmail.sql` updates `site_settings.primary_contact_email` (drives Footer + `/boosters` page) and the SportsYou resource_links row description (which embeds the email in body text). Idempotent single-tx; applied to live Supabase via `psql "$SUPABASE_DB_URL" -f ...` — two `UPDATE 1` returns plus COMMIT. ISR cache (`revalidate=60`) may take a minute to flush per page.
+- **NOT done deliberately**: `sponsorship@mcneilmavericks.org` and `webmaster@mcneilmavericks.org` on `/about` still show as .org. Jeremy explicitly limited the swap to `boosters@`. Same concern applies (those addresses aren't wired either) — flagged in chat for a separate decision.
+
+**Thread C — Stripe → Square as Phase 2 payment provider (`fbbafa2`).** Jeremy discovered the booster club already has a Square account, so Phase 2 design pivots from Stripe to Square before any code is written. Docs-only swap; live DB still has `payments.stripe_*` columns from migration 004 (see "DB schema gap below").
+
+- **`specs/build_plan_v2.md`** — J6 rewritten ("create Stripe account, apply for nonprofit pricing" → "verify existing Square account access transferred to current board, recover credentials, capture sandbox + production keys + webhook signing secret"). J7 + Steps 9 + 10 + 15 + cutover step (Square webhook URL) + monitoring (Square dashboard) + ship table (Step 15 Square live) all swapped. Steps 9/10/15 relabeled UPDATED 2026-05-26 (were UNCHANGED).
+- **`specs/boosters_donate_spec.md`** — Phase 2 references (intro line, content_map supersede note, post-Stripe data model heading, webhook subject, on-site form pairing, email-automation reference) → Square.
+- **`specs/boosters_join_spec.md`** — Stripe Checkout reference annotated with the Square swap.
+- **`followups.md`** — added "Verify Square account access transferred to current board" under pre-cutover ops (gates Steps 9, 10, 15). Also added a separate flag: **rename `payments.stripe_*` columns to provider-agnostic names before Step 9 wires the webhook handler.** Square uses different ID concepts than Stripe (order_id, payment_id vs session_id, PaymentIntent_id), so silently renaming requires a design pass — not done in this session.
+
+**DB schema gap** — `payments.stripe_session_id` + `payments.stripe_payment_intent_id` still exist in live DB from migration 004. `schema_v2.md` is already provider-neutral (no stripe_ refs). `schema.md` (v1 historical doc) still references the columns; will be updated alongside the rename migration when that lands. The columns aren't wired to any code yet (no payment flow shipped), so this is the right window to rename — but the rename needs a design call first.
+
+**Files updated outside the repo:**
+- `~/Projects/BoosterClub/MavericksWebsite/private-data/` created; PII xlsx moved there.
+
+**Demo state going into tonight's meeting:**
+- Site ready; staging deployed `fbbafa2`.
+- Footer + `/boosters` show `mcneilfootballboosters@gmail.com` (live DB updated).
+- No `/news` links anywhere. No 404 risks from the booster-section grid (verified by the link-review subagent).
+- Known weird-looking states for parents: empty 2025 scores on JV + Freshman teams (PDF had no scores; coach-sourced data Phase 2), head coach placeholder (Cruz on admin leave — intentional), JV/Freshmen rosters all-numbers (no MaxPreps source). Jeremy has answers ready.
+
 ## The pivot (2026-05-16)
 
 Jeremy clarified mid-build that the site's audience is the McNeil football community, not the booster club's members specifically. The current SE site is the football team's de facto public web presence; the booster club just owns the hosting. Reframe:
@@ -572,7 +611,7 @@ Spec docs evolve as a chain of addenda rather than rewrites. Read in order if yo
 - **Type**: Lato (Google Fonts, weights 400/700/900) via `next/font/google` in `app/layout.tsx`. Replaces Geist as `--font-sans` site-wide as of `2ac698c`.
 - **Hosting**: Vercel (auto-deploy from `main`)
 - **Backend**: Supabase (Postgres + Auth + Storage + RLS)
-- **Payments**: Stripe Checkout (guest checkout — no public user accounts)
+- **Payments**: Square (Phase 2 — provider swapped from Stripe 2026-05-26; guest checkout, no public user accounts)
 - **Email**: Cloudflare Email Routing for role aliases (pending); Resend for contact-form delivery (wired in Step 4)
 - **Repo**: GitHub org `github.com/McNeil-Mavs-Football-Boosters/mavericks-website` (public)
 
@@ -692,7 +731,7 @@ These are not blockers but will need attention as Step 4c progresses:
 - **Env vars** (in `.env.local` and Vercel):
   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
   - `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` (default `onboarding@resend.dev`)
-  - Future: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`
+  - Future (Square — provider swapped from Stripe 2026-05-26): `SQUARE_ACCESS_TOKEN`, `SQUARE_APPLICATION_ID`, `SQUARE_LOCATION_ID`, `SQUARE_WEBHOOK_SIGNATURE_KEY`, `SQUARE_ENVIRONMENT` (`sandbox` vs `production`), `NEXT_PUBLIC_SITE_URL`. Exact env-var names will be confirmed against the official `square` SDK once J6 (Square account access) is done.
 - **Service-role JWT was pasted in chat history during Step 2**. Rotate via Supabase → Project Settings → API → Reset; update `.env.local` and Vercel env vars when convenient.
 
 ## Key facts
@@ -701,7 +740,7 @@ These are not blockers but will need attention as Step 4c progresses:
 - **Existing site**: SportsEngine site ID 21475, "Itasca" theme, behind Cloudflare. News last updated 2018.
 - **SE renewal lapse**: 2026-07-31. Hard deadline: cancel by 2026-07-29 or accept another $1,385.
 - **Email today**: GoDaddy MX. Migrating to Cloudflare Email Routing aliases (J9).
-- **Nonprofit**: 501(c)(3), EIN **26-4231242**, legal name "McNeil Maverick Football Booster Club". Eligible for Stripe nonprofit pricing.
+- **Nonprofit**: 501(c)(3), EIN **26-4231242**, legal name "McNeil Maverick Football Booster Club". (Stripe nonprofit pricing no longer relevant — provider swapped to existing booster Square account 2026-05-26.)
 - **Phase 1 admin roles**: `super_admin`, `content_admin`, `readonly_admin` (Chevon as treasurer). Per admin_scope_v2: Jeremy + Carol are super_admin (plus institutional `president@`/`webmaster@` recovery accounts in Step 6).
 - **Mailing address**: `#412, 6001 W Parmer Ln, Suite 370, Austin TX 78727` (PO Box-style, from existing /boosters page; confirmed live-seeded in DB).
 - **Head coach situation**: Cruz hired March 2026, arrested May 2026, on admin leave. **Launch with no head coach listed.**
@@ -734,5 +773,5 @@ These are not blockers but will need attention as Step 4c progresses:
   done > db/apply_all.sql
   ```
   The `*_rollback.sql` guard exists because rollbacks (e.g. `037_rollback.sql`) live alongside forward migrations in `db/migrations/` but must NOT be bundled into the forward-apply sequence — running them on a fresh DB would silently undo the seed.
-- **Stripe should be created last** in the new-account chain so receipts come from a real `treasurer@mcneilmavericks.org` role address.
-- **Migration of 35 existing Google Form signups**: 7 paid rows should go to `payments` with `method = 'other'`, NOT `'stripe'`. See schema.md migration plan and Step 12 of build_plan_v2.md.
+- **Square access transfer should happen before institutional emails are wired** so account-recovery / receipt emails route to a real `treasurer@mcneilmavericks.org` role address from day one (J6 + J9 sequencing).
+- **Migration of 35 existing Google Form signups**: 7 paid rows should go to `payments` with `method = 'other'`, NOT `'square'`/`'stripe'`. See schema.md migration plan and Step 12 of build_plan_v2.md.
