@@ -1,6 +1,6 @@
 # /boosters/donate Spec
 
-Written 2026-05-25. Phase 1 pattern matches /boosters/join (Google Form CTA) and /boosters/members (Sheets-backed list). No Stripe in Phase 1; Venmo is the working payment channel. Treasurer verifies each payment manually in the linked Google Sheet before any donation appears on the public list.
+Written 2026-05-25. Phase 1 pattern matches /boosters/join (Google Form CTA) and /boosters/members (Sheets-backed list). No payment-provider integration in Phase 1; Venmo is the working payment channel. Treasurer verifies each payment manually in the linked Google Sheet before any donation appears on the public list. Phase 2 payment provider is **Square** (swapped from the original Stripe plan 2026-05-26 once the existing booster Square account was discovered).
 
 ## As-shipped 2026-05-25 (evening)
 
@@ -19,7 +19,7 @@ Both turns shipped same day as the spec was written. Five commits: `a1352a5` (Tu
 
 ## Original spec follows
 
-Supersedes the `/boosters/donate` stub in `content_map_v2.md` (which described the Phase 2 Stripe-Checkout flow). The Phase 2 swap-out plan is documented at the bottom.
+Supersedes the `/boosters/donate` stub in `content_map_v2.md` (which described a Phase 2 Stripe-Checkout flow before the provider swap to Square). The Phase 2 swap-out plan is documented at the bottom.
 
 ## Goal
 
@@ -343,7 +343,7 @@ mcneilfootballboosters@gmail.com
 
 The "No goods or services" line is the IRS-required language for written acknowledgments of donations $250 and over. Including it on every receipt is simpler than maintaining two templates and harms nothing for smaller donations.
 
-When Stripe + Resend automation lands in Phase 2, this exact copy becomes the email template body.
+When Square + Resend automation lands in Phase 2, this exact copy becomes the email template body.
 
 ## Data model — Phase 1 vs Phase 2
 
@@ -353,9 +353,9 @@ When Stripe + Resend automation lands in Phase 2, this exact copy becomes the em
 - No DB writes from this page
 - Manual receipt email by treasurer
 
-**Phase 2 (post-Stripe):**
+**Phase 2 (post-Square):**
 - Source of truth: `donations` table (new) or `payments` table with `purpose = 'donation'`
-- Stripe webhook flips `status = 'succeeded'`, which becomes the page filter
+- Square webhook flips `status = 'succeeded'`, which becomes the page filter
 - Auto-generated receipt email via Resend on webhook fire
 - Same page shape; the only swap is `lib/sheets/donations.ts` → a Supabase query function with the same return type
 - Google Form retired; on-site form replaces it (mirrors the Phase 2 `/boosters/join` plan)
@@ -364,7 +364,7 @@ The `Donation` type, the page layout, the amount cards, the empty state, the "Sh
 
 ## Out of scope for v1
 
-- On-site donation form (Phase 2 — paired with Stripe)
+- On-site donation form (Phase 2 — paired with Square)
 - Automated receipt email via Resend (Phase 2)
 - Donation archive page at `/boosters/donate/archive` (Phase 2 — Show more placeholder is there for it)
 - Recurring/monthly donations (Phase 2+)

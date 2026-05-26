@@ -2,7 +2,7 @@
 
 Written 2026-05-18. Phase 1 pivot: no payments in Phase 1. Google Form is the join flow. /boosters/join is a server-rendered tier ladder + CTA to the Form.
 
-Replaces the original Step 6 in build_plan_v2.md (Stripe Checkout was scoped out 2026-05-18). Future custom join flow is Phase 2+.
+Replaces the original Step 6 in build_plan_v2.md (paid-checkout was scoped out of Phase 1 on 2026-05-18). Future custom join flow is Phase 2+, payment provider is **Square** (swapped from Stripe 2026-05-26).
 
 ## Source of truth
 

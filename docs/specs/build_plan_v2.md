@@ -38,9 +38,9 @@ Items J1-J3 done. Rest can happen in any order except as noted.
 
 **J5. Google Workspace for Nonprofits — DEFERRED** per credentials.md. Phase 1 uses Cloudflare Email Routing forwarders only.
 
-**J6. Stripe account.** Create with EIN 26-4231242, apply for nonprofit pricing. Capture test publishable, secret, webhook signing secret. Bank account can come later (until then, test mode works without it).
+**J6. Square account access (UPDATED 2026-05-26).** The booster club already has a Square account. Verify access has been transferred to the current board, recover credentials, and capture sandbox + production API keys + webhook signing secret. Replaces the original Stripe nonprofit-pricing application (Square was discovered 2026-05-26).
 
-**J7. Booster bank account confirmation.** Talk to Chevon. Required for Stripe to actually deposit. Phase 1 can ship in Stripe test mode and flip to live mode at the last minute (Step 15).
+**J7. Booster bank account confirmation.** Talk to Chevon. Required for Square to actually deposit. Phase 1 can ship in Square sandbox mode and flip to live mode at the last minute (Step 15).
 
 **J8. IRS determination letter + bylaws PDFs.** From Chevon. Two PDFs total. Needed for `/boosters/documents` content.
 
@@ -183,7 +183,7 @@ The full list:
 - `/boosters/events/[slug]` (detail)
 - `/boosters/documents`
 
-`/boosters/join` and `/boosters/donate` deferred to Step 9 (they need Stripe wired up).
+`/boosters/join` and `/boosters/donate` deferred to Step 9 (they need Square wired up).
 
 **Implementation patterns:**
 - All server components, pulling from Supabase via `lib/supabase/server.ts`
@@ -298,21 +298,21 @@ All follow the same patterns from Step 7 (TipTap for markdown bodies, image uplo
 
 ---
 
-### Step 9 (UNCHANGED). Stripe — membership flow (test mode)
+### Step 9 (UPDATED 2026-05-26). Square — membership flow (sandbox mode)
 
-**Prereqs:** Step 8, J6 (Stripe test keys).
+**Prereqs:** Step 8, J6 (Square sandbox credentials).
 
-Unchanged from original. Builds `/boosters/join` (the form deferred from Step 5), `/api/memberships/create`, `/api/stripe/webhook`. Handles Free Fan Base $0 bypass, idempotent webhook, success/cancel pages.
+Provider swapped from Stripe to Square 2026-05-26. Builds `/boosters/join` (the form deferred from Step 5), `/api/memberships/create`, `/api/square/webhook`. Handles Free Fan Base $0 bypass, idempotent webhook, success/cancel pages. Likely uses Square Checkout (hosted) for the same UX shape Stripe Checkout would have provided; confirm at implementation time once Square API access is in hand.
 
 **Estimate:** 2-3 evenings.
 
 ---
 
-### Step 10 (UNCHANGED). Stripe — donation flow (test mode)
+### Step 10 (UPDATED 2026-05-26). Square — donation flow (sandbox mode)
 
 **Prereqs:** Step 9.
 
-Builds `/boosters/donate` (deferred from Step 5). Reuses webhook handler with `purpose='donation'`. Standalone from membership per `content_map_v2.md`.
+Builds `/boosters/donate` (deferred from Step 5). Reuses Square webhook handler with `purpose='donation'`. Standalone from membership per `content_map_v2.md`.
 
 **Estimate:** 1 evening.
 
@@ -377,11 +377,11 @@ All reuse patterns from earlier steps.
 
 ---
 
-### Step 15 (UNCHANGED). Stripe live mode
+### Step 15 (UPDATED 2026-05-26). Square live mode
 
 **Prereqs:** Step 14, J6 + J7 done.
 
-Unchanged from original. Real $1 charge test, Treasurer (Chevon) granted readonly_admin access to verify she can see the payment.
+Provider-swapped (Stripe → Square) but otherwise unchanged from original plan. Real $1 charge test, Treasurer (Chevon) granted readonly_admin access to verify she can see the payment.
 
 **Estimate:** 1 evening.
 
@@ -420,7 +420,7 @@ Unchanged from original plus:
 
 **Prereqs:** Step 17. Target: **Monday July 13 - Monday July 20** (fallback July 27).
 
-Network Solutions nameserver change to Cloudflare. Vercel issues SSL. Stripe webhook URL updated to production. Verification checklist runs.
+Network Solutions nameserver change to Cloudflare. Vercel issues SSL. Square webhook URL updated to production. Verification checklist runs.
 
 **Rollback:** Network Solutions nameservers back to `ns1-5.sportnginserver.com`. SE site resumes. Under 30 minutes plus DNS TTL.
 
@@ -428,7 +428,7 @@ Network Solutions nameserver change to Cloudflare. Vercel issues SSL. Stripe web
 
 ### Step 19 (UNCHANGED). Post-cutover monitoring
 
-7 days. Daily checks on Vercel logs, Supabase logs, Stripe dashboard. Manual outreach to first 3-5 real signups.
+7 days. Daily checks on Vercel logs, Supabase logs, Square dashboard. Manual outreach to first 3-5 real signups.
 
 ---
 
@@ -462,7 +462,7 @@ Not a numbered build step. After the dust settles on launch (~Aug 1):
 | **Demo at June 2 board meeting** (intermediate) | — | Tue June 2 |
 | Step 11 + 12 + 13 | 5 evenings | Weeks of June 16-30 |
 | Step 14 (hardening) | 1-2 evenings | Week of June 30 |
-| Step 15 (Stripe live) | 1 evening | Week of July 7 (after board sign-off) |
+| Step 15 (Square live) | 1 evening | Week of July 7 (after board sign-off) |
 | **Step 16 — board sign-off** | — | Tue July 7 |
 | Step 17 (pre-cutover) | 2-3 hours | Days before cutover |
 | Step 18 (cutover) | 1 evening | Window July 13-20 |

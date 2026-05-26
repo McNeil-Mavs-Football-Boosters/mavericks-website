@@ -47,6 +47,8 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] Second super_admin account for Carol with 2FA + recovery codes.
 - [ ] Institutional super_admin accounts (president@, webmaster@) wired through Cloudflare Email Routing to personal inboxes.
 - [ ] Mobile QA pass: open every public route on iPhone, fix anything broken. Step 14 territory.
+- [ ] **Verify Square account access transferred to current board** (added 2026-05-26). Existing booster Square account discovered; need to recover credentials, confirm current board has admin access, and capture sandbox + production API keys + webhook signing secret. Replaces the original J6 "apply for Stripe nonprofit pricing" plan (build_plan_v2.md J6 updated). Gates Steps 9, 10, 15.
+- [ ] **Rename `payments.stripe_*` columns** to provider-agnostic names before Step 9 wires the webhook handler. Live DB has `payments.stripe_session_id` and `payments.stripe_payment_intent_id` from migration 004; Square uses different ID concepts (order_id, payment_id). Propose: `payment_session_id` + `payment_provider_id` + new `payment_provider text NOT NULL DEFAULT 'square'`. Migration needs to happen *before* any payment code lands so nothing has to be rewritten. schema.md docs reference these column names and would be updated in the same pass.
 
 ## Spec drift to consolidate post-launch
 - [ ] Collapse the v2 doc trail (site_pivot + addendum, schema_v2 + 3 addenda, content_map_v2 + 2 addenda, admin_scope_v2, build_plan_v2) into clean canonical docs. Per build_plan_v2 "Post-Step-20" section.
