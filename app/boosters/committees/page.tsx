@@ -20,7 +20,7 @@ const CADENCE_LABELS: Record<Committee["cadence"], string> = {
 
 function CadenceBadge({ cadence }: { cadence: Committee["cadence"] }) {
   return (
-    <span className="inline-block bg-mavs-green/10 text-mavs-green text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded">
+    <span className="inline-block bg-mavs-green text-white text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded">
       {CADENCE_LABELS[cadence]}
     </span>
   );

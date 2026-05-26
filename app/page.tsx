@@ -18,15 +18,6 @@ import type { EventRow } from "@/lib/types";
 
 export const revalidate = 60;
 
-type NewsCard = {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  featured_image_url: string | null;
-  published_at: string | null;
-};
-
 type SponsorTile = {
   id: string;
   name: string;
@@ -36,29 +27,16 @@ type SponsorTile = {
 };
 
 type HomeData = {
-  news: NewsCard[];
   events: EventRow[];
   sponsors: SponsorTile[];
   mvpTierId: string | null;
 };
 
 const EMPTY_HOME: HomeData = {
-  news: [],
   events: [],
   sponsors: [],
   mvpTierId: null,
 };
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 async function loadHome(): Promise<HomeData> {
   try {
@@ -66,14 +44,7 @@ async function loadHome(): Promise<HomeData> {
     const supabase = createServerClient();
     const nowIso = new Date().toISOString();
 
-    const [newsRes, eventsRes, sponsorsRes, mvpTierRes] = await Promise.all([
-      supabase
-        .from("news_posts")
-        .select("id, slug, title, excerpt, featured_image_url, published_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(3)
-        .returns<NewsCard[]>(),
+    const [eventsRes, sponsorsRes, mvpTierRes] = await Promise.all([
       supabase
         .from("events")
         .select("*")
@@ -104,7 +75,6 @@ async function loadHome(): Promise<HomeData> {
     }
 
     return {
-      news: newsRes.error || !newsRes.data ? [] : newsRes.data,
       events: eventsRes.error || !eventsRes.data ? [] : eventsRes.data,
       sponsors:
         sponsorsRes.error || !sponsorsRes.data ? [] : sponsorsRes.data,
@@ -133,7 +103,7 @@ function buildQuickLinks(currentYear: string): Array<{
 
 export default async function Home() {
   const { current_year } = await getSiteSettingsCore();
-  const [{ news, events, sponsors, mvpTierId }, carousel] = await Promise.all([
+  const [{ events, sponsors, mvpTierId }, carousel] = await Promise.all([
     loadHome(),
     loadHeroCarouselData(),
   ]);
@@ -171,53 +141,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {news.length > 0 ? (
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold uppercase tracking-tight">Latest News</h2>
-            <Link
-              href="/news"
-              className="text-sm font-medium text-mavs-navy hover:underline"
-            >
-              View all news →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {news.map((post) => (
-              <Link
-                key={post.id}
-                href={`/news/${post.slug}`}
-                className="block rounded-lg border border-border bg-white overflow-hidden hover:shadow-md transition-shadow"
-              >
-                {post.featured_image_url ? (
-                  <div className="aspect-[16/9] bg-muted overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={post.featured_image_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : null}
-                <div className="p-4">
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(post.published_at)}
-                  </p>
-                  <h3 className="mt-1 font-semibold text-foreground">
-                    {post.title}
-                  </h3>
-                  {post.excerpt ? (
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  ) : null}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       {events.length > 0 ? (
         <section className="bg-mavs-green text-white">
