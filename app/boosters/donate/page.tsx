@@ -91,14 +91,12 @@ export default async function BoostersDonatePage() {
                 Make a Donation
               </h1>
             </div>
-            <a
-              href={DONATION_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/boosters/join"
               className="bg-mavs-navy text-white px-6 py-3 font-bold uppercase hover:bg-mavs-navy/90 transition-colors inline-block whitespace-nowrap shrink-0 text-center w-full md:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-mavs-green"
             >
-              Donate →
-            </a>
+              Become a Member →
+            </Link>
           </div>
         </div>
       </section>
