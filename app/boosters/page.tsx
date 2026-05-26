@@ -338,26 +338,10 @@ export default async function BoostersPage() {
           </li>
           <li>
             <Link
-              href="/boosters/board"
-              className="text-mavs-navy hover:underline"
-            >
-              Board
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/boosters/events"
+              href="/events"
               className="text-mavs-navy hover:underline"
             >
               Calendar / Events
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/boosters/documents"
-              className="text-mavs-navy hover:underline"
-            >
-              Documents
             </Link>
           </li>
           <li>
