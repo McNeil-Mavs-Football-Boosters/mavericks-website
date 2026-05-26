@@ -125,7 +125,41 @@ function EmptyState({ filter }: { filter: "upcoming" | "past" }) {
   );
 }
 
-export function EventRowCard({ event }: { event: EventRow }) {
+type EventRowVariant = "default" | "on-green";
+
+const VARIANT_CLASSES: Record<
+  EventRowVariant,
+  {
+    border: string;
+    muted: string;
+    day: string;
+    title: string;
+    location: string;
+  }
+> = {
+  default: {
+    border: "border-mavs-navy/10",
+    muted: "text-muted-foreground",
+    day: "text-mavs-navy",
+    title: "text-mavs-navy",
+    location: "",
+  },
+  "on-green": {
+    border: "border-white/20",
+    muted: "text-white/80",
+    day: "text-white",
+    title: "text-white",
+    location: "text-white",
+  },
+};
+
+export function EventRowCard({
+  event,
+  variant = "default",
+}: {
+  event: EventRow;
+  variant?: EventRowVariant;
+}) {
   const weekday = formatInTimeZone(
     new Date(event.starts_at),
     CHICAGO_TZ,
@@ -137,37 +171,38 @@ export function EventRowCard({ event }: { event: EventRow }) {
     CHICAGO_TZ,
     "MMM",
   ).toUpperCase();
+  const v = VARIANT_CLASSES[variant];
 
   return (
-    <article className="flex gap-6 py-6 border-b border-mavs-navy/10">
+    <article className={`flex gap-6 py-6 border-b ${v.border}`}>
       {/* Date block */}
       <div className="w-28 shrink-0 text-center">
-        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        <div
+          className={`text-xs font-bold uppercase tracking-wide ${v.muted}`}
+        >
           {weekday}
         </div>
-        <div className="text-4xl font-black text-mavs-navy leading-none my-1">
+        <div className={`text-4xl font-black leading-none my-1 ${v.day}`}>
           {day}
         </div>
-        <div className="text-xs uppercase text-muted-foreground">
-          {monthAbbr}
-        </div>
+        <div className={`text-xs uppercase ${v.muted}`}>{monthAbbr}</div>
       </div>
 
       {/* Body */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-muted-foreground">
+        <p className={`text-sm ${v.muted}`}>
           {formatTimeRange(event.starts_at, event.ends_at)}
         </p>
-        <h3 className="text-xl font-bold text-mavs-navy mt-1">
+        <h3 className={`text-xl font-bold mt-1 ${v.title}`}>
           <Link href={`/events/${event.slug}`} className="hover:underline">
             {event.title}
           </Link>
         </h3>
         {event.location ? (
-          <p className="text-sm mt-1">{event.location}</p>
+          <p className={`text-sm mt-1 ${v.location}`}>{event.location}</p>
         ) : null}
         {event.description ? (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+          <p className={`text-sm mt-2 line-clamp-3 ${v.muted}`}>
             {event.description}
           </p>
         ) : null}

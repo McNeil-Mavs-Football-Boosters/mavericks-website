@@ -8,11 +8,13 @@ import {
   Users,
 } from "lucide-react";
 
+import { EventRowCard } from "@/components/events/EventListView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { SponsorStripLogo } from "@/components/sponsors/SponsorStripLogo";
 import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
+import type { EventRow } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -25,14 +27,6 @@ type NewsCard = {
   published_at: string | null;
 };
 
-type EventCard = {
-  id: string;
-  slug: string;
-  title: string;
-  starts_at: string;
-  location: string | null;
-};
-
 type SponsorTile = {
   id: string;
   name: string;
@@ -43,7 +37,7 @@ type SponsorTile = {
 
 type HomeData = {
   news: NewsCard[];
-  events: EventCard[];
+  events: EventRow[];
   sponsors: SponsorTile[];
   mvpTierId: string | null;
 };
@@ -82,12 +76,12 @@ async function loadHome(): Promise<HomeData> {
         .returns<NewsCard[]>(),
       supabase
         .from("events")
-        .select("id, slug, title, starts_at, location")
+        .select("*")
         .eq("status", "published")
-        .gt("starts_at", nowIso)
+        .gte("starts_at", nowIso)
         .order("starts_at", { ascending: true })
-        .limit(5)
-        .returns<EventCard[]>(),
+        .limit(2)
+        .returns<EventRow[]>(),
       supabase
         .from("sponsors")
         .select("id, name, logo_url, website_url, tier_id")
@@ -226,49 +220,25 @@ export default async function Home() {
       ) : null}
 
       {events.length > 0 ? (
-        <section className="bg-muted/40">
+        <section className="bg-mavs-green text-white">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold uppercase tracking-tight">
-                Upcoming Events
-              </h2>
-              <Link
-                href="/boosters/events"
-                className="text-sm font-medium text-mavs-navy hover:underline"
-              >
-                View calendar →
+            <h2 className="text-2xl font-bold uppercase tracking-tight mb-6 text-center">
+              Upcoming Events
+            </h2>
+            <div>
+              {events.map((event) => (
+                <EventRowCard
+                  key={event.id}
+                  event={event}
+                  variant="on-green"
+                />
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <Link href="/events" className="text-sm font-bold hover:underline">
+                All Events →
               </Link>
             </div>
-            <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0">
-              {events.map((ev) => (
-                <li
-                  key={ev.id}
-                  className="rounded-lg border border-border bg-white p-4"
-                >
-                  <p className="text-xs uppercase tracking-wide text-mavs-navy font-semibold">
-                    {formatDate(ev.starts_at)}
-                  </p>
-                  <p className="mt-2 font-semibold text-foreground">
-                    {ev.title}
-                  </p>
-                  {ev.location ? (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {ev.location}
-                    </p>
-                  ) : null}
-                  {ev.slug ? (
-                    <p className="mt-3">
-                      <Link
-                        href={`/boosters/events/${ev.slug}`}
-                        className="text-sm font-medium text-mavs-navy hover:underline"
-                      >
-                        Learn more →
-                      </Link>
-                    </p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
           </div>
         </section>
       ) : null}

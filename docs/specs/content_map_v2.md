@@ -94,8 +94,8 @@ Same across all routes.
 3. **Get Involved band** (h2 reads "Get Involved") — 6 cards, equal weight, clickable. Rendered as `bg-mavs-green` band with white heading; cards inside keep white backgrounds with navy icons and navy hover border.
    - Join the Club → `/boosters/join`
    - Sponsor the Team → `/boosters/sponsor`
-   - Make a Donation → `/boosters/donate`
    - Volunteer → `/boosters/volunteer`
+   - Make a Donation → `/boosters/donate`
    - 2026-27 Schedule → `/schedule`
    - 2026-27 Roster → `/roster`
    - The "2026-27" prefix on the last two reads from `site_settings.current_year`
@@ -105,10 +105,10 @@ Same across all routes.
    - Each card: featured_image_url (or default), title, published_at, excerpt
    - Empty state: hide the section entirely
 
-5. **Upcoming Events** — heading "Upcoming Events", "View calendar →" → `/events`
+5. **Upcoming Events** — green band (`bg-mavs-green`, white text) matching the Get Involved band above. Centered h2 "Upcoming Events"; centered "All Events →" link below the rows linking to `/events`.
    - This is **booster events**, not games. Games have their own home section above.
-   - Query: `SELECT * FROM events WHERE status = 'published' AND starts_at > now() ORDER BY starts_at ASC LIMIT 5`
-   - Each card: title, starts_at, location, "Learn more →"
+   - Query: `SELECT * FROM events WHERE status = 'published' AND starts_at >= now() ORDER BY starts_at ASC LIMIT 2`
+   - Rendered via the shared `<EventRowCard variant="on-green">` component from `components/events/EventListView.tsx` — same row layout as `/events` (left date block: weekday / day / month abbr; right body: time range, title link, location, 3-line description excerpt; optional md+ cover image). The variant swaps navy/muted colors for white/white-on-green so the same component reads correctly on either band.
    - Empty state: hide the section entirely
 
 6. **Sponsors strip** — two-row thank-you band (restyled 2026-05-22 PM, supersedes the morning's small-caps strip)
