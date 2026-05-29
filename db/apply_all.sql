@@ -2797,3 +2797,66 @@ SET location_url='https://www.google.com/maps/search/?api=1&query=300+N+Lake+Cre
 WHERE year='2025-26' AND location='Dragon Stadium';
 
 COMMIT;
+
+-- ===
+-- db/migrations/053_temporary_swap_contact_email_to_gmail.sql
+-- ===
+
+-- 053_temporary_swap_contact_email_to_gmail.sql
+--
+-- TEMPORARY swap of boosters@mcneilmavericks.org → mcneilfootballboosters@gmail.com
+-- on every public-surface DB row, so the board's pre-admin-phase review (2026-05-26
+-- meeting) doesn't see an aliased address that isn't wired up yet. The .org alias
+-- will be restored via 053_rollback.sql once Cloudflare Email Routing is live.
+--
+-- Affected rows:
+--   1. site_settings.primary_contact_email (singleton row, id=1)
+--   2. resource_links SportsYou description (embedded mention of the booster email)
+
+BEGIN;
+
+-- 1. site_settings singleton
+UPDATE site_settings
+SET primary_contact_email = 'mcneilfootballboosters@gmail.com'
+WHERE id = 1
+  AND primary_contact_email = 'boosters@mcneilmavericks.org';
+
+-- 2. SportsYou resource_links row description
+UPDATE resource_links
+SET description = REPLACE(
+  description,
+  'boosters@mcneilmavericks.org',
+  'mcneilfootballboosters@gmail.com'
+)
+WHERE label = 'SportsYou (Team Messaging)'
+  AND description LIKE '%boosters@mcneilmavericks.org%';
+
+COMMIT;
+
+-- ===
+-- db/migrations/054_sponsor_tier_perk_trims.sql
+-- ===
+
+-- 054_sponsor_tier_perk_trims.sql
+-- Trim sponsorship tier perks per Jeremy 2026-05-29.
+--   Blue ($500):     drop "Sign at field", "Game program: Quarter page", "Streaming recognition".
+--   Gold ($1000):    "Game program: Half page" -> "Game program"; drop "Streaming recognition".
+--   Platinum ($1500): drop "Streaming banner all games".
+-- Diamond + MVP untouched (streaming banner remains only on those two tiers).
+-- Full-array replacement scoped by name + year so re-running is idempotent.
+
+begin;
+
+update sponsorship_tiers
+set perks = '["Logo + link on website", "Social + newsletter promo", "PA announcement"]'::jsonb
+where name = 'Blue' and year = '2025-26';
+
+update sponsorship_tiers
+set perks = '["Logo + link on website", "Sign at field", "Social + newsletter promo", "PA announcement", "Game program"]'::jsonb
+where name = 'Gold' and year = '2025-26';
+
+update sponsorship_tiers
+set perks = '["Logo + link on website", "Sign at field", "Social + newsletter promo", "PA announcement", "Game program: Full page", "2x 30-sec audio commercials per game"]'::jsonb
+where name = 'Platinum' and year = '2025-26';
+
+commit;
