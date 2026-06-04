@@ -17,8 +17,8 @@ const SECTION_ORDER: ReadonlyArray<{ key: RoleCategory; heading: string }> = [
 ];
 
 export default async function CoachesPage() {
-  const { current_year } = await getSiteSettingsCore();
-  const coaches = await getCoachesForYear(current_year);
+  const { current_coaches_year } = await getSiteSettingsCore();
+  const coaches = await getCoachesForYear(current_coaches_year);
 
   const grouped = new Map<RoleCategory, Coach[]>();
   for (const coach of coaches) {
@@ -36,7 +36,7 @@ export default async function CoachesPage() {
         <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
           Coaches & Trainers
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{current_year}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{current_coaches_year}</p>
       </header>
 
       <div className="mt-8 space-y-10">
