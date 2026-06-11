@@ -23,7 +23,12 @@ export default async function GameSchedulePage({
   const levelTitle = LEVEL_TITLES[level];
   if (!levelTitle) notFound();
 
-  const { current_year, maxpreps_team_url } = await getSiteSettingsCore();
+  // Schedule pages display the decoupled schedule year (current_schedule_year),
+  // not current_year. Rosters/practice/sponsors stay on current_year. The roster
+  // lookup below is only for the Print View PDF, which lives on a rosters row at
+  // the schedule year (stub rows seeded at the schedule year carry the PDF path).
+  const { current_schedule_year: current_year, maxpreps_team_url } =
+    await getSiteSettingsCore();
 
   const [games, roster] = await Promise.all([
     getGamesForTeam({

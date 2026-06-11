@@ -25,8 +25,13 @@ export default async function FreshmanGameSchedulePage({
   const designationTitle = DESIGNATION_TITLES[designation];
   if (!designationTitle) notFound();
 
-  const { current_year, maxpreps_team_url, freshman_has_blue } =
-    await getSiteSettingsCore();
+  // Schedule pages display the decoupled schedule year (current_schedule_year);
+  // see app/schedule/games/[level]/page.tsx for the full rationale.
+  const {
+    current_schedule_year: current_year,
+    maxpreps_team_url,
+    freshman_has_blue,
+  } = await getSiteSettingsCore();
 
   if (designation === "blue" && !freshman_has_blue) notFound();
 
