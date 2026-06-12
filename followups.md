@@ -43,6 +43,15 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] **Lighthouse perf timeout on `/` staging.** When Jeremy ran a11y on the homepage 2026-05-23, Lighthouse flagged "the page loaded too slowly to finish within the time limit, results may be incomplete." The a11y audit completed (100/100) but the perf audit didn't. Likely Vercel preview/staging is slower than prod will be. Re-run perf-only on production after cutover; if the timeout repeats, investigate (image sizes, Supabase round-trips, hero carousel hydration).
 - [x] ~~Console-error sweep on `/` and `/sponsors`.~~ All three prefetch 404s (`/boosters/sponsor`, `/boosters/volunteer`, `/boosters/donate`) resolved as those pages shipped. Closed 2026-05-26.
 
+## J9 — DNS + email cutover (staging status 2026-06-08 final)
+Full spec + record values + zone IDs live **outside the repo** at `MavericksWebsite/j9_dns_email_cutover_spec.md` (next to `dns_audit.md`). Status only here:
+- [x] **DNS staging done + verified.** Cloudflare zone created (Free, pending). 3 STAGE-NOW records built and correct: apex A → Vercel (gray), www CNAME → Vercel per-project host (gray), `_dmarc` TXT. Auto-scan's 18 imported SE/GoDaddy records reconciled (P8) and all dropped — nothing carried forward.
+- [x] **Email Routing enabled + Gmail destination verified** (`mcneilfootballboosters@gmail.com`).
+- [ ] **GATED until zone Active (flip-day):** the 3 MX + SPF + DKIM (`cf2024-1._domainkey`) records and the 6 alias rules + catch-all. Cloudflare won't add these while the zone is pending. Become flip-day steps right after the NS change activates the zone.
+- [ ] **Resend `send.mcneilmavericks.org` verification** — the only remaining *pre-flip* task. Needs the Resend dashboard; then its DKIM/SPF/MX rows get added to the zone.
+- [ ] **NS not flipped; SE still live.** Flip = replace `ns1-5.sportnginserver.com` with the Cloudflare pair at Network Solutions, target July 13–20. Everything else waits for the flip.
+- [ ] **Held CC task:** populate `site_settings.alias_*` + roll back migration 053 (temp gmail swap) — runs only after routing tests live post-flip.
+
 ## Pre-cutover ops
 - [ ] Second super_admin account for Carol with 2FA + recovery codes.
 - [ ] Institutional super_admin accounts (president@, webmaster@) wired through Cloudflare Email Routing to personal inboxes.
