@@ -47,3 +47,16 @@ next-env.d.ts
 docs/Football Player & Guardian Name*.xlsx
 docs/Football Player & Guardian Name*.xls
 docs/Football Player & Guardian Name*.csv
+
+# PII: roster source PDFs (player names). The live /roster pages are served from
+# Supabase, not from these files. Source copies live in MavericksWebsite/private-data/.
+# Public repo — never commit.
+docs/varsity-2025.pdf
+docs/jv-2025.pdf
+docs/freshman-2025.pdf
+
+# Redundant local copies of assets already in Supabase storage (served to the site
+# from there). No need to version binaries in the public repo.
+docs/2025-26.pdf
+docs/Backgrounds/
+docs/sponsor_logos/
