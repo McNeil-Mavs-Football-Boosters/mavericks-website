@@ -105,6 +105,7 @@ export interface Coach {
   name: string;
   role: string;
   role_category: "head" | "coordinator" | "position_coach" | "trainer" | "staff";
+  teaching_role: string | null;
   phone: string | null;
   email: string | null;
   photo_url: string | null;
@@ -140,6 +141,7 @@ export interface BoardMember {
   sort_order: number;
   year: string;
   active: boolean;
+  is_vacant: boolean;
   last_edited_by: string | null;
   created_at: string;
   updated_at: string;

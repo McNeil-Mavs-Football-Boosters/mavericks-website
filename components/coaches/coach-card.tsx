@@ -39,6 +39,9 @@ export function CoachCard({ coach }: { coach: Coach }) {
       <div className="flex flex-1 flex-col p-5">
         <h3 className="text-lg font-semibold tracking-tight">{coach.name}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{coach.role}</p>
+        {coach.teaching_role ? (
+          <p className="text-xs text-muted-foreground">{coach.teaching_role}</p>
+        ) : null}
 
         {hasContact ? (
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">

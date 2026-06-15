@@ -3076,3 +3076,127 @@ WHERE name = 'Rudy''s BBQ'
   AND year = '2025-26';
 
 COMMIT;
+
+-- ===
+-- db/migrations/061_board_card_update.sql
+-- ===
+
+-- 061_board_card_update.sql
+--
+-- 2026-27 board roster + display changes (spec: docs/specs/board_card_update_spec.md).
+--
+-- Schema decisions (made against the live schema, not guessed):
+--   * Email column already exists: board_members.email_alias (nullable text).
+--   * Soft-delete flag already exists: board_members.active (boolean). Chevon is
+--     deactivated, not hard-deleted.
+--   * Vacancy needs an explicit representation. board_members.name is NOT NULL, so
+--     it can't be nulled, and matching a sentinel name string in the UI would be a
+--     fragile heuristic. This migration adds an explicit is_vacant boolean instead;
+--     the card render keys off the flag.
+--
+-- Roster changes:
+--   1. Chevon Williams (Treasurer)  -> soft-deleted (active = false).
+--   2. Ashley Olson "Co-Treasurer"  -> "Treasurer".
+--   3. Sylvia Brito (VP of Merchandise) -> vacancy (is_vacant = true, email cleared;
+--      role text unchanged per spec).
+--   4. Every remaining FILLED 2026-27 member gets the placeholder contact email
+--      mcneilfootballboosters@gmail.com. This is the shared booster inbox, used as a
+--      placeholder until per-role .org aliases land in J9; see 053 for the same
+--      placeholder pattern on site_settings. Reversed by 061_rollback.sql.
+--
+-- Idempotent: each UPDATE is guarded so a re-run is a no-op.
+
+BEGIN;
+
+-- Explicit vacancy flag (no-op if a prior run already added it).
+ALTER TABLE board_members ADD COLUMN IF NOT EXISTS is_vacant boolean NOT NULL DEFAULT false;
+
+-- 1. Soft-delete Chevon Williams.
+UPDATE board_members
+SET active = false
+WHERE year = '2026-27'
+  AND name = 'Chevon Williams'
+  AND role = 'Treasurer'
+  AND active = true;
+
+-- 2. Ashley Olson: Co-Treasurer -> Treasurer.
+UPDATE board_members
+SET role = 'Treasurer'
+WHERE year = '2026-27'
+  AND name = 'Ashley Olson'
+  AND role = 'Co-Treasurer';
+
+-- 3. Sylvia Brito -> vacancy (role text stays "VP of Merchandise"; no email).
+UPDATE board_members
+SET is_vacant = true,
+    email_alias = NULL
+WHERE year = '2026-27'
+  AND name = 'Sylvia Brito'
+  AND is_vacant = false;
+
+-- 4. Placeholder contact email on every remaining FILLED 2026-27 member.
+--    Runs last so the deactivated (Chevon) and vacant (Sylvia) rows are excluded.
+UPDATE board_members
+SET email_alias = 'mcneilfootballboosters@gmail.com'
+WHERE year = '2026-27'
+  AND active = true
+  AND is_vacant = false;
+
+COMMIT;
+
+-- ===
+-- db/migrations/062_coaches_teaching_roles_and_debose.sql
+-- ===
+
+-- 062_coaches_teaching_roles_and_debose.sql
+--
+-- Coaches page updates (2026-27):
+--   * New nullable column `teaching_role` holds each coach's RRISD teaching title
+--     (e.g. "Social Studies Teacher"). Kept separate from `role` (the football
+--     title) and from `bio` (markdown paragraph — Gardner has a real bio; the
+--     other coaches don't). The card renders it as a small line under `role`.
+--     "Athletics" is dropped from the RRISD directory phrasing as redundant on a
+--     coaches page.
+--   * Douglas Wallin: add email + teaching_role. Football role unchanged.
+--   * Michael Hale: add teaching_role. Email already present.
+--   * Reginal Debose: new Defensive Line Coach (position_coach), same group as
+--     Wallin.
+--   * Jerry Gardner: add email (no teaching_role).
+--   * Photos for Wallin, Hale, Debose live in the coach-photos bucket; photo_url
+--     stores the full public URL (same convention as Gardner's row).
+--
+-- Idempotent: column add is IF NOT EXISTS; the INSERT is guarded by NOT EXISTS.
+
+BEGIN;
+
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS teaching_role text;
+
+-- Jerry Gardner — add email (no teaching_role; he is Head Coach / Athletic Director).
+UPDATE coaches
+SET email = 'jerry_gardner@roundrockisd.org'
+WHERE year = '2026-27' AND name = 'Jerry Gardner';
+
+-- Douglas Wallin — add email + teaching subject + photo.
+UPDATE coaches
+SET email = 'Douglas_Wallin@roundrockisd.org',
+    teaching_role = 'Social Studies Teacher',
+    photo_url = 'https://rgdoolafpvhtsdpxbqvj.supabase.co/storage/v1/object/public/coach-photos/CoachWallinHead.jpg'
+WHERE year = '2026-27' AND name = 'Douglas Wallin';
+
+-- Michael Hale — add teaching subject + photo (email already set).
+UPDATE coaches
+SET teaching_role = 'Physical Education Teacher',
+    photo_url = 'https://rgdoolafpvhtsdpxbqvj.supabase.co/storage/v1/object/public/coach-photos/CoachHaleHead.jpg'
+WHERE year = '2026-27' AND name = 'Michael Hale';
+
+-- Reginal Debose — new Defensive Line Coach.
+INSERT INTO coaches (year, name, role, role_category, email, teaching_role, photo_url, sort_order, active)
+SELECT '2026-27', 'Reginal Debose', 'Defensive Line Coach', 'position_coach',
+       'reginal_debose@roundrockisd.org', 'Special Education Teacher',
+       'https://rgdoolafpvhtsdpxbqvj.supabase.co/storage/v1/object/public/coach-photos/CoachDeboseHead.jpg',
+       15, true
+WHERE NOT EXISTS (
+  SELECT 1 FROM coaches WHERE year = '2026-27' AND name = 'Reginal Debose'
+);
+
+COMMIT;

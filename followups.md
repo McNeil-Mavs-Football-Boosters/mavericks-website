@@ -105,6 +105,9 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 - **Featured Event homepage treatment.** `events.featured` boolean is on the schema, unused. Future homepage "Featured Event" card could read it.
 - **`foldIcsLine` multi-byte boundary fix.** Inline `// TODO` in `app/events.ics/route.ts`. Cheap to fix; not blocking.
 
+## Board members
+- **Optional short bio per board member — pending board approval, own spec when ready.** Additive (new card space; `board_members.bio` column already exists in schema, currently unrendered). Do not build until approved. Deferred from `docs/specs/board_card_update_spec.md` (2026-06-14).
+
 ## Resource icons — `lib/resource-icons.tsx`
 - The file was renamed from `.ts` to `.tsx` on 2026-05-25 (commit `3e85efa`) because the registry now holds an inline `Facebook` SVG component (lucide-react v1.x dropped brand glyphs for trademark reasons). The import in `components/resources/resource-item.tsx` is extension-less, so no consumer update was needed. If future brand-glyph hints get added (Instagram, YouTube, X), follow the same pattern — inline SVG component + `ICON_BY_HINT[lowercase] = Component`. Footer.tsx has the canonical Facebook/Instagram/Youtube SVG paths; copy from there.
 - **`react-hooks/static-components` lint error on `resource-item.tsx`** persists (see "Lint baseline" below). Now lives alongside the larger icon registry; the fix is the same — refactor `iconForHint()` consumers to render module-scope components rather than create-during-render. Cheap follow-up.

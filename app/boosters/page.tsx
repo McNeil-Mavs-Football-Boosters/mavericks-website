@@ -28,15 +28,6 @@ const SETTINGS_DEFAULTS: Pick<
   mailing_address: null,
 };
 
-function initialsFor(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => (w[0] ?? "").toUpperCase())
-    .join("");
-}
-
 async function loadPageData(boardYear: string): Promise<{
   settings: Pick<
     SiteSettings,
@@ -213,40 +204,47 @@ export default async function BoostersPage() {
             Board roster will be posted soon.
           </p>
         ) : (
-          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 list-none p-0">
-            {boardMembers.map((member) => {
-              const initials = initialsFor(member.name);
-              return (
-                <li key={member.id}>
-                  {member.photo_url ? (
-                    <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={member.photo_url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-square w-full rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-3xl font-semibold">
-                      {initials}
-                    </div>
-                  )}
-                  <p className="mt-3 font-semibold text-foreground">
-                    {member.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{member.role}</p>
-                  {member.email_alias ? (
-                    <a
-                      href={`mailto:${member.email_alias}`}
-                      className="mt-1 inline-block text-sm text-mavs-navy hover:underline"
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0">
+            {boardMembers.map((member) => (
+              <li
+                key={member.id}
+                className="rounded-lg border border-border bg-white p-4"
+              >
+                {member.is_vacant ? (
+                  <>
+                    <p className="font-medium text-muted-foreground">
+                      Position Open
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {member.role}
+                    </p>
+                    <Link
+                      href="/boosters/committees"
+                      className="mt-3 inline-block rounded-md bg-mavs-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-mavs-navy/90 transition-colors"
                     >
-                      {member.email_alias}
-                    </a>
-                  ) : null}
-                </li>
-              );
-            })}
+                      Join a Committee
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-foreground">
+                      {member.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {member.role}
+                    </p>
+                    {member.email_alias ? (
+                      <a
+                        href={`mailto:${member.email_alias}`}
+                        className="mt-1 inline-block text-sm text-mavs-navy hover:underline"
+                      >
+                        {member.email_alias}
+                      </a>
+                    ) : null}
+                  </>
+                )}
+              </li>
+            ))}
           </ul>
         )}
       </section>
