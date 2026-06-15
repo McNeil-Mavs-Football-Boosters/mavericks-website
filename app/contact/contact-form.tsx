@@ -70,8 +70,8 @@ export function ContactForm() {
           className="mb-6 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
         >
           Something went wrong sending your message. Try again, or email{" "}
-          <a className="underline" href="mailto:mcneilfootballboosters@gmail.com">
-            mcneilfootballboosters@gmail.com
+          <a className="underline" href="mailto:boosters@mcneilmavericks.org">
+            boosters@mcneilmavericks.org
           </a>{" "}
           directly.
         </div>

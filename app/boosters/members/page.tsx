@@ -216,10 +216,10 @@ export default async function BoostersMembersPage() {
         <p className="text-sm text-muted-foreground">
           Want yours updated or removed? Email us{" "}
           <a
-            href="mailto:mcneilfootballboosters@gmail.com"
+            href="mailto:membership@mcneilmavericks.org"
             className="text-mavs-navy hover:underline"
           >
-            mcneilfootballboosters@gmail.com
+            membership@mcneilmavericks.org
           </a>
         </p>
       </section>

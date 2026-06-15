@@ -115,10 +115,10 @@ function EmptyState({ filter }: { filter: "upcoming" | "past" }) {
       <p className="text-sm text-muted-foreground mt-3">
         Want to host an event? Email{" "}
         <a
-          href="mailto:mcneilfootballboosters@gmail.com"
+          href="mailto:boosters@mcneilmavericks.org"
           className="text-mavs-navy hover:underline"
         >
-          mcneilfootballboosters@gmail.com
+          boosters@mcneilmavericks.org
         </a>
       </p>
     </div>
