@@ -822,7 +822,7 @@ These are not blockers but will need attention as Step 4c progresses:
 - **SE renewal lapse**: 2026-07-31. Hard deadline: cancel by 2026-07-29 or accept another $1,385.
 - **Email today**: GoDaddy MX. Migrating to Cloudflare Email Routing aliases (J9).
 - **Nonprofit**: 501(c)(3), EIN **26-4231242**, legal name "McNeil Maverick Football Booster Club". (Stripe nonprofit pricing no longer relevant — provider swapped to existing booster Square account 2026-05-26.)
-- **Phase 1 admin roles**: `super_admin`, `content_admin`, `readonly_admin` (Chevon as treasurer). Per admin_scope_v2: Jeremy + Carol are super_admin (plus institutional `president@`/`webmaster@` recovery accounts in Step 6).
+- **Phase 1 admin roles**: `super_admin`, `content_admin`, `readonly_admin` (Ashley Root as treasurer; Chevon Williams stepped down 2026-06-09). Per admin_scope_v2: Jeremy + Carol are super_admin (plus institutional `president@`/`webmaster@` recovery accounts in Step 6).
 - **Mailing address**: `#412, 6001 W Parmer Ln, Suite 370, Austin TX 78727` (PO Box-style, from existing /boosters page; confirmed live-seeded in DB).
 - **Head coach**: **Jerry Gardner**, named head coach (THSF 2026-06-03), seeded as "Head Coach and Athletic Director" on `/coaches` (migration 055, year 2026-27). Supersedes the prior "no head coach at launch" plan — that was the Cruz situation (hired March 2026, arrested May 2026, admin leave); the slot is now filled by Gardner.
 
