@@ -32,6 +32,22 @@ type Sponsor = SponsorStripLogoSponsor & {
   year: string;
 };
 
+// Concrete examples of what sponsorship dollars fund. Editable per Jeremy 2026-06-23.
+const SPONSORSHIP_FUNDS = [
+  "Character Wins curriculum",
+  "Riddell SpeedFlex helmets",
+  "Weekly game streaming subscription",
+  "Hudl subscription",
+  "ANSRS subscription",
+  "Meals and transportation for the students",
+  "Offensive line knee braces",
+  "Skull caps",
+  "Weight room enhancements",
+  "Coach and team gameday polos",
+  "Team Tracker and Padilla Poll subscriptions",
+  "Media day to highlight varsity players",
+];
+
 function SponsorshipTierCard({
   tier,
   size,
@@ -41,6 +57,13 @@ function SponsorshipTierCard({
 }) {
   const dollars = Math.round(tier.price_cents / 100).toLocaleString("en-US");
   const isLarge = size === "large";
+  // Tiers with no perks (e.g. Scoreboard) show a summary body instead of a bullet list.
+  // Their description holds the gray-italic subtitle and the body separated by a blank
+  // line; perk tiers use the whole description as the subtitle (matching MVP).
+  const isSummary = tier.perks.length === 0;
+  const [summarySubtitle, ...summaryRest] = (tier.description ?? "").split(/\n{2,}/);
+  const subtitle = isSummary ? summarySubtitle : tier.description;
+  const summaryBody = summaryRest.join("\n\n");
   return (
     <div
       className={`relative bg-white border-2 rounded-lg flex flex-col ${
@@ -67,23 +90,31 @@ function SponsorshipTierCard({
         >
           {tier.name}
         </h3>
-        {tier.description ? (
-          <p className="text-sm text-gray-600 italic mt-2">{tier.description}</p>
+        {subtitle ? (
+          <p className="text-sm text-gray-600 italic mt-2">{subtitle}</p>
         ) : null}
       </div>
-      <ul className="space-y-2 flex-grow">
-        {tier.perks.map((perk, i) => (
-          <li
-            key={i}
-            className={`flex gap-2 ${
-              isLarge ? "text-base" : "text-sm"
-            } text-gray-800`}
-          >
-            <span className="text-mavs-green font-bold">+</span>
-            <span>{perk}</span>
-          </li>
-        ))}
-      </ul>
+      {isSummary ? (
+        summaryBody ? (
+          <p className="flex-grow text-center text-base text-gray-700 leading-relaxed">
+            {summaryBody}
+          </p>
+        ) : null
+      ) : (
+        <ul className="space-y-2 flex-grow">
+          {tier.perks.map((perk, i) => (
+            <li
+              key={i}
+              className={`flex gap-2 ${
+                isLarge ? "text-base" : "text-sm"
+              } text-gray-800`}
+            >
+              <span className="text-mavs-green font-bold">+</span>
+              <span>{perk}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -135,7 +166,7 @@ export default async function BoostersSponsorPage() {
     (a, b) => a.price_cents - b.price_cents,
   );
   const topRow = tiersByPrice.slice(0, 3);
-  const bottomRow = tiersByPrice.slice(3, 5);
+  const bottomRow = tiersByPrice.slice(3, 6);
 
   const topTierSponsors = sponsors.filter((s) => s.tier_id === mvpTierId);
   const otherSponsors = sponsors.filter((s) => s.tier_id !== mvpTierId);
@@ -201,6 +232,27 @@ export default async function BoostersSponsorPage() {
         </div>
       </section>
 
+      {/* 2b. What sponsorship funds */}
+      <section className="container mx-auto px-4 pb-16 md:pb-20 max-w-3xl">
+        <div className="bg-mavs-navy/5 border-2 border-mavs-navy/10 rounded-lg p-8 md:p-10">
+          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-mavs-navy text-center">
+            What Your Sponsorship Helps Fund
+          </h2>
+          <div className="h-1 w-20 bg-mavs-green mx-auto mt-3 mb-8"></div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+            {SPONSORSHIP_FUNDS.map((item) => (
+              <li
+                key={item}
+                className="flex gap-2 text-base text-gray-800"
+              >
+                <span className="text-mavs-green font-bold">+</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       {/* 3. Sponsorship Levels + tier cards */}
       <section className="container mx-auto px-4 py-12 md:py-16">
         <div className="text-center mb-12">
@@ -221,8 +273,8 @@ export default async function BoostersSponsorPage() {
           ))}
         </div>
 
-        {/* Bottom row: 2 larger cards, centered */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        {/* Bottom row: 3 larger cards, aligned with the top row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {bottomRow.map((tier) => (
             <SponsorshipTierCard key={tier.id} tier={tier} size="large" />
           ))}
