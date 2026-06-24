@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -5,9 +6,17 @@ import {
   type SponsorStripLogoSponsor,
 } from "@/components/sponsors/SponsorStripLogo";
 import { getSiteSettingsCore } from "@/lib/site-settings";
+import { publicObjectUrl } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+// Full booster sponsorship letter (hosted in the documents bucket). The ?download
+// param sets Content-Disposition: attachment so the link downloads rather than
+// opening in a tab (the HTML `download` attr is ignored cross-origin).
+const SPONSORSHIP_LETTER_URL =
+  publicObjectUrl("documents/sponsorship/sponsorship-letter-2025-26.pdf") +
+  "?download=McNeil-Sponsorship-Letter-2025-26.pdf";
 
 export const metadata = {
   title: "Become a Sponsor | McNeil Mavericks Football",
@@ -229,6 +238,15 @@ export default async function BoostersSponsorPage() {
             Your sponsorship matters. Your support is seen. And it directly
             impacts the athletes who wear the McNeil jersey.
           </p>
+        </div>
+        <div className="mt-10 text-center">
+          <a
+            href={SPONSORSHIP_LETTER_URL}
+            className="inline-flex items-center gap-2 rounded-md border-2 border-mavs-navy px-6 py-3 font-bold uppercase text-mavs-navy hover:bg-mavs-navy hover:text-white transition-colors"
+          >
+            <Download className="h-5 w-5" />
+            Download the Sponsorship Letter
+          </a>
         </div>
       </section>
 
