@@ -19,6 +19,16 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-05 — role-address send-as working; Workspace still on trial)
+
+**Headline:** sending *as* the role addresses now works with the correct From. Resolved the "mail shows as admin@" problem and locked in the method.
+
+- **Send-as method (important):** the ONLY way to send as a role address with the correct visible From is Gmail "Send mail as" from a **Workspace account that is a member of that role's group** (native, no SMTP). The earlier **SMTP + App Password** approach (auth `admin@`, `smtp.gmail.com`) authenticates but Google **rewrites the From to `admin@`** — abandoned. Confirmed working: `secretary@` (and `sponsorship@` set up for Kendra), all currently run from **`admin@`'s Gmail** since it's the only Workspace user during the trial. Reply setting: "Reply from the same address the message was sent to."
+- **Docs:** the board PDF `Booster_Email_SendAs_Setup_Guide` was **rebuilt** around the native method (the prior SMTP version is superseded — do not distribute it).
+- **`admin@` security:** 2-Step switched to **Authenticator** (TOTP seed saved to the club vault so it isn't stranded on one phone) + backup codes; phone number corrected. TODO: designate a **second Super Admin** for redundancy.
+- **Workspace subscription:** still on the **free Nonprofits Trial plan** ("1 day left" as of ~2026-07-05; active since Jun 23). Trial **caps user creation at 1 seat**, which blocks the planned dedicated send-as seat `mcneilfootballboosters@`. Licenses show "All users"; no payment attached. **OPEN:** confirm with Google support that it auto-continues on the free plan (the live club email now depends on it) and that the seat cap lifts, then create the dedicated seat and move role send-as off `admin@`.
+- **Still pending:** (1) confirm trial→free-plan continuation; (2) **Google DKIM** (domain still has none — role mail risks recipients' spam); (3) per-officer own-inbox send-as once seats free up (each needs their own Workspace account, member of their role group); (4) GoDaddy email cancel.
+
 ## Status (2026-06-23 — Google Workspace for Nonprofits LIVE; email MX cut over from Cloudflare to Google)
 
 **Today's headline:** Workspace for Nonprofits is active on `mcneilmavericks.org` and inbound mail was cut over from Cloudflare Email Routing to Google. Delivery test still pending (see below) — treat the cutover as done-but-unverified until the test passes.
