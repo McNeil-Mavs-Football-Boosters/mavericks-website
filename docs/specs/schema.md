@@ -288,7 +288,9 @@ CREATE INDEX idx_documents_type_date ON documents(doc_type, doc_date DESC) WHERE
 
 ### payments
 
-Records every Stripe transaction (and manual cash/check entries). Source of truth for "who has paid what."
+Records every online transaction (and manual cash/check entries). Source of truth for "who has paid what."
+
+Provider note: columns went provider-agnostic in migration 068 (2026-07-05) when the board's processor moved Stripe → Square. `stripe_session_id`/`stripe_payment_intent_id` became `payment_session_id`/`payment_provider_id`, and `payment_provider` was added. The `payment_method_type` enum below still lists `'stripe'` — that value is a pending decision (rename to `'square'`/`'online'` vs. rely on `payment_provider`), intentionally not touched by 068.
 
 ```sql
 CREATE TYPE payment_method_type AS ENUM ('stripe', 'cash', 'check', 'zero_dollar', 'other');
@@ -297,8 +299,9 @@ CREATE TYPE payment_status AS ENUM ('pending', 'succeeded', 'failed', 'canceled'
 
 CREATE TABLE payments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  stripe_session_id text UNIQUE,  -- null for non-Stripe payments
-  stripe_payment_intent_id text UNIQUE,
+  payment_session_id text UNIQUE,   -- Square order_id / (legacy) Stripe session id; null for manual entries
+  payment_provider_id text UNIQUE,  -- Square payment_id / (legacy) Stripe payment_intent id
+  payment_provider text NOT NULL DEFAULT 'square',  -- square | paypal | stripe (legacy)
   method payment_method_type NOT NULL,
   purpose payment_purpose NOT NULL,
   amount_cents integer NOT NULL CHECK (amount_cents >= 0),
