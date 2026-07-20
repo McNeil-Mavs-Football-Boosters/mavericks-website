@@ -223,8 +223,9 @@ export default async function SponsorsPage() {
             Want to Join Them in 2026-27?
           </h2>
           <p className="text-lg text-white/90 mt-4 max-w-2xl mx-auto">
-            Five sponsorship tiers. Each one supports McNeil football and puts
-            your business in front of Mavs families all season long.
+            Sponsorship levels for every budget, plus add-ons. Each one supports
+            McNeil football and puts your business in front of Mavs families all
+            season long.
           </p>
           <Link
             href="/boosters/sponsor"

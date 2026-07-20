@@ -21,7 +21,7 @@ const SPONSORSHIP_LETTER_URL =
 export const metadata = {
   title: "Become a Sponsor | McNeil Mavericks Football",
   description:
-    "Support McNeil Mavericks Football. Five sponsorship tiers, real visibility, every level supports the program.",
+    "Support McNeil Mavericks Football. Six sponsorship levels plus add-ons, real visibility, every level supports the program.",
 };
 
 interface SponsorshipTier {
@@ -33,6 +33,9 @@ interface SponsorshipTier {
   sort_order: number;
   badge_label: string | null;
   year: string;
+  is_addon: boolean;
+  price_flexible: boolean;
+  term_label: string | null;
 }
 
 type Sponsor = SponsorStripLogoSponsor & {
@@ -66,9 +69,12 @@ function SponsorshipTierCard({
 }) {
   const dollars = Math.round(tier.price_cents / 100).toLocaleString("en-US");
   const isLarge = size === "large";
-  // Tiers with no perks (e.g. Scoreboard) show a summary body instead of a bullet list.
-  // Their description holds the gray-italic subtitle and the body separated by a blank
-  // line; perk tiers use the whole description as the subtitle (matching MVP).
+  // Flexible-price tiers (Custom) show the word "Flexible" instead of a dollar
+  // figure; the tier name below already reads "Custom".
+  const priceText = tier.price_flexible ? "Flexible" : `$${dollars}`;
+  // Tiers with no perks (e.g. add-ons) show a summary body instead of a bullet
+  // list. Their description holds the gray-italic subtitle and the body,
+  // separated by a blank line; perk tiers use the whole description as subtitle.
   const isSummary = tier.perks.length === 0;
   const [summarySubtitle, ...summaryRest] = (tier.description ?? "").split(/\n{2,}/);
   const subtitle = isSummary ? summarySubtitle : tier.description;
@@ -90,8 +96,13 @@ function SponsorshipTierCard({
             isLarge ? "text-5xl" : "text-4xl"
           }`}
         >
-          ${dollars}
+          {priceText}
         </p>
+        {tier.term_label ? (
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mt-1">
+            {tier.term_label}
+          </p>
+        ) : null}
         <h3
           className={`font-bold uppercase text-mavs-navy mt-1 ${
             isLarge ? "text-2xl" : "text-xl"
@@ -137,7 +148,7 @@ export default async function BoostersSponsorPage() {
     supabase
       .from("sponsorship_tiers")
       .select(
-        "id, name, price_cents, description, perks, sort_order, badge_label, year",
+        "id, name, price_cents, description, perks, sort_order, badge_label, year, is_addon, price_flexible, term_label",
       )
       .eq("year", current_year)
       .eq("active", true)
@@ -171,11 +182,12 @@ export default async function BoostersSponsorPage() {
   const sponsors: Sponsor[] = (sponsorsRes.data ?? []) as Sponsor[];
   const mvpTierId: string | null = mvpTierRes.data?.id ?? null;
 
-  const tiersByPrice = [...tiers].sort(
-    (a, b) => a.price_cents - b.price_cents,
-  );
-  const topRow = tiersByPrice.slice(0, 3);
-  const bottomRow = tiersByPrice.slice(3, 6);
+  // Base levels vs add-ons, each ordered by sort_order (NOT price — Custom is
+  // the final base choice and its $0/flexible price must not sort it first).
+  const bySort = (a: SponsorshipTier, b: SponsorshipTier) =>
+    a.sort_order - b.sort_order;
+  const baseTiers = tiers.filter((t) => !t.is_addon).sort(bySort);
+  const addOnTiers = tiers.filter((t) => t.is_addon).sort(bySort);
 
   const topTierSponsors = sponsors.filter((s) => s.tier_id === mvpTierId);
   const otherSponsors = sponsors.filter((s) => s.tier_id !== mvpTierId);
@@ -279,25 +291,39 @@ export default async function BoostersSponsorPage() {
           </h2>
           <div className="h-1 w-20 bg-mavs-green mx-auto mt-3"></div>
           <p className="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
-            Five tiers, real visibility. Every level supports McNeil football
-            and puts your business in front of Mavs families all season long.
+            Six sponsorship levels, plus add-ons. Every level supports McNeil
+            football and puts your business in front of Mavs families all season
+            long.
           </p>
         </div>
 
-        {/* Top row: 3 smaller cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 max-w-5xl mx-auto">
-          {topRow.map((tier) => (
+        {/* Base levels: responsive grid, ordered Blue → MVP → Custom */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {baseTiers.map((tier) => (
             <SponsorshipTierCard key={tier.id} tier={tier} size="small" />
           ))}
         </div>
-
-        {/* Bottom row: 3 larger cards, aligned with the top row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {bottomRow.map((tier) => (
-            <SponsorshipTierCard key={tier.id} tier={tier} size="large" />
-          ))}
-        </div>
       </section>
+
+      {/* 3b. Add-Ons */}
+      {addOnTiers.length > 0 ? (
+        <section className="container mx-auto px-4 pb-12 md:pb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-mavs-navy">
+              Add-Ons
+            </h2>
+            <div className="h-1 w-20 bg-mavs-green mx-auto mt-3"></div>
+            <p className="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
+              Add these to any sponsorship level, or take one on its own.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {addOnTiers.map((tier) => (
+              <SponsorshipTierCard key={tier.id} tier={tier} size="small" />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* 4. Contact CTA card */}
       <section className="container mx-auto px-4 py-12 md:py-16">
