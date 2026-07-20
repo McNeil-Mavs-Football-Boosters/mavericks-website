@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { BOOSTER_FORM_URL } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import type { SiteSettings } from "@/lib/types";
 
@@ -186,6 +187,16 @@ export async function Footer() {
             >
               {settings.primary_contact_email}
             </a>
+            <div className="mt-1">
+              <a
+                href={BOOSTER_FORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-mavs-navy"
+              >
+                Join Our Mailing List
+              </a>
+            </div>
             <div className="mt-1">
               <Link
                 href="/about"
