@@ -15,8 +15,8 @@ export const dynamic = "force-dynamic";
 // param sets Content-Disposition: attachment so the link downloads rather than
 // opening in a tab (the HTML `download` attr is ignored cross-origin).
 const SPONSORSHIP_LETTER_URL =
-  publicObjectUrl("documents/sponsorship/sponsorship-letter-2025-26.pdf") +
-  "?download=McNeil-Sponsorship-Letter-2025-26.pdf";
+  publicObjectUrl("documents/sponsorship/sponsorship-letter-2026-27.pdf") +
+  "?download=McNeil-Sponsorship-Letter-2026-27.pdf";
 
 export const metadata = {
   title: "Become a Sponsor | McNeil Mavericks Football",
