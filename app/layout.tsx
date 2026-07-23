@@ -20,13 +20,32 @@ const lato = Lato({
   display: "swap",
 });
 
+const SITE_DESCRIPTION =
+  "Parent-run 501(c)(3) supporting McNeil High School Mavericks football in Austin, Texas.";
+
+// metadataBase makes the auto-wired opengraph-image.png / twitter-image.png
+// resolve to absolute URLs, which link-preview crawlers (SportsYou, iMessage,
+// Facebook, etc.) require to render a preview card.
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.mcneilmavericks.org"),
   title: {
     default: "McNeil Mavericks Football Booster Club",
     template: "%s · McNeil Mavericks Football Booster Club",
   },
-  description:
-    "Parent-run 501(c)(3) supporting McNeil High School Mavericks football in Austin, Texas.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "McNeil Mavericks Football",
+    title: "McNeil Mavericks Football Booster Club",
+    description: SITE_DESCRIPTION,
+    url: "https://www.mcneilmavericks.org",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "McNeil Mavericks Football Booster Club",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({
