@@ -111,7 +111,9 @@ export function GamesTable({ games }: { games: Game[] }) {
                       <HomeAwayBadge value={game.home_or_away} />
                     </td>
                     <td className="py-3 pr-4 align-top whitespace-nowrap">
-                      {formatTime(game.game_date)}
+                      {game.result_status === "tbd"
+                        ? "TBD"
+                        : formatTime(game.game_date)}
                     </td>
                     <td className="py-3 pr-4 align-top whitespace-nowrap">
                       <ResultCell game={game} />

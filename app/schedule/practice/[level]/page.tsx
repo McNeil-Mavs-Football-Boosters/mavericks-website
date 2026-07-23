@@ -25,7 +25,10 @@ export default async function PracticeSchedulePage({
   const levelTitle = LEVEL_TITLES[level];
   if (!levelTitle) notFound();
 
-  const { current_year, freshman_has_blue } = await getSiteSettingsCore();
+  // Practice belongs to the season being played, so it tracks
+  // current_schedule_year (the games year), not current_year (the roster year).
+  const { current_schedule_year, freshman_has_blue } =
+    await getSiteSettingsCore();
 
   const teamLabel =
     level === "freshman" && freshman_has_blue
@@ -36,7 +39,7 @@ export default async function PracticeSchedulePage({
   const { data } = await supabase
     .from("practice_schedules")
     .select("body, source_note")
-    .eq("year", current_year)
+    .eq("year", current_schedule_year)
     .eq("team_level", level)
     .eq("active", true)
     .limit(1)
@@ -49,7 +52,7 @@ export default async function PracticeSchedulePage({
     <section>
       <header className="mb-6">
         <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
-          {current_year} {teamLabel} Practice Schedule
+          {current_schedule_year} {teamLabel} Practice Schedule
         </h1>
       </header>
 

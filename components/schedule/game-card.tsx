@@ -71,7 +71,8 @@ export function GameCard({ game }: { game: Game }) {
       </div>
 
       <div className="mt-1 text-sm text-muted-foreground">
-        {formatDate(game.game_date)} · {formatTime(game.game_date)}
+        {formatDate(game.game_date)} ·{" "}
+        {game.result_status === "tbd" ? "TBD" : formatTime(game.game_date)}
       </div>
 
       <div className="mt-1 text-sm">

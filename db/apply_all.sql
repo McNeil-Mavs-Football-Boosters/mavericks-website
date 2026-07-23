@@ -3856,3 +3856,203 @@ WHERE year = '2026-27'
   AND role = 'Receiver Coach';
 
 COMMIT;
+
+-- ===
+-- db/migrations/077_practice_schedules_2026_preseason.sql
+-- ===
+
+-- 077_practice_schedules_2026_preseason.sql
+--
+-- Seeds the 2026-27 preseason practice schedule (from the coaches' July-August
+-- 2026 calendar). Player-facing detail only: daily team practice times + key
+-- markers (first day of practice/school, picture day, intrasquad scrimmage,
+-- pool party). Coach-internal items (PD, coaches meetings, work week, scout
+-- input, class periods) are intentionally omitted.
+--
+-- Year is 2026-27: the practice page now reads current_schedule_year (the season
+-- being played), matching games/coaches — not current_year (the roster year).
+-- Varsity and JV practice together, so they share one body; Freshmen differ.
+-- Opponent scrimmages + Game 1 live on the games schedule (migration 078); the
+-- tables here just point to it on those days.
+--
+-- Idempotent: INSERT-if-absent on (year, team_level).
+
+BEGIN;
+
+-- Varsity + JV (identical times) --------------------------------------------
+INSERT INTO practice_schedules (year, team_level, body, source_note, active)
+SELECT '2026-27', 'varsity', $body$Varsity and JV practice together. Times are AM unless noted and are subject to change. See the Games schedule for scrimmages and Game 1.
+
+| Date | Practice | Notes |
+|---|---|---|
+| Mon Aug 3 | 7:30–11:00 | First day of practice |
+| Tue Aug 4 | 6:00–9:30 | |
+| Wed Aug 5 | 7:30–11:00 | |
+| Thu Aug 6 | 7:30–11:00 | |
+| Fri Aug 7 | 7:30–11:00 | Pool party 5:00–8:00 PM |
+| Sat Aug 8 | 7:30–9:30 | Intrasquad scrimmage |
+| Mon Aug 10 | 6:30–10:00 | |
+| Tue Aug 11 | 6:30–10:00 | |
+| Wed Aug 12 | 6:30–10:00 | |
+| Thu Aug 13 | See Games | Scrimmage vs Hendrickson (home) |
+| Fri Aug 14 | 7:00–10:00 | |
+| Sat Aug 15 | 9:00–11:00 | |
+| Mon Aug 17 | 6:30–10:00 | |
+| Tue Aug 18 | 6:30–10:00 | |
+| Wed Aug 19 | 6:20–8:15 | First day of school |
+| Thu Aug 20 | See Games | Scrimmage vs Eastview (home), time TBD |
+| Fri Aug 21 | 7:00–8:00 | Picture day |
+| Mon Aug 24 | 6:00–8:15 | |
+| Tue Aug 25 | 6:00–8:15 | |
+| Wed Aug 26 | 6:20–8:15 | |
+| Thu Aug 27 | 7:50–8:30 | |
+| Fri Aug 28 | See Games | Game 1 at Bowie (away) |
+$body$, NULL, true
+WHERE NOT EXISTS (SELECT 1 FROM practice_schedules WHERE year='2026-27' AND team_level='varsity');
+
+INSERT INTO practice_schedules (year, team_level, body, source_note, active)
+SELECT '2026-27', 'jv', $body$Varsity and JV practice together. Times are AM unless noted and are subject to change. See the Games schedule for scrimmages and Game 1.
+
+| Date | Practice | Notes |
+|---|---|---|
+| Mon Aug 3 | 7:30–11:00 | First day of practice |
+| Tue Aug 4 | 6:00–9:30 | |
+| Wed Aug 5 | 7:30–11:00 | |
+| Thu Aug 6 | 7:30–11:00 | |
+| Fri Aug 7 | 7:30–11:00 | Pool party 5:00–8:00 PM |
+| Sat Aug 8 | 7:30–9:30 | Intrasquad scrimmage |
+| Mon Aug 10 | 6:30–10:00 | |
+| Tue Aug 11 | 6:30–10:00 | |
+| Wed Aug 12 | 6:30–10:00 | |
+| Thu Aug 13 | See Games | Scrimmage vs Hendrickson (home) |
+| Fri Aug 14 | 7:00–10:00 | |
+| Sat Aug 15 | 9:00–11:00 | |
+| Mon Aug 17 | 6:30–10:00 | |
+| Tue Aug 18 | 6:30–10:00 | |
+| Wed Aug 19 | 6:20–8:15 | First day of school |
+| Thu Aug 20 | See Games | Scrimmage vs Eastview (home), time TBD |
+| Fri Aug 21 | 7:00–8:00 | Picture day |
+| Mon Aug 24 | 6:00–8:15 | |
+| Tue Aug 25 | 6:00–8:15 | |
+| Wed Aug 26 | 6:20–8:15 | |
+| Thu Aug 27 | 7:50–8:30 | |
+| Fri Aug 28 | See Games | Game 1 at Bowie (away) |
+$body$, NULL, true
+WHERE NOT EXISTS (SELECT 1 FROM practice_schedules WHERE year='2026-27' AND team_level='jv');
+
+-- Freshmen ------------------------------------------------------------------
+INSERT INTO practice_schedules (year, team_level, body, source_note, active)
+SELECT '2026-27', 'freshman', $body$Freshmen practice times. Times are subject to change. See the Games schedule for scrimmages and Game 1.
+
+| Date | Practice | Notes |
+|---|---|---|
+| Mon Aug 3 | 10:00–12:00 | First day of practice |
+| Tue Aug 4 | 8:30–10:30 (or 6:30–8:30 PM) | |
+| Wed Aug 5 | 10:00–12:00 | |
+| Thu Aug 6 | 10:00–12:00 | |
+| Fri Aug 7 | 10:00–12:00 | Pool party 5:00–8:00 PM |
+| Sat Aug 8 | 9:00–10:30 | Intrasquad scrimmage |
+| Mon Aug 10 | 9:00–11:00 | |
+| Tue Aug 11 | 9:00–11:00 | |
+| Wed Aug 12 | 9:00–11:00 (or 6:30–8:30 PM) | |
+| Thu Aug 13 | See Games | Scrimmage vs Hendrickson (home) |
+| Fri Aug 14 | 9:00–11:00 | |
+| Sat Aug 15 | No practice | |
+| Mon Aug 17 | 9:00–11:00 | |
+| Tue Aug 18 | 9:00–11:00 | |
+| Wed Aug 19 | 8:10–9:45 | First day of school |
+| Thu Aug 20 | See Games | Scrimmage vs Eastview (home), time TBD |
+| Fri Aug 21 | 8:00–10:15 | Picture day |
+| Mon Aug 24 | 8:10–9:50 | |
+| Tue Aug 25 | 8:10–9:50 | |
+| Wed Aug 26 | 8:10–9:50 | |
+| Thu Aug 27 | 8:45–9:50 | |
+| Fri Aug 28 | 8:30–9:50 | Game 1 at Bowie (away) |
+$body$, NULL, true
+WHERE NOT EXISTS (SELECT 1 FROM practice_schedules WHERE year='2026-27' AND team_level='freshman');
+
+COMMIT;
+
+-- ===
+-- db/migrations/078_preseason_scrimmages_2026.sql
+-- ===
+
+-- 078_preseason_scrimmages_2026.sql
+--
+-- Adds the two 2026 preseason opponent scrimmages to the games schedule (these
+-- were the "Aug 13 / Aug 20 preseason TBD" slots migration 057 omitted for lack
+-- of an opponent). Both are HOME; notes = 'Scrimmage'. Per the coaches' calendar:
+--   * Thu Aug 13 vs Hendrickson — firm times: Varsity 7:00 PM, JV + Freshmen
+--     5:30 PM. result_status = 'scheduled'.
+--   * Thu Aug 20 vs Eastview — time TBD in the source, so result_status = 'tbd'
+--     (the games views now render "TBD" in the time cell for tbd games). The
+--     stored game_date time is a nominal placeholder; the date (Aug 20) is real.
+-- Freshmen rows are mirrored Green + Blue at the single advertised time, matching
+-- the migration 032 convention. Venue (KRAC vs McNeil Stadium) is unknown for a
+-- scrimmage, so location is left NULL.
+--
+-- August 2026 is CDT (-05). Game 1 vs Bowie (Aug 28) is already seeded (057) —
+-- not touched here. Idempotent: INSERT-if-absent per (year, team_level,
+-- team_designation, opponent, game_date).
+
+BEGIN;
+
+-- Thu Aug 13 vs Hendrickson (HOME) — firm times ------------------------------
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'varsity', NULL, 'Hendrickson High School', '2026-08-13 19:00:00-05'::timestamptz, 'home', 'scheduled', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='varsity' AND team_designation IS NULL AND opponent='Hendrickson High School' AND game_date='2026-08-13 19:00:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'jv', NULL, 'Hendrickson High School', '2026-08-13 17:30:00-05'::timestamptz, 'home', 'scheduled', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='jv' AND team_designation IS NULL AND opponent='Hendrickson High School' AND game_date='2026-08-13 17:30:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'freshman', 'Green', 'Hendrickson High School', '2026-08-13 17:30:00-05'::timestamptz, 'home', 'scheduled', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='freshman' AND team_designation='Green' AND opponent='Hendrickson High School' AND game_date='2026-08-13 17:30:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'freshman', 'Blue', 'Hendrickson High School', '2026-08-13 17:30:00-05'::timestamptz, 'home', 'scheduled', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='freshman' AND team_designation='Blue' AND opponent='Hendrickson High School' AND game_date='2026-08-13 17:30:00-05'::timestamptz);
+
+-- Thu Aug 20 vs Eastview (HOME) — time TBD -----------------------------------
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'varsity', NULL, 'Eastview High School', '2026-08-20 18:00:00-05'::timestamptz, 'home', 'tbd', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='varsity' AND team_designation IS NULL AND opponent='Eastview High School' AND game_date='2026-08-20 18:00:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'jv', NULL, 'Eastview High School', '2026-08-20 18:00:00-05'::timestamptz, 'home', 'tbd', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='jv' AND team_designation IS NULL AND opponent='Eastview High School' AND game_date='2026-08-20 18:00:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'freshman', 'Green', 'Eastview High School', '2026-08-20 18:00:00-05'::timestamptz, 'home', 'tbd', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='freshman' AND team_designation='Green' AND opponent='Eastview High School' AND game_date='2026-08-20 18:00:00-05'::timestamptz);
+
+INSERT INTO games (year, team_level, team_designation, opponent, game_date, home_or_away, result_status, notes)
+SELECT '2026-27', 'freshman', 'Blue', 'Eastview High School', '2026-08-20 18:00:00-05'::timestamptz, 'home', 'tbd', 'Scrimmage'
+WHERE NOT EXISTS (SELECT 1 FROM games WHERE year='2026-27' AND team_level='freshman' AND team_designation='Blue' AND opponent='Eastview High School' AND game_date='2026-08-20 18:00:00-05'::timestamptz);
+
+COMMIT;
+
+-- ===
+-- db/migrations/079_parent_meeting_confirmed_time.sql
+-- ===
+
+-- 079_parent_meeting_confirmed_time.sql
+--
+-- The Parent & Athlete Meeting time is confirmed by the coaches' calendar:
+-- Mon July 27 2026, 6:30-8:00 PM. Replaces the 6:00 PM placeholder + "(Time TBA)"
+-- title seeded by migration 071. July 27 is CDT (-05).
+--
+-- Idempotent: guarded on the placeholder title.
+
+BEGIN;
+
+UPDATE events SET
+  starts_at = '2026-07-27 18:30:00-05'::timestamptz,
+  ends_at = '2026-07-27 20:00:00-05'::timestamptz,
+  title = 'Parent & Athlete Meeting',
+  description = 'Meeting for parents and athletes ahead of the 2026 season at McNeil High School.'
+WHERE slug = 'parent-athlete-meeting-2026'
+  AND title = 'Parent & Athlete Meeting (Time TBA)';
+
+COMMIT;
