@@ -15,6 +15,9 @@ export async function loadHeroCarouselData(): Promise<HeroCarouselData> {
   try {
     const supabase = createServerClient();
 
+    // Hide tiles whose expiry has passed. Evaluated at render/ISR-revalidation.
+    const nowIso = new Date().toISOString();
+
     const [backgroundsResult, tilesResult] = await Promise.all([
       supabase
         .from("hero_background_images")
@@ -26,6 +29,7 @@ export async function loadHeroCarouselData(): Promise<HeroCarouselData> {
         .from("hero_foreground_tiles")
         .select("*")
         .eq("active", true)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
         .order("sort_order", { ascending: true })
         .returns<HeroForegroundTile[]>(),
     ]);

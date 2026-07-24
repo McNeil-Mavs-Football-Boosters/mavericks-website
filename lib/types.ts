@@ -189,6 +189,7 @@ export interface HeroForegroundTile {
   payload: HeroForegroundTilePayload;
   sort_order: number;
   active: boolean;
+  expires_at: string | null;
 }
 
 export interface EventRow {
