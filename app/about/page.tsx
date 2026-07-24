@@ -52,10 +52,10 @@ export default function AboutPage() {
               Sponsorship inquiries:
             </span>{" "}
             <a
-              href="mailto:sponsorship@mcneilmavericks.org"
+              href="mailto:fundraising@mcneilmavericks.org"
               className="text-mavs-navy hover:underline"
             >
-              sponsorship@mcneilmavericks.org
+              fundraising@mcneilmavericks.org
             </a>
           </li>
           <li>

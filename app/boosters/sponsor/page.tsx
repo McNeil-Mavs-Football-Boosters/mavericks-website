@@ -337,13 +337,13 @@ export default async function BoostersSponsorPage() {
             set up at the level that&apos;s right for your business.
           </p>
           <a
-            href="mailto:sponsorship@mcneilmavericks.org?subject=McNeil%20Football%20Sponsorship%20Inquiry"
+            href="mailto:fundraising@mcneilmavericks.org?subject=McNeil%20Football%20Sponsorship%20Inquiry"
             className="inline-block mt-8 bg-mavs-green text-white px-8 py-4 font-bold uppercase hover:bg-mavs-green/90 transition-colors text-lg"
           >
             Email Us to Become a Sponsor
           </a>
           <p className="text-sm text-white/70 mt-4">
-            sponsorship@mcneilmavericks.org
+            fundraising@mcneilmavericks.org
           </p>
         </div>
       </section>
