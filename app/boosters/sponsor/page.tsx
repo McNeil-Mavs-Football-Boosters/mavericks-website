@@ -5,6 +5,7 @@ import {
   SponsorStripLogo,
   type SponsorStripLogoSponsor,
 } from "@/components/sponsors/SponsorStripLogo";
+import { SPONSOR_FORM_URL } from "@/lib/constants";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { publicObjectUrl } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -60,6 +61,38 @@ const SPONSORSHIP_FUNDS = [
   "Team Tracker and Padilla Poll subscriptions",
   "Media day to highlight varsity players",
 ];
+
+// Google Form field IDs + exact option strings (from the live sponsorship form).
+// A "Select" button prefills the level (or add-on) the sponsor clicked.
+const SPONSOR_FORM_ENTRY_LEVEL = "entry.673070323";
+const SPONSOR_FORM_ENTRY_ADDONS = "entry.1109740693";
+const SPONSOR_LEVEL_OPTION: Record<string, string> = {
+  Blue: "Blue — $500 / season",
+  Gold: "Gold — $1,000 / season",
+  Platinum: "Platinum — $1,500 / season",
+  Diamond: "Diamond — $2,500 / season",
+  MVP: "MVP — $5,000 / season",
+  Custom: "Custom (let’s talk)",
+};
+const SPONSOR_ADDON_ONLY = "No base package — add-on only";
+const SPONSOR_ADDON_OPTION: Record<string, string> = {
+  Tunnel: "Tunnel — $350 / season (Homecoming Tunnel Stampede)",
+  Scoreboard:
+    "Scoreboard — $3,000 / two seasons (McNeil Stadium scoreboard logo)",
+};
+
+function sponsorFormHref(tier: SponsorshipTier): string {
+  const params = new URLSearchParams({ usp: "pp_url" });
+  if (tier.is_addon) {
+    params.set(SPONSOR_FORM_ENTRY_LEVEL, SPONSOR_ADDON_ONLY);
+    const addon = SPONSOR_ADDON_OPTION[tier.name];
+    if (addon) params.set(SPONSOR_FORM_ENTRY_ADDONS, addon);
+  } else {
+    const level = SPONSOR_LEVEL_OPTION[tier.name];
+    if (level) params.set(SPONSOR_FORM_ENTRY_LEVEL, level);
+  }
+  return `${SPONSOR_FORM_URL}?${params.toString()}`;
+}
 
 function SponsorshipTierCard({
   tier,
@@ -137,6 +170,14 @@ function SponsorshipTierCard({
           ))}
         </ul>
       )}
+      <a
+        href={sponsorFormHref(tier)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-6 block w-full rounded-md bg-mavs-green text-white text-center px-4 py-3 font-bold uppercase text-sm hover:bg-mavs-green/90 transition-colors"
+      >
+        {tier.is_addon ? "Add This Add-On" : "Select This Level"}
+      </a>
     </div>
   );
 }
@@ -297,6 +338,16 @@ export default async function BoostersSponsorPage() {
             football and puts your business in front of Mavs families all season
             long.
           </p>
+          <div className="mt-6">
+            <a
+              href={SPONSOR_FORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block rounded-md bg-mavs-navy text-white px-8 py-4 font-bold uppercase text-lg hover:bg-mavs-navy/90 transition-colors"
+            >
+              Sponsor Now
+            </a>
+          </div>
         </div>
 
         {/* Base levels: responsive grid, ordered Blue → MVP → Custom */}
@@ -339,13 +390,21 @@ export default async function BoostersSponsorPage() {
             set up at the level that&apos;s right for your business.
           </p>
           <a
-            href="mailto:fundraising@mcneilmavericks.org?subject=McNeil%20Football%20Sponsorship%20Inquiry"
+            href={SPONSOR_FORM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-block mt-8 bg-mavs-green text-white px-8 py-4 font-bold uppercase hover:bg-mavs-green/90 transition-colors text-lg"
           >
-            Email Us to Become a Sponsor
+            Sponsor Now
           </a>
-          <p className="text-sm text-white/70 mt-4">
-            fundraising@mcneilmavericks.org
+          <p className="text-sm text-white/80 mt-6">
+            You can also email us to become a sponsor:{" "}
+            <a
+              href="mailto:fundraising@mcneilmavericks.org?subject=McNeil%20Football%20Sponsorship%20Inquiry"
+              className="underline hover:text-white"
+            >
+              fundraising@mcneilmavericks.org
+            </a>
           </p>
         </div>
       </section>

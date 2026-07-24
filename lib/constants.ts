@@ -7,6 +7,9 @@ export const VOLUNTEER_FORM_URL =
 export const DONATION_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSepjuuCP85fsBKgZU2uA4I-h9JWUkH3-ee9Juc8kC_ybrx5CA/viewform";
 
+export const SPONSOR_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe5iIQUJn_-JALXYJtLmWA3CQhEhCMreLY7vIgfllqppNnFJg/viewform";
+
 export const DONATION_SHEET_ID = "1Dk-qdY0SiK1YlG9hPmEV7V__e1j2UoojJI3H6rYLmOI";
 
 export const VENMO_HANDLE = "@McNeil-Football";
