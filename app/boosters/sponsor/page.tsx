@@ -36,6 +36,7 @@ interface SponsorshipTier {
   is_addon: boolean;
   price_flexible: boolean;
   term_label: string | null;
+  price_display: string | null;
 }
 
 type Sponsor = SponsorStripLogoSponsor & {
@@ -71,7 +72,8 @@ function SponsorshipTierCard({
   const isLarge = size === "large";
   // Flexible-price tiers (Custom) show the word "Flexible" instead of a dollar
   // figure; the tier name below already reads "Custom".
-  const priceText = tier.price_flexible ? "Flexible" : `$${dollars}`;
+  const priceText =
+    tier.price_display ?? (tier.price_flexible ? "Flexible" : `$${dollars}`);
   // Tiers with no perks (e.g. add-ons) show a summary body instead of a bullet
   // list. Their description holds the gray-italic subtitle and the body,
   // separated by a blank line; perk tiers use the whole description as subtitle.
@@ -148,7 +150,7 @@ export default async function BoostersSponsorPage() {
     supabase
       .from("sponsorship_tiers")
       .select(
-        "id, name, price_cents, description, perks, sort_order, badge_label, year, is_addon, price_flexible, term_label",
+        "id, name, price_cents, description, perks, sort_order, badge_label, year, is_addon, price_flexible, term_label, price_display",
       )
       .eq("year", current_year)
       .eq("active", true)
@@ -314,10 +316,10 @@ export default async function BoostersSponsorPage() {
             </h2>
             <div className="h-1 w-20 bg-mavs-green mx-auto mt-3"></div>
             <p className="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
-              Add these to any sponsorship level, or take one on its own.
+              Add these to any sponsorship level.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {addOnTiers.map((tier) => (
               <SponsorshipTierCard key={tier.id} tier={tier} size="small" />
             ))}
