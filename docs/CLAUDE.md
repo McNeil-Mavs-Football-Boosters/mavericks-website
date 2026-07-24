@@ -19,6 +19,33 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-24 — sponsorship commit→invoice flow, events, coaches, email cutover, carousel expiry)
+
+**Headline:** Large content/build session (migrations **070–091**, all applied to live Supabase + pushed as `jeremyvest-ATXcoder`; tsc/eslint clean each). Google Workspace is reactivated and email is fully cut over. **Two items carry into the next session — see OPEN.**
+
+**Sponsorship — commitment→invoice flow shipped (Phase B v1):**
+- Page restructured to **6 base levels** (Blue/Gold/Platinum/Diamond/MVP/Custom) **+ 2 add-ons** (Tunnel $350/season, Scoreboard $3,000/two-seasons) **+ Program Ad add-on** ($100–$250, "Commit by July 31") — mig 074/086. New `sponsorship_tiers` columns: `is_addon`, `price_flexible`, `term_label`, `price_display`. "Game program" removed everywhere; Scoreboard carries the KRAC/McNeil-Stadium venue disclosure. Downloadable letter swapped to the 2026-27 PDF.
+- **Google Form** for commitments (generator: `MavericksWebsite/scripts/create-sponsor-form.gs`; responder URL in `lib/constants.ts` as `SPONSOR_FORM_URL`). Collects level + add-ons + business/contact + preferred payment; assets emailed (no in-form upload); `onFormSubmit` trigger emails **fundraising@**; responses → "Sponsorship Commitments" sheet.
+- **Site wiring** (`app/boosters/sponsor/page.tsx`): "Sponsor Now" buttons (above Sponsorship Levels + bottom CTA), per-card **"Select This Level" / "Add This Add-On"** prefill buttons (form entry IDs: level `entry.673070323`, add-ons `entry.1109740693`), fundraising@ as a real mailto. **Payment = manual Square invoice per submission** (no in-form charge, no payable add-on — sponsorship totals vary; a Square invoice is itself a card link). Custom on-site form + uploads deferred to v2 — spec: `docs/specs/sponsorship_form_spec.md`.
+
+**Email / Workspace (done):** Workspace reactivated; groups manageable in Admin console. **`fundraising@` group created** (members: Kendra + booster Gmail; external posting on); `fundraisers@` deleted. Website `sponsorship@` → `fundraising@` swapped on `/boosters/sponsor` + `/about` (code, no migration). `boosterboard@` board DL exists (created outside our work).
+
+**Events (all live on `/events`):** July slate (mig 071) — Rice "Stronger Together" 7/22, 7th–9th camp 7/24 (+registration form, mig 082), **Parent & Athlete Meeting Mon 7/27 6:30–8 PM Cafeteria** (mig 079/080), Equipment Pickups 7/29 seniors + 7/30 jr/soph. Senior Photo Shoot 7/26 10:30 AM McNeil HS, jeans + jerseys-at-shoot (mig 070/072/088). **Pool Party 8/7** — Sign Up is now the **attendee RSVP form** with the food SignUpGenius linked inside it; address fixed to 10121 Morgan Creek (mig 081/083/085). **Phil's & Amy's Community Night Tue 8/4 4–8 PM** (mig 087). **Senior Program Ad reservation** event 7/31 deadline, $25 form (mig 090).
+
+**Games / practice:** Preseason scrimmages on the games schedule — Hendrickson 8/13 HOME (V 7:00, JV+Fresh 5:30), Eastview 8/20 HOME (time TBD → `result_status='tbd'`, which the games table/card now render as "TBD") — mig 078. Practice page now reads `current_schedule_year` (not `current_year`); 2026-27 practice tables seeded (mig 077).
+
+**Coaches (mig 075/076):** added Gillis (Asst HC/OC), Matthews (ST & Pass Game Coord), Umberger (WR), Doyle (OL), Jones (DB); Ward → Running Backs Coach. No photos yet (initials fallback; RRISD directory has none).
+
+**Carousel + SEO:** Added `hero_foreground_tiles.expires_at`; the loader (`lib/queries/hero.ts`) hides expired tiles (mig 091). **Community Night tile expires 8/5, Senior Program Ads tile expires 8/1** — self-cleaning, no manual off. Added Open Graph + Twitter meta + branded `opengraph-image.png`/`twitter-image.png` (`app/layout.tsx`) — fixes "preview unavailable" when the site link is shared.
+
+**Other:** 7/23 board minutes at `~/Projects/BoosterClub/notes/BoosterClub_Minutes_2026-07-23.docx`. SportsEngine already cancelled. **Next booster meeting Aug 3.**
+
+**OPEN (start here next session):**
+1. **`members@` all-member mailing list** — now unblocked (Workspace works). Create `members@mcneilmavericks.org` group (external posting on, allow external members, add booster Gmail); keep the master list in the membership responses Sheet + add a "grad year" column; annual August prune. Jeremy creates the group; CC preps the Sheet + his member list.
+2. **Square sponsorship invoicing** — manual flow documented (Dashboard → Invoices → itemized line per level+add-ons → send; note Venmo @McNeil-Football / check; due Aug 14). Recommended one-time setup: build the Square Item Library (Blue $500 … MVP $5,000, Custom variable, Tunnel $350, Scoreboard $3,000, Program Ad $100/$150/$250) + enable card-on-invoices. Jeremy to test one end-to-end.
+3. **Aug 3 meeting notes** at `~/Projects/BoosterClub/next_meeting_items_2026-08-03.md`: hold Tony C's/Rudy's/Phil's-Amy's logos as "sponsors" until signed; confirm coaches-meals owner; ask Phil's/Amy's (Jess, donations@amysicecreams.com) about sponsoring + intro Kendra.
+4. **Meet the Mavs** event once the Aug 14 date is firm.
+
 ## Status (2026-07-05 — Square payments wired: donation checkout backend built + verified in sandbox)
 
 **Headline:** J6 cleared — Square **sandbox** access confirmed and the **donation** on-site payment backend is built and verified end-to-end against Square sandbox. It is **NOT wired to the public page and NOT deployed** — the live `/boosters/donate` still uses the Google Form. This was the first payment flow (donations chosen over memberships because the donate page is already shaped for it).
@@ -29,6 +56,13 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **Design:** Square-hosted checkout (Payment Links), no card data on the site. Amount → hosted Square page → redirect to thank-you → webhook confirms and records.
 - **NEXT (all need Jeremy — see `followups.md` "Square donations" section):** (1) **Donor-form UX decision** — the donate page buttons still hit the Google Form; wiring to Square needs a call on how to collect name/dedication/list-publicly/anonymous (Square's hosted page won't; the "Thank You to Our Donors" list depends on them). Not built autonomously per the no-surprise-UI rule. (2) **Webhook subscription** — create it in the Square dashboard pointing at `/api/square/webhook` (needs a public URL / tunnel for sandbox), paste the signing key into `SQUARE_WEBHOOK_SIGNATURE_KEY`; until then payments stay `pending`. (3) **Production flip** (Step 15) — production creds in Vercel + $1 live test.
 - **Separately:** sponsor invoicing (Jeremy's originally-stated first priority) is a **Square Invoices dashboard task, no code** — email invoice with a pay link, done from the dashboard whenever.
+
+## Status (2026-07-17 — Square account access RECOVERED)
+
+**Headline:** Jeremy has access to the club's Square account. This was next_steps item 7 (open since May) and un-gates build_plan_v2 Steps 9/10/15 (payments) plus the planned sponsorship-signup invoice automation (Kendra's pipeline, spec'd 2026-07-17 call — see next_steps/followups when logged).
+
+- **Still to capture:** store credentials in the club vault; confirm which board members have access; enable 2FA; capture sandbox + production API keys + webhook signing secret when payment work starts.
+- **Context also in flight (not yet shipped):** Workspace for Nonprofits activation under Google review (email still flowing, tested daily); events seed for Jul 22 Rice event / Jul 24 camp / Jul 27 parent mtg / Jul 29-30 equipment pickups queued for CC; Meet the Mavs date contested (Aug 14 vs 15) — NOT on site yet.
 
 ## Status (2026-07-05 — role-address send-as working; Workspace still on trial)
 
