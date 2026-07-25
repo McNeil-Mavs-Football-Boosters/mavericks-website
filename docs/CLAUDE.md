@@ -39,9 +39,9 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 **Auth gotcha (important):** Payable / add-on actions must be performed while signed in as the form owner **mcneilfootballboosters@gmail.com** (a personal Gmail). Operating the form under any other Google account throws **"Authorization is required to perform that action"** / add-on "unknown system error" even though plain form editing works. Use the dedicated isolated booster Chrome profile at `MavericksWebsite/.chrome-debug` (launch: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/Projects/BoosterClub/MavericksWebsite/.chrome-debug"`).
 
-**Sponsorship letter:** rebuilt with updated payment verbiage (pay by card w/ 3% fee **or** be invoiced / pay by check — no more "invoice only"). **Editable HTML source + PDF** now at `MavericksWebsite/sponsorship_letter/` (logo extracted from the old PDF; renders via headless Chrome). **OPEN:** the site still serves the OLD letter from Supabase storage `documents/sponsorship/sponsorship-letter-2026-27.pdf` — replace that object with the new PDF to update the site's Download button.
+**Sponsorship letter:** rebuilt with updated payment verbiage (pay by card w/ 3% fee **or** be invoiced / pay by check — no more "invoice only"). **Editable HTML source + PDF** now at `MavericksWebsite/sponsorship_letter/` (logo extracted from the old PDF; renders via headless Chrome). **Deployed 2026-07-25:** the new PDF was uploaded to Supabase storage `documents/sponsorship/sponsorship-letter-2026-27.pdf` and the public Download URL now serves it (verified). Upload note: the storage REST API needs BOTH `apikey` and `Authorization: Bearer` headers with the **`sb_secret_…`** service key (new key format), plus `x-upsert: true` to overwrite — a Bearer-only call fails with "Invalid Compact JWS".
 
-**Still OPEN:** members@ all-member mailing list (unchanged from 2026-07-24); replace hosted sponsorship-letter PDF; Meet the Mavs event once Aug 14 date firm; Aug 3 meeting items.
+**Still OPEN:** members@ all-member mailing list (unchanged from 2026-07-24); Meet the Mavs event once Aug 14 date firm; Aug 3 meeting items.
 
 ## Status (2026-07-24 — sponsorship commit→invoice flow, events, coaches, email cutover, carousel expiry)
 
