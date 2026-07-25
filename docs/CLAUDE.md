@@ -19,6 +19,30 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-25 — Payable/Square card payments LIVE on donation + sponsor Google Forms)
+
+**Headline:** The **donation** and **sponsor** Google Forms now accept real card payments via the **Payable Forms** add-on (Payable Apps, `payableapps.com`) wired to the club's **Square** account (business "McNeil Football Boosters", Merchant ID `ML3YZBJBDRGSS`). Jeremy confirmed both live. This **supersedes** the never-deployed in-site Square donation backend (2026-07-05) and the manual-invoice-only sponsor plan / "build a Square Item Library" open item — sponsorship still keeps an invoice/check path, but card-at-submit is now the primary.
+
+**How it works (both forms):** puzzle **Add-ons → Payable Forms → Configure Payment Settings**. Prices live in each option's label; Payable sums selected options and routes to a **Square-hosted checkout** after Submit. Per-form toggles: **Make this form Payable = Yes**, **Testing Mode = Off (Real Money)**. Square connects once at the account level (carries across forms). Fees: Square ~2.9% + $0.30 online, plus Payable surcharge (free <$5, $0.49 flat $5–$50, 1% >$50).
+
+**Config applied to both forms:**
+- **3% "Card Processing Fee"** (Payable handling fee, card only; Venmo/check/invoice are no-fee).
+- **Custom Text on Checkout** = 501(c)(3)/EIN 26-4231242 note + "prefer check/invoice? close this page" escape.
+- **Post-Payment Message** = thank-you.
+- **Form description rewritten** so the checkout top (Payable mirrors the form description there) reads card + Venmo/check + close-to-be-invoiced, not the old "invoice only" wording. Payment-method choice is soft (Option B): everyone can reach the card checkout but the response is saved *before* it, so check/Venmo/invoice people just close the page.
+- **Payable payment email** reworded (card link + Venmo @McNeil-Football + check mail-to + "ignore if already paid"). Check mail-to: **McNeil Maverick Football Booster Club, 6001 W Parmer Ln, Suite 370, #412, Austin, TX 78727**. (Legal/bank name is singular "Maverick".)
+- Google Forms native **response receipt** available (Settings → Responses → "Send responders a copy"); Payable also emails card payers a receipt.
+
+**Donation form** (`1vMdYW0mVn-vjCK_O-CBSYG5Iqn8CAoLuIk-HwvcYCc8`): responses sheet is **still `1Dk-qdY0…` "Form Responses 1"** (verified after Payable Auto-Configure — the public donors-list feed via `lib/sheets/donations.ts` is intact; Payable appended its own columns to the right, safe since the reader matches by header name). Pre-change backup: `MavericksWebsite/backups/donation_responses_2026-07-24.csv`. Test rows may remain in the sheet; clear them before trusting the donors list. Live `/boosters/donate` already links to this form, so no site code change.
+
+**Sponsor form** (`1ktAHAfjcDepkqIf8Be1b4PXF_DTrOrvcdEEKH0_NfMw`): fixed a Payable price mis-parse — the Program Ad add-on labels had fraction digits ("1/4 Page", "1/2 Page") that Payable merged into the price ($100 read as **$1,001**). Reworded to "Quarter Page" / "Half Page". No site change needed (only Tunnel/Scoreboard are prefilled from `SPONSOR_ADDON_OPTION`; the site does not read the sponsor responses sheet).
+
+**Auth gotcha (important):** Payable / add-on actions must be performed while signed in as the form owner **mcneilfootballboosters@gmail.com** (a personal Gmail). Operating the form under any other Google account throws **"Authorization is required to perform that action"** / add-on "unknown system error" even though plain form editing works. Use the dedicated isolated booster Chrome profile at `MavericksWebsite/.chrome-debug` (launch: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/Projects/BoosterClub/MavericksWebsite/.chrome-debug"`).
+
+**Sponsorship letter:** rebuilt with updated payment verbiage (pay by card w/ 3% fee **or** be invoiced / pay by check — no more "invoice only"). **Editable HTML source + PDF** now at `MavericksWebsite/sponsorship_letter/` (logo extracted from the old PDF; renders via headless Chrome). **OPEN:** the site still serves the OLD letter from Supabase storage `documents/sponsorship/sponsorship-letter-2026-27.pdf` — replace that object with the new PDF to update the site's Download button.
+
+**Still OPEN:** members@ all-member mailing list (unchanged from 2026-07-24); replace hosted sponsorship-letter PDF; Meet the Mavs event once Aug 14 date firm; Aug 3 meeting items.
+
 ## Status (2026-07-24 — sponsorship commit→invoice flow, events, coaches, email cutover, carousel expiry)
 
 **Headline:** Large content/build session (migrations **070–091**, all applied to live Supabase + pushed as `jeremyvest-ATXcoder`; tsc/eslint clean each). Google Workspace is reactivated and email is fully cut over. **Two items carry into the next session — see OPEN.**
