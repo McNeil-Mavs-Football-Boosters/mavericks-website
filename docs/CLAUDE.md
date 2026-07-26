@@ -19,6 +19,13 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-26 — coaches: new DL coach + headshots + logo fallback)
+
+- **Nick Edwards** added as a Defensive Line Coach (2026-27, migration 093), alongside the existing Wallin + Debose DL rows (Jeremy: keep all three, no replacements).
+- **Headshots** for Gillis, Matthews, and Edwards: faces cropped (OpenCV/PIL, no face editing) from their "Welcome to Mav Nation" graphics in `~/Downloads`, uploaded to the `coach-photos` bucket as `Coach{Name}Head.jpg`, and `photo_url` set in mig 093. Crop tooling kept at `MavericksWebsite/coach_photos/`.
+- **Coach-card fallback:** coaches with no photo now render the Mavericks **horse-in-horseshoe mark** (`public/brand/mhs-mark.png`) instead of a green initials block (`components/coaches/coach-card.tsx`, `bg-white p-8 object-contain`). **Asset gotcha:** `public/brand/mhs-horseshoe.jpg` is the *plain* horseshoe (no horse); the full mark is `mhs-mark.png` (cropped text-free from the sponsorship-letter logo).
+- Commits: `ae9e108` (Edwards + photos + fallback) → `d04743a` (swap to horse mark). Verified live on `/coaches`.
+
 ## Status (2026-07-25 — Payable/Square card payments LIVE on donation + sponsor Google Forms)
 
 **Headline:** The **donation** and **sponsor** Google Forms now accept real card payments via the **Payable Forms** add-on (Payable Apps, `payableapps.com`) wired to the club's **Square** account (business "McNeil Football Boosters", Merchant ID `ML3YZBJBDRGSS`). Jeremy confirmed both live. This **supersedes** the never-deployed in-site Square donation backend (2026-07-05) and the manual-invoice-only sponsor plan / "build a Square Item Library" open item — sponsorship still keeps an invoice/check path, but card-at-submit is now the primary.
