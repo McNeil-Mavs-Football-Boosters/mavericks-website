@@ -3,15 +3,6 @@ import remarkGfm from "remark-gfm";
 
 import type { Coach } from "@/lib/types";
 
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return (parts[0]?.[0] ?? "").toUpperCase();
-  const first = parts[0]?.[0] ?? "";
-  const last = parts[parts.length - 1]?.[0] ?? "";
-  return (first + last).toUpperCase();
-}
-
 export function CoachCard({ coach }: { coach: Coach }) {
   const bio = (coach.bio ?? "").trim();
   const hasContact = Boolean(coach.email) || Boolean(coach.phone);
@@ -27,11 +18,15 @@ export function CoachCard({ coach }: { coach: Coach }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div
-            aria-hidden="true"
-            className="flex h-full w-full items-center justify-center bg-mavs-green text-4xl font-semibold tracking-wide text-white"
-          >
-            {initialsFromName(coach.name)}
+          // No headshot yet: show the Mavericks logo instead of a blank/initials block.
+          <div className="flex h-full w-full items-center justify-center bg-white p-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/mhs-horseshoe.jpg"
+              alt=""
+              aria-hidden="true"
+              className="max-h-full max-w-full object-contain"
+            />
           </div>
         )}
       </div>
