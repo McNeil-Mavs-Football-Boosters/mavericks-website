@@ -22,7 +22,7 @@ export function CoachCard({ coach }: { coach: Coach }) {
           <div className="flex h-full w-full items-center justify-center bg-white p-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/brand/mhs-horseshoe.jpg"
+              src="/brand/mhs-mark.png"
               alt=""
               aria-hidden="true"
               className="max-h-full max-w-full object-contain"
