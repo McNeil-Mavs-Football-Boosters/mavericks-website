@@ -19,6 +19,20 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-26 later — Rudy's MVP sponsor restored, open sponsor-page ordering, two email drafts)
+
+**Rudy's BBQ restored as MVP sponsor (migration 094):** Jeremy confirmed Rudy's is a *real* sponsor (migration 060 had wrongly removed it as a placeholder). Re-inserted at the MVP tier, sort_order 1, year 2025-26, logo `sponsor-logos/rudys-bbq.png` (object was still in storage). Live on `/sponsors` — the MVP Rudy's logo renders much larger than the Gold logos, giving the intended "the more you sponsor, the bigger the logo" effect.
+
+**OPEN — `/sponsors` tier order (awaiting Jeremy's go):** the page orders tiers by `sort_order` ASC (Blue=1 … MVP=5, Custom=6), so MVP currently renders at the BOTTOM (below the Gold block). Jeremy wants the premier MVP tier at the TOP. Proposed one-line fix: in `app/sponsors/page.tsx` order the tier list by `price_cents` DESC (add it to the tiers `.select`) instead of `sort_order` ASC → MVP → Diamond → Platinum → Gold → Blue → Custom. (Do NOT just reverse sort_order: Custom=6 would jump to the top.) Only affects the public `/sponsors` showcase, not the `/boosters/sponsor` sign-up ladder. NOT yet done.
+
+**Two email drafts composed this session (neither sent):**
+- **Members "upcoming events" email** — drafted, not sent, no send mechanism chosen yet. Covers 7/27 Parent & Athlete Meeting (framed as Coach Gardner's season kickoff), 7/29 senior equipment pickup, 7/30 jr/soph pickup, 7/31 Senior Program Ad deadline, 8/4 Phil's & Amy's Community Night, 8/7 Pool Party, plus a "ways to support" block (join / donate / sponsor, now payable online). **OPEN:** `members@` group still not created (member list lives in the membership-form responses Sheet); pick a send address + audience before sending.
+- **Sponsorship cold-outreach email (generic small business)** — created as a Gmail **draft in jvest@s3.com** (To: jeremyvest@gmail.com as a reusable-template placeholder) via the send-email skill; body kept at `~/Projects/ClientAdHoc/sponsorship_outreach/body.txt`. Leans hard on McNeil being **Title 1** and team meals being the club's biggest cost ("feed the kids"), offers a **Community/Spirit Night**, stresses the **7/31 program-logo window** and the **Aug 14** commitment deadline, links `/boosters/sponsor` + `/sponsors`. Jeremy attaches the letter PDF (`~/Downloads/McNeil FB 2026-27_Sponsorship_Opportunities_UPDATED.pdf`, the QR version) and fills `[First Name]` / `[Your Name]` per business. A website/current-sponsors social-proof line was also provided to paste in.
+
+**Still OPEN (carry forward):** `/sponsors` MVP-first ordering flip; `members@` mailing list; clear the donation-form test rows; Meet the Mavs event once Aug 14 is firm; send the two email drafts. Last migration applied: **094**.
+
+**Scratch/tooling (outside the repo, in `~/Projects/BoosterClub/MavericksWebsite/`):** `sponsorship_letter/` (letter HTML+PDF, logo crops, `edit_original.py`), `coach_photos/` (headshot crop tooling), `backups/donation_responses_2026-07-24.csv`, and the isolated booster Chrome profile `.chrome-debug` (launch it for any Payable/add-on work, which must be done as `mcneilfootballboosters@gmail.com`).
+
 ## Status (2026-07-26 — coaches: new DL coach + headshots + logo fallback)
 
 - **Nick Edwards** added as a Defensive Line Coach (2026-27, migration 093), alongside the existing Wallin + Debose DL rows (Jeremy: keep all three, no replacements).
