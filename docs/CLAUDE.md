@@ -21,7 +21,7 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-07-28 — rosters advanced to 2026-27 "Coming Soon")
 
-**Headline:** the year-old **2025-26 rosters are off the public site** — all four roster pages now show a "Coming Soon" card for **2026-27**. Jeremy's ask: the stale rosters were confusing parents; real rosters arrive in a few weeks.
+**Headline:** the year-old **2025-26 rosters are off the public site** — all four roster pages now show a "Coming Soon" card for **2026-27**. Jeremy's ask: the stale rosters were confusing parents; real rosters arrive in a few weeks. **Migration 095 applied to live Supabase; commit `6b58472` pushed to `main`; verified live on prod.** Last migration applied: **095**.
 
 **Roster-year decoupling (migration 095, applied live).** New `site_settings.current_roster_year`, set to `2026-27` — the fourth instance of the `current_board_year` (030) / `current_coaches_year` (055) / `current_schedule_year` (056) pattern. **`current_year` was NOT flipped**: it still governs `sponsors` + `sponsorship_tiers`, so flipping it would have blanked `/sponsors`, `/boosters/sponsor`'s "Thank You to Our 2025-2026 Sponsors!" strip, and the homepage sponsor tiles. `095_rollback.sql` drops the column, which falls the pages back to `current_year` and restores the 2025-26 rosters.
 
@@ -29,9 +29,20 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **Code:** `lib/site-settings.ts` `SiteSettingsCore` + `DEFAULTS` + `.select()` gained the field; both roster pages (`app/roster/[level]/page.tsx`, `app/roster/[level]/[designation]/page.tsx`) read `current_roster_year` aliased to the local `current_year`, same one-line trick the schedule pages use. `lib/types.ts` deliberately untouched (pages use `SiteSettingsCore`; leaving the interface alone avoids a forced `Footer.tsx` FALLBACK_SETTINGS edit — see the mig-055 note below).
 - **Empty state rewritten** from a lone `"{year} {level} roster coming soon."` sentence to a bold **"Coming Soon"** headline + "The 2026-27 roster will be posted once the coaching staff finalizes it." A non-empty `rosters.source_note` still overrides the subline (the 2025-26 rows carry "Awaiting roster from coaching staff"), so the admin escape hatch survives.
 - **Homepage quick links de-staled:** `buildQuickLinks` took one `currentYear` and stamped it on BOTH the Schedule and Roster tiles, so the Schedule tile had read a wrong **"2025-26 Schedule"** since the schedule moved to 2026-27 back in June. Now takes `(scheduleYear, rosterYear)` from `current_schedule_year` / `current_roster_year` — both read 2026-27.
-- **Verified on a local dev server** against the live DB: all four roster pages render "2026-27 … Roster" + Coming Soon with no Print View button; `/`, `/sponsors`, `/boosters/sponsor` still show 2025-26 sponsors and their logos. tsc clean; eslint clean except two **pre-existing** `react-hooks/static-components` errors in `HeroCarousel.tsx` + `resource-item.tsx` (untouched files).
+- **Verified twice** — first on a local dev server against the live DB, then on **prod after the push**: all four roster pages (`/roster/varsity`, `/roster/jv`, `/roster/freshman/green`, `/roster/freshman/blue`) render "2026-27 … Roster" + Coming Soon with no Print View button; homepage quick links read "2026-27 Schedule" / "2026-27 Roster"; homepage sponsor strip still reads "Thank You to Our 2025-2026 Sponsors!" with 28 logos; `/sponsors` still reads "2025-26 Season" with its Gold + MVP sections. tsc clean; eslint clean except two **pre-existing** `react-hooks/static-components` errors in `HeroCarousel.tsx` + `resource-item.tsx` (untouched files).
 
-**`freshman_has_blue` is now `true`** (someone flipped it since the mig-056 era notes, which assumed false) — so nav shows Freshmen Green **and** Freshmen Blue, and both `/roster/freshman/{green,blue}` are live. Worth confirming the 2026-27 freshman squads actually split Blue/Green before the rosters are seeded.
+**`freshman_has_blue` is `true`** (flipped sometime after the mig-056-era notes, which assumed false) — nav shows Freshmen Green **and** Freshmen Blue, and both `/roster/freshman/{green,blue}` are live. **Jeremy confirmed 2026-07-28 that the Blue/Green split is real**, so both freshman rosters need seeding — neither page is an orphan.
+
+**NEXT — seeding the real 2026-27 rosters (no code change, no flag flip):** insert `players` rows against the four existing 2026-27 `rosters` rows (ids in the table below), and the Coming Soon card is replaced by `PlayerTable` automatically. Optionally set `rosters.pdf_storage_path` to a `documents/rosters/*-2026.pdf` upload to bring the **Print View** button back, and leave `source_note` NULL so the Coming Soon subline copy stays in code. Players order by `sort_order` then `jersey_number`.
+
+| 2026-27 roster row | id |
+|---|---|
+| varsity | `aee4c35b-be01-41e5-9b45-804bdf15cc89` |
+| jv | `4daf6c70-66bc-427c-b239-c6b0557509a3` |
+| freshman Blue | `6f382cbb-37dc-42b9-85d7-bda8bb9eda71` |
+| freshman Green | `df8c9352-d011-4cb4-858d-aa9d5b50abca` |
+
+**Gotcha for verifying prod copy with curl+grep:** React's SSR output splits adjacent text nodes with `<!-- -->` comments, so `grep "2026-27 Varsity Roster"` finds **nothing** on a page that renders it correctly. An 8-minute deploy-wait loop spun on exactly this false negative. Strip `<script>`, `<style>`, and `<!--…-->` then collapse tags to text before matching (the one-liner used this session is in the git history of this entry's session, or just re-derive it).
 
 ## Status (2026-07-26 later — Rudy's MVP sponsor restored, open sponsor-page ordering, two email drafts)
 

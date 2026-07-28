@@ -12,6 +12,7 @@ Items surfaced during the Phase 1 build that aren't blocking the current step bu
 - [ ] **Memberships + sponsorship online pay.** Not built. Memberships = Step 9 (tiers, $0 Free Fan Base bypass, join form). Sponsorship = Jeremy wants email-invoice-with-pay-link first (that's Square Invoices in the dashboard, no code).
 
 ## Next pickup
+- [ ] **Seed the 2026-27 rosters** (blocked on the coaching staff; Jeremy expects them August 2026). The four 2026-27 `rosters` rows already exist and the pages show "Coming Soon" (migration 095, 2026-07-28) — this is a `players` data load only, no code change and no flag flip. Row ids + optional Print View PDF step are in the 2026-07-28 status entry of `docs/CLAUDE.md`. All four teams need seeding: Varsity, JV, Freshmen Blue, Freshmen Green (`freshman_has_blue` is `true` and Jeremy confirmed the split is real).
 - [x] ~~Remove the "Home" link from the desktop and mobile nav.~~ Done 2026-05-19, commit `afee45f`. Also removed from footer center-column `SITE_LINKS` for consistency ("no Home in any nav surface").
 - [x] ~~Homepage Hero Carousel (3-turn rollout).~~ Done 2026-05-19 evening. Migrations 036 + 037, `components/home/HeroCarousel.tsx`, StaticHero moved to /boosters. Commits `279f47a` → `8b35446`.
 - [x] ~~Print View PDFs replacing window.print() buttons; Coach Wallin → Douglas Wallin / Defensive Line Coach.~~ Done 2026-05-19 evening. Migrations 038 + 039 + 040 (freshmen plural fix). Commits `c919aa3` → `4705b8b`.
