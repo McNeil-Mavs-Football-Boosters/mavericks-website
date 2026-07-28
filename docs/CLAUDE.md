@@ -41,7 +41,11 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 **Verification method for all three:** `resource_links` is read at request time (`/resources` is `force-dynamic`), so **a DB-only migration goes live with no deploy** — no code changed in any of the three. Confirmed on prod by fetching `https://www.mcneilmavericks.org/resources` and stripping `<script>`/`<style>`/`<!--…-->` then tags before matching (the SSR-comment gotcha from the 095 entry below). **Gotcha added:** also `html.unescape()` before matching — `&amp;` and `&#x27;` made a correctly-rendered "ONE MAV Parent & Athlete Meeting" and "Coach Gardner's" read as a false MISS on the first pass. Anonymous fetch of the PDF returns 200 / `application/pdf` / 974,010 bytes; the Rank One URL returns 200. Rollbacks: `097_rollback.sql` (deletes the row, leaves the PDF in the bucket), `098_rollback.sql`, `099_rollback.sql`.
 
-**Commits (all pushed as `jeremyvest-ATXcoder`):** `9640701` (097) → `76be1f0` (followups) → `b2b0733` (098) → `313fade` (099).
+**100 — coach titles/positions aligned to the deck.** Jeremy: "update titles and positions per the deck, feels like coach would be more correct than us." The 11-coach roster already matched exactly; three roles were wrong on our side. **Jerry Gardner** "Head Coach and Athletic Director" → **"Athletic Coordinator / Head Football Coach"** (we had been publishing Jeff Cheatham's job title — the deck lists Cheatham as AD, Gardner as Athletic *Coordinator*; used the deck's own slide-1 expansion rather than the abbreviation "AC"). **Douglas Wallin** "Defensive Line Coach" → **"Linebackers Coach"** — a real *position* change that migration 093's three-DL-coach arrangement no longer reflects; Debose + Edwards remain on the line. **Barrett Matthews** → **"Special Teams Coordinator / Receivers."** Kept the site's `"… Coach"` suffix on position rooms (the deck lists bare rooms) so the migration changed substance, not typography; coordinator titles verbatim. **`Michael` vs `Jake` Hale left alone on purpose** — a first name is neither a title nor a position, and migration 039 set "Douglas Wallin" over "Doug" by the same logic; awaiting Coach's answer (tracked in `followups.md`). `sort_order` untouched, so Wallin (10) now renders before the DL pair (15, 16).
+
+**⚠️ Migration 100 exposed a silent-failure landmine in the `apply_all.sql` regeneration loop.** The documented glob was `db/migrations/0*.sql`, which **does not match `100_*.sql`** — regeneration would have succeeded with no error and no warning while silently omitting migration 100 and everything after it, so any DB rebuilt from the bundle would be subtly wrong. Glob corrected to **`db/migrations/[0-9]*.sql`** (see the psql section near the end of this file, which now also documents the post-regeneration count check). Verified after the fix: **102 forward migrations on disk, 102 sections in the bundle, 0 rollbacks bundled, tail shows 100.**
+
+**Commits (all pushed as `jeremyvest-ATXcoder`):** `9640701` (097) → `76be1f0` (followups) → `b2b0733` (098) → `313fade` (099) → `da6931e` (docs) → 100 + glob fix.
 
 **NEXT from this session (in `followups.md` under Next pickup):** build a **Program Expectations** page from the deck's evergreen half — ONE MAV standard, communication process, parent partnership, academics & eligibility, lightning & concussion protocols, practice & attendance, equipment/locker room/travel, conduct & discipline, strength/nutrition, character & leadership, recruiting reality. **Exclude the time-bound slides** (August practice calendar, 2026 schedule). **It's Coach's content — get him to bless it as a webpage before publishing**, and keep the PDF up as the meeting record regardless.
 
@@ -1023,12 +1027,14 @@ These are not blockers but will need attention as Step 4c progresses:
   ```
   `SUPABASE_DB_URL` is the Session pooler URI from Supabase Connect, with the password URL-encoded (`&` → `%26`, etc.). **Never echo `$SUPABASE_DB_URL`.** `db/apply_all.sql` remains as the concatenated bundle for one-paste via Supabase SQL Editor when psql is not handy; after any migration edit, regenerate via:
   ```
-  for f in db/migrations/0*.sql; do
+  for f in db/migrations/[0-9]*.sql; do
     case "$f" in *_rollback.sql) continue;; esac
     printf '\n-- ===\n-- %s\n-- ===\n\n' "$f"
     cat "$f"
   done > db/apply_all.sql
   ```
   The `*_rollback.sql` guard exists because rollbacks (e.g. `037_rollback.sql`) live alongside forward migrations in `db/migrations/` but must NOT be bundled into the forward-apply sequence — running them on a fresh DB would silently undo the seed.
+
+  **⚠️ The glob was `db/migrations/0*.sql` until 2026-07-28 and that was a silent-failure landmine.** Migration **100** is the first three-digit-hundreds migration, and `0*.sql` does not match `100_*.sql` — the bundle would have been regenerated *successfully*, with no error and no warning, simply missing every migration from 100 on. Anyone rebuilding a DB from `apply_all.sql` would have gotten a subtly wrong schema/seed. Now `[0-9]*.sql`. **After regenerating, always verify the tail:** `grep "^-- db/migrations" db/apply_all.sql | tail -3` should show your newest migration, and `ls db/migrations/[0-9]*.sql | grep -v _rollback | wc -l` should equal the number of bundled sections.
 - **Square access transfer should happen before institutional emails are wired** so account-recovery / receipt emails route to a real `treasurer@mcneilmavericks.org` role address from day one (J6 + J9 sequencing).
 - **Migration of 35 existing Google Form signups**: 7 paid rows should go to `payments` with `method = 'other'`, NOT `'square'`/`'stripe'`. See schema.md migration plan and Step 12 of build_plan_v2.md.
