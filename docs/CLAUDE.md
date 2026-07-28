@@ -19,6 +19,32 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-28 evening — ONE MAV deck posted; Registration & Forms pruned to Rank One)
+
+**Headline:** Coach Gardner's **ONE MAV Parent & Athlete Meeting deck (7/27/2026, 18 slides)** is live on `/resources`, and the Registration & Forms section was cut from four links to two after the deck exposed a stale registration link. **Migrations 097, 098, 099 all applied to live Supabase and verified on prod. Last migration applied: 099** (note: the 095 entry below predates 096, which was also applied — verified via the "Reserve a Senior Shoutout" event title).
+
+**097 — deck posted to Forms & Links.** PDF uploaded to the public `documents` bucket at `documents/meetings/one-mav-parent-athlete-meeting-2026-07-27.pdf`, following the existing `rosters/` + `schedules/` + `sponsorship/` convention (NOT `public/` — keeps binaries out of the repo). New `resource_links` row in the **`resources`** section at **sort_order 0**, above McNeil High School and HUDL. `icon_hint='pdf'` (FileText). **No `?download=` param** unlike the sponsorship letter — a presentation should open in a tab.
+- **Jeremy's explicit call: NO homepage link and NO announcement.** Coach points parents at the Forms & Links page from SportsYou; the page is the destination.
+- **Deliberate staleness guard:** the label is date-stamped `(July 27, 2026)` and the description mentions **no dates and no registration system**. The deck embeds an August practice calendar (photo of a printed sheet, two scrimmages TBD) and a 2026 schedule stamped "subject to change". **`/schedule` stays the live source of truth — never relabel this row as a schedule link.**
+- No student names, rosters, or photos of minors in the deck; the only contact shown is Coach's `roundrockisd.org` address, so it does **not** reintroduce the gmail exposure that migration 064 cleaned up.
+
+**098 — Aktivate retired, Rank One promoted.** The deck's slide 9 ("complete paperwork in RankOne.com", GREEN status required before Aug 3) directly contradicted the `/resources` row claiming Aktivate had "replaced the old RankOne system." **Aktivate was the stale one**, traced rather than guessed:
+- The Aktivate row came from **migration 018**, the original SportsEngine content port (May 2026), and was never revisited.
+- **Migration 035** (2026-05-19) had already repointed "RRISD Athletic Forms" to `https://roundrockisd.rankone.com/New/NewInstructionsPage.aspx`.
+- **Migration 071** embeds that same Rank One link for both July equipment pickups with the "all green" requirement.
+- Jeremy + Karen confirmed Rank One from what they see as parents in 2026-27.
+- Fix: Aktivate → `active=false` (**not** DELETE, so it's one flag flip back if RRISD ever really moves). The existing Rank One row promoted to **sort_order 1**, relabeled **"RRISD Athletic Forms (Rank One)"** to match Coach's language, description rewritten to the standing requirement: *"Complete every required athletic form in Rank One. Athletes must be 'all green' before they can practice, compete, or be issued equipment."* **No Aug 3 date in the copy** so it can't go stale. **Deliberately did NOT add a second Rank One row** — the RRISD row already pointed at the identical URL, and two entries to one destination is how parents get confused.
+
+**099 — UIL Forms retired.** Jeremy: not needed either, since everything an athlete signs lives in the Rank One packet and `uiltexas.org/athletics/forms` is a generic state page with nothing actionable. `active=false`, same pattern. Grepped the repo: **no UIL references anywhere else** in code or content.
+
+**Registration & Forms is now two rows:** `1` RRISD Athletic Forms (Rank One), `4` Game-Day Meal Program (Parent Payment). The sort_order gap is harmless (ordering doesn't need contiguity).
+
+**Verification method for all three:** `resource_links` is read at request time (`/resources` is `force-dynamic`), so **a DB-only migration goes live with no deploy** — no code changed in any of the three. Confirmed on prod by fetching `https://www.mcneilmavericks.org/resources` and stripping `<script>`/`<style>`/`<!--…-->` then tags before matching (the SSR-comment gotcha from the 095 entry below). **Gotcha added:** also `html.unescape()` before matching — `&amp;` and `&#x27;` made a correctly-rendered "ONE MAV Parent & Athlete Meeting" and "Coach Gardner's" read as a false MISS on the first pass. Anonymous fetch of the PDF returns 200 / `application/pdf` / 974,010 bytes; the Rank One URL returns 200. Rollbacks: `097_rollback.sql` (deletes the row, leaves the PDF in the bucket), `098_rollback.sql`, `099_rollback.sql`.
+
+**Commits (all pushed as `jeremyvest-ATXcoder`):** `9640701` (097) → `76be1f0` (followups) → `b2b0733` (098) → `313fade` (099).
+
+**NEXT from this session (in `followups.md` under Next pickup):** build a **Program Expectations** page from the deck's evergreen half — ONE MAV standard, communication process, parent partnership, academics & eligibility, lightning & concussion protocols, practice & attendance, equipment/locker room/travel, conduct & discipline, strength/nutrition, character & leadership, recruiting reality. **Exclude the time-bound slides** (August practice calendar, 2026 schedule). **It's Coach's content — get him to bless it as a webpage before publishing**, and keep the PDF up as the meeting record regardless.
+
 ## Status (2026-07-28 — rosters advanced to 2026-27 "Coming Soon")
 
 **Headline:** the year-old **2025-26 rosters are off the public site** — all four roster pages now show a "Coming Soon" card for **2026-27**. Jeremy's ask: the stale rosters were confusing parents; real rosters arrive in a few weeks. **Migration 095 applied to live Supabase; commit `6b58472` pushed to `main`; verified live on prod.** Last migration applied: **095**.
