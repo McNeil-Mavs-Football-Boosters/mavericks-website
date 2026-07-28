@@ -86,7 +86,14 @@ async function loadHome(): Promise<HomeData> {
   }
 }
 
-function buildQuickLinks(currentYear: string): Array<{
+// The Schedule and Roster labels are year-stamped from the same settings the
+// destination pages read (current_schedule_year / current_roster_year), not
+// from current_year -- those years advance independently, so a single
+// current_year label would go stale on whichever one moved first.
+function buildQuickLinks(
+  scheduleYear: string,
+  rosterYear: string,
+): Array<{
   label: string;
   href: string;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
@@ -96,18 +103,19 @@ function buildQuickLinks(currentYear: string): Array<{
     { label: "Sponsor the Team", href: "/boosters/sponsor", Icon: Handshake },
     { label: "Volunteer", href: "/boosters/volunteer", Icon: HandHelping },
     { label: "Make a Donation", href: "/boosters/donate", Icon: HeartHandshake },
-    { label: `${currentYear} Schedule`, href: "/schedule", Icon: CalendarDays },
-    { label: `${currentYear} Roster`, href: "/roster", Icon: Users },
+    { label: `${scheduleYear} Schedule`, href: "/schedule", Icon: CalendarDays },
+    { label: `${rosterYear} Roster`, href: "/roster", Icon: Users },
   ];
 }
 
 export default async function Home() {
-  const { current_year } = await getSiteSettingsCore();
+  const { current_schedule_year, current_roster_year } =
+    await getSiteSettingsCore();
   const [{ events, sponsors, mvpTierId }, carousel] = await Promise.all([
     loadHome(),
     loadHeroCarouselData(),
   ]);
-  const quickLinks = buildQuickLinks(current_year);
+  const quickLinks = buildQuickLinks(current_schedule_year, current_roster_year);
   const topTierSponsors = mvpTierId
     ? sponsors.filter((s) => s.tier_id === mvpTierId)
     : [];

@@ -8,6 +8,7 @@ export type SiteSettingsCore = {
   current_board_year: string;
   current_coaches_year: string;
   current_schedule_year: string;
+  current_roster_year: string;
   maxpreps_team_url: string | null;
   freshman_has_blue: boolean;
 };
@@ -17,6 +18,7 @@ const DEFAULTS: SiteSettingsCore = {
   current_board_year: "2026-27",
   current_coaches_year: "2026-27",
   current_schedule_year: "2025-26",
+  current_roster_year: "2026-27",
   maxpreps_team_url:
     "https://www.maxpreps.com/tx/austin/mcneil-mavericks/football/",
   freshman_has_blue: false,
@@ -28,7 +30,7 @@ export const getSiteSettingsCore = cache(
     const { data, error } = await supabase
       .from("site_settings")
       .select(
-        "current_year, current_board_year, current_coaches_year, current_schedule_year, maxpreps_team_url, freshman_has_blue",
+        "current_year, current_board_year, current_coaches_year, current_schedule_year, current_roster_year, maxpreps_team_url, freshman_has_blue",
       )
       .eq("id", 1)
       .single<SiteSettingsCore>();

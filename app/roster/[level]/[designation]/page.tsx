@@ -23,7 +23,10 @@ export default async function FreshmanRosterPage({
   const designationTitle = DESIGNATION_TITLES[designation];
   if (!designationTitle) notFound();
 
-  const { current_year, freshman_has_blue } = await getSiteSettingsCore();
+  // Rosters read current_roster_year (migration 095), not current_year -- see
+  // the sibling app/roster/[level]/page.tsx for why.
+  const { current_roster_year: current_year, freshman_has_blue } =
+    await getSiteSettingsCore();
 
   if (designation === "blue" && !freshman_has_blue) notFound();
 
@@ -41,8 +44,6 @@ export default async function FreshmanRosterPage({
   const players = roster ? await getPlayersForRoster(roster.id) : [];
   const body = (roster?.body ?? "").trim();
   const sourceNote = (roster?.source_note ?? "").trim();
-  const emptyCopy =
-    sourceNote || `${current_year} ${teamLabel} roster coming soon.`;
 
   return (
     <section>
@@ -66,7 +67,13 @@ export default async function FreshmanRosterPage({
         />
       ) : (
         <div className="rounded-lg border border-border bg-white p-8 text-center">
-          <p className="text-foreground">{emptyCopy}</p>
+          <p className="text-2xl font-black uppercase tracking-tight text-mavs-navy">
+            Coming Soon
+          </p>
+          <p className="mt-3 text-foreground">
+            {sourceNote ||
+              `The ${current_year} roster will be posted once the coaching staff finalizes it.`}
+          </p>
         </div>
       )}
 
