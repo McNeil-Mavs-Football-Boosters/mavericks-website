@@ -40,21 +40,26 @@ export function GamePracticeToggle() {
   const isGame = type === "games";
 
   return (
-    <div
-      role="tablist"
-      aria-label="Game or practice schedule"
-      className="inline-flex rounded-full border border-mavs-navy p-1 bg-white"
-    >
-      <ToggleButton
-        href={gameHref}
-        active={isGame}
-        label="Game"
-      />
-      <ToggleButton
-        href={practiceHref}
-        active={!isGame}
-        label="Practice"
-      />
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-mavs-navy/20 bg-mavs-navy/5 px-3 py-3 sm:px-4">
+      <span className="text-xs font-bold uppercase tracking-widest text-mavs-navy/70">
+        Viewing
+      </span>
+      <div
+        role="tablist"
+        aria-label="Game or practice schedule"
+        className="inline-flex rounded-full border-2 border-mavs-navy bg-white p-1 shadow-sm"
+      >
+        <ToggleButton
+          href={gameHref}
+          active={isGame}
+          label="Game"
+        />
+        <ToggleButton
+          href={practiceHref}
+          active={!isGame}
+          label="Practice"
+        />
+      </div>
     </div>
   );
 }
@@ -75,10 +80,10 @@ function ToggleButton({
       aria-current={active ? "page" : undefined}
       aria-selected={active}
       className={cn(
-        "inline-flex h-9 min-w-24 items-center justify-center rounded-full px-5 text-sm font-medium transition-colors",
+        "inline-flex h-10 min-w-28 items-center justify-center rounded-full px-6 text-sm font-black uppercase tracking-wide transition-colors",
         active
-          ? "bg-mavs-navy text-white"
-          : "bg-transparent text-mavs-navy hover:bg-mavs-navy/10",
+          ? "bg-mavs-navy text-white shadow"
+          : "bg-transparent text-mavs-navy hover:bg-mavs-navy/15",
       )}
     >
       {label}
