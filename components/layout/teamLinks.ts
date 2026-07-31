@@ -1,34 +1,33 @@
 export type NavLink = { href: string; label: string };
 
-// Labels advertise "Game and Practice" because parents were missing the
-// Game/Practice toggle on the schedule pages and never finding practice times.
-// The hrefs still land on the game schedule; the toggle covers the last hop.
-const SCHEDULE_SUFFIX = " - Game and Practice";
-
+// Parents were missing the Game/Practice toggle on the schedule pages and never
+// finding practice times, so practice gets its own nav rows rather than relying
+// on the toggle. Game and practice rows are interleaved per team so a parent
+// sees both of their links together.
+//
+// Practice has no Green/Blue split: the route is /schedule/practice/[level]
+// only (/schedule/practice/freshman/green 404s via the catchall) and the page
+// titles itself "Freshmen Green & Blue Practice Schedule". So there is ONE
+// freshmen practice row — two rows to an identical URL would just confuse.
 export function buildScheduleLinks(freshmanHasBlue: boolean): NavLink[] {
   return [
-    {
-      href: "/schedule/games/varsity",
-      label: `Varsity${SCHEDULE_SUFFIX}`,
-    },
-    { href: "/schedule/games/jv", label: `JV${SCHEDULE_SUFFIX}` },
+    { href: "/schedule/games/varsity", label: "Varsity - Game" },
+    { href: "/schedule/practice/varsity", label: "Varsity - Practice" },
+    { href: "/schedule/games/jv", label: "JV - Game" },
+    { href: "/schedule/practice/jv", label: "JV - Practice" },
     ...(freshmanHasBlue
       ? [
           {
             href: "/schedule/games/freshman/green",
-            label: `Freshmen Green${SCHEDULE_SUFFIX}`,
+            label: "Freshmen Green - Game",
           },
           {
             href: "/schedule/games/freshman/blue",
-            label: `Freshmen Blue${SCHEDULE_SUFFIX}`,
+            label: "Freshmen Blue - Game",
           },
         ]
-      : [
-          {
-            href: "/schedule/games/freshman/green",
-            label: `Freshmen${SCHEDULE_SUFFIX}`,
-          },
-        ]),
+      : [{ href: "/schedule/games/freshman/green", label: "Freshmen - Game" }]),
+    { href: "/schedule/practice/freshman", label: "Freshmen - Practice" },
   ];
 }
 
