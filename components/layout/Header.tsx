@@ -191,7 +191,10 @@ function HeaderDropdown({
       {isOpen ? (
         <div
           role="menu"
-          className={`absolute ${alignClass} mt-2 w-64 rounded-md border border-border bg-white shadow-lg py-2 z-50`}
+          // w-max + a min-width so each dropdown sizes to its own longest
+          // label instead of wrapping inside a fixed 16rem panel. Roster and
+          // Booster Club stay at the 16rem floor; only Schedule grows.
+          className={`absolute ${alignClass} mt-2 w-max min-w-[16rem] rounded-md border border-border bg-white shadow-lg py-2 z-50`}
         >
           {links.map((link) => (
             <Link
@@ -199,7 +202,7 @@ function HeaderDropdown({
               href={link.href}
               role="menuitem"
               onClick={onItemClick}
-              className="block px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-mavs-navy"
+              className="block whitespace-nowrap px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-mavs-navy"
             >
               {link.label}
             </Link>

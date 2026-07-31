@@ -1,15 +1,34 @@
 export type NavLink = { href: string; label: string };
 
+// Labels advertise "Game and Practice" because parents were missing the
+// Game/Practice toggle on the schedule pages and never finding practice times.
+// The hrefs still land on the game schedule; the toggle covers the last hop.
+const SCHEDULE_SUFFIX = " - Game and Practice";
+
 export function buildScheduleLinks(freshmanHasBlue: boolean): NavLink[] {
   return [
-    { href: "/schedule/games/varsity", label: "Varsity" },
-    { href: "/schedule/games/jv", label: "JV" },
+    {
+      href: "/schedule/games/varsity",
+      label: `Varsity${SCHEDULE_SUFFIX}`,
+    },
+    { href: "/schedule/games/jv", label: `JV${SCHEDULE_SUFFIX}` },
     ...(freshmanHasBlue
       ? [
-          { href: "/schedule/games/freshman/green", label: "Freshmen Green" },
-          { href: "/schedule/games/freshman/blue", label: "Freshmen Blue" },
+          {
+            href: "/schedule/games/freshman/green",
+            label: `Freshmen Green${SCHEDULE_SUFFIX}`,
+          },
+          {
+            href: "/schedule/games/freshman/blue",
+            label: `Freshmen Blue${SCHEDULE_SUFFIX}`,
+          },
         ]
-      : [{ href: "/schedule/games/freshman/green", label: "Freshmen" }]),
+      : [
+          {
+            href: "/schedule/games/freshman/green",
+            label: `Freshmen${SCHEDULE_SUFFIX}`,
+          },
+        ]),
   ];
 }
 
