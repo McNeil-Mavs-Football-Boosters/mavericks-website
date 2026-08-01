@@ -27,6 +27,7 @@ interface SponsorshipTier {
   name: string;
   sort_order: number;
   year: string;
+  price_cents: number;
 }
 
 const TIER_SIZE_CLASSES: Record<string, string> = {
@@ -84,10 +85,16 @@ export default async function SponsorsPage() {
   const [tiersResult, sponsorsResult] = await Promise.all([
     supabase
       .from("sponsorship_tiers")
-      .select("id, name, sort_order, year")
+      .select("id, name, sort_order, year, price_cents")
       .eq("year", current_year)
       .eq("active", true)
-      .order("sort_order", { ascending: true }),
+      // Premier tier first: MVP -> Diamond -> Platinum -> Gold -> Blue -> Custom.
+      // Ordered by price DESC, NOT by reversing sort_order -- sort_order runs
+      // Blue=1 .. MVP=5, Custom=6, so descending sort_order would put Custom
+      // (a $0 placeholder tier) at the top. This is the showcase page, where
+      // the biggest supporters should read first; the /boosters/sponsor sign-up
+      // ladder keeps its own low-to-high ordering.
+      .order("price_cents", { ascending: false }),
     supabase
       .from("sponsors")
       .select("id, name, logo_url, website_url, tier_id, sort_order, year")
