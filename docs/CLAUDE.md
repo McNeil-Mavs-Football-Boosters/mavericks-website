@@ -19,6 +19,34 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-07-31 — Coach's week-1 practice schedule live; practice surfaced in nav; week-1 events seeded)
+
+**Headline:** Coach's "MAV FOOTBALL WEEKLY SCHEDULE, August 3–9, 2026" doc is live on all three practice pages, and practice finally has nav entries. **Migrations 101 + 102 applied to live Supabase and verified on prod. Last migration applied: 102.** Both are DB-only, so they went live with no deploy (`/schedule/practice/*` and `/events` read at request time).
+
+**The discoverability problem this session started from:** parents were missing the Game/Practice toggle and never finding practice times. Three changes, in order of how much they actually fix it:
+
+1. **Practice is now in the header Schedule dropdown** (commit `18a46a6`, `components/layout/teamLinks.ts`). Previously `buildScheduleLinks` returned game URLs *only* — the toggle was the sole path to `/schedule/practice/*`. Now interleaved per team: Varsity Game / Varsity Practice / JV Game / JV Practice / Freshmen Green Game / Freshmen Blue Game / **Freshmen Practice**. **One freshmen practice row, not two** — the route is `/schedule/practice/[level]` with no designation (`/schedule/practice/freshman/green` 404s via the catchall) and the page titles itself "Freshmen Green & Blue Practice Schedule"; two rows to an identical URL is the Rank One confusion pattern. All 7 hrefs verified 200.
+2. **Toggle restyled** (commit `72c02e2`, `components/schedule/game-practice-toggle.tsx`) — pill group now sits in a bordered navy-tinted bar with a "VIEWING" label, `border-2`, `h-10`/`min-w-28` uppercase-black buttons, hover fill `/10`→`/15`. It read as decoration before.
+3. **Dropdown panel sizing** (commit `d59a5a2`, `Header.tsx`) — fixed `w-64` → `w-max min-w-[16rem]` with `whitespace-nowrap` items, so each dropdown sizes to its own longest label. Roster and Booster Club sit at the 16rem floor, visually unchanged. An interim "- Game and Practice" suffix was tried and abandoned in favor of split rows (superseded by `18a46a6`).
+
+**⚠️ Migration 101 was a CORRECTION, not an addition.** Coach's doc contradicted the migration-077 preseason seed in three places, and the site was publishing wrong times two days before week 1:
+
+| | 077 seed (was live) | Coach's doc (now live) |
+|---|---|---|
+| Tue Aug 4 upperclassmen | 6:00–9:30 | **5:40 arrival / 5:55 field / 7:45 end** |
+| Tue Aug 4 freshmen | 8:30–10:30 AM *or* 6:30–8:30 PM | **evening only, 6:30 / 6:45 / 8:15 PM** |
+| Sat Aug 8 scrimmages | V/JV 7:30–9:30, F 9:00–10:30 | **V/JV 7:30–8:30, F 9:00–10:00** |
+
+Treat Coach's weekly doc as authoritative over any seeded preseason grid. **The freshmen AM option on Aug 4 was deleted, not merged** — his doc lists evening only.
+
+**Body structure changed.** Each practice body is now two sections: `## Week 1 — August 3–9` as a **5-column** table (Day / Arrival / On field / Ends / Notes — the arrival-vs-on-field split is the point of Coach's "be dressed, prepared, and ready to begin at the listed on-field start time" line, which is preserved verbatim at the top), then `## After Week 1 — tentative` with a bold "Everything below is tentative and subject to change" line above the original 3-column Aug 10–28 table. **Nothing was deleted from Aug 10 onward** — Jeremy's instruction was to mark it tentative, not strip it. Varsity and JV share identical bodies (Coach addresses them jointly as "Upperclassmen (Soph / Jr / Sr)"), matching the 077 convention. Week 1 also gained Monday equipment pickup and Sunday Aug 9 as an explicit off day. `101_rollback.sql` was generated **from the live rows** before applying, so it restores 077's bodies byte-exact.
+
+**Migration 102 — three week-1 events** on `/events`: Equipment Pickup (Mon Aug 3), Upperclassmen Intra-Squad Scrimmage (Sat Aug 8, 7:30–8:30 a.m.), Freshman Intra-Squad Scrimmage (Sat Aug 8, 9:00–10:00 a.m.). Pool Party was already there from 059. **One equipment-pickup row, not two** — unlike the 7/29 + 7/30 pickups from migration 071 (different days), both groups collect the same morning, so both times live in the description. **`ends_at` is NULL on the pickup**: Coach gives start times (6:45 / 9:20 a.m.) with no stated close, and inventing one would be fabrication (same precedent as the senior-photo-shoot row from 070). `on conflict (slug) do nothing` makes it re-runnable. Verified: all three render on `/events`, all three detail pages 200, all three in `/events.ics`.
+
+**Verification note:** the client-side-label gotcha bit once this session. `Header.tsx` is a client component that calls `buildScheduleLinks` in the browser, and the dropdown panel is conditionally rendered (`{isOpen ? … : null}`), so **dropdown labels never appear in the page HTML** — grepping prod HTML for them returns 0 whether or not they deployed. Grep the `/_next/static/**.js` chunks instead. A prod-deploy check was also called "broken" prematurely when the build simply hadn't finished; the Vercel Git integration is fine.
+
+**Open from this session:** the mobile hamburger drawer is `max-w-xs` (320px) with `p-6` and `text-base` items, leaving ~256px — the split labels (21 chars max) fit comfortably now, but that's the surface to re-check if labels ever grow again.
+
 ## Status (2026-07-28 evening — ONE MAV deck posted; Registration & Forms pruned to Rank One)
 
 **Headline:** Coach Gardner's **ONE MAV Parent & Athlete Meeting deck (7/27/2026, 18 slides)** is live on `/resources`, and the Registration & Forms section was cut from four links to two after the deck exposed a stale registration link. **Migrations 097, 098, 099 all applied to live Supabase and verified on prod. Last migration applied: 099** (note: the 095 entry below predates 096, which was also applied — verified via the "Reserve a Senior Shoutout" event title).
