@@ -55,6 +55,27 @@ Treat Coach's weekly doc as authoritative over any seeded preseason grid. **The 
 
 **Verification worth reusing: parse the source docx and diff it against the live pages.** `/tmp` script pattern — pull each `(group, day)` time set out of the Word table by **row index** (not by matching the day-cell string; the cell contains a newline, so string keys silently miss and you get a green run that compared nothing), normalize (`–`→`-`, strip spaces/periods, lowercase), then slice the live page text between day headings and set-compare. Final state: all 7 days × varsity/jv/freshman match Coach's doc exactly, 16/16 tentative dates present.
 
+**Migration 105 — Coach's Beginning of Year checklist posted to `/resources`**, at **sort_order 0** in Registration & Forms (above Rank One — it's the "start here" doc that points at everything else, Rank One included). `icon_hint='pdf'`, **no `?download=`** param, matching the ONE MAV deck. Label is year-stamped so it visibly ages; description carries no dates. PDF at `documents/checklists/boy-checklist-2026-27.pdf` (new subfolder, existing convention — binaries stay out of the repo).
+
+**The PDF was edited before upload.** Editing tooling + the edited file live OUTSIDE the repo at `MavericksWebsite/boy_checklist/` (`edit_checklist.py`, same pattern as `sponsorship_letter/edit_original.py`). Four changes:
+1. **`Code: EBQA-WNBB` removed** → "Email contact@mcneilmavericks.org for the team code." The SportsYou join code is a credential for the channel Coach uses to message families; publishing it hands that channel to anyone who finds the page, and it can't be un-published once indexed. Confirmed beforehand that the code was **nowhere** on the site or in the repo, so posting the raw PDF would have been its first public exposure.
+2. **Sponsorship Letter link** was a raw Supabase storage URL (project ref + bucket path baked into a parent-facing doc, dies silently on any re-upload) → `/boosters/sponsor`.
+3. **Instagram link** share-sheet tracking params (`utm_source=ig_web_button_share_sheet&igsh=…`) stripped.
+4. **mailto: + underline** added on the new address so it matches the doc's other links.
+
+**PDF-editing gotchas (all three cost time — see the docstring in `edit_checklist.py`):**
+- The PDF embeds **subset** fonts (`BAAAAA+Lato-Regular`, Identity-H) and the subset has **no capital "E"**, so reusing the embedded font for "Email …" renders tofu. Same class of bug as the missing `%` glyph in the sponsorship letter. Fix: embed a **full** Lato TTF (`github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf`) — verified `has_glyph` for every character before writing.
+- **`page.update_link()` throws "bad xref" after `apply_redactions()`.** Capture every link rect+URI first, `delete_link` them all, then re-insert the corrected set.
+- **fitz refuses `save()` over the file it opened** ("save to original must be incremental"). Open the source, save to a new path.
+
+**Verification (the ask was "double check everything"):** text no longer contains `EBQA`/`WNBB`/`Code:`; **all 9 link annotations resolve 200** (8 original + new mailto); a **150-dpi pixel diff against the original** confirms the only changed pixels are x 65–407, y 348–360 — i.e. the edited line and nothing else; the **header QR code decodes** (OpenCV) to `forms.gle/QLVRg62TgxUNPh3v5` → `1FAIpQLSfJXyss…`, an exact match for `BOOSTER_FORM_URL`; the uploaded object fetches anonymously as `application/pdf`, 484,227 bytes, **sha256-identical** to the local file with links intact after the round-trip; `/resources` renders the row on a 390px phone with no overflow, `target=_blank rel="noopener noreferrer"`, correct order within the section.
+
+**Non-issue investigated and cleared:** the PDF's "Purchase Game Day Meals" link (`/forms/d/e/1FAIpQLSdqnI…`) looks different from the site's Game-Day Meal row (`/forms/d/1jFCsISKk…`) but both serve the **same** form — "2026 Game Day Meal Program - Parent Payment Form", no sign-in gate. It's the published-ID vs document-ID form of the same URL, not a mismatch.
+
+**Also fixed in 105:** the live SportsYou description read *"Use the access code from the SportsYou invite page **in the SE capture**…"* — "the SE capture" is our internal name for the SportsEngine scrape doc and had been public since migration 064. Rewritten, and pointed at `contact@` so it matches the instruction now printed in the checklist PDF (both aliases are Groups delivering to the booster Gmail, so this is wording, not routing).
+
+**Open:** the checklist is **landscape, 9.8in × 8.2in** — fine printed or on a laptop, pinch-and-zoom on a phone. Argues for eventually making it a real page, same reasoning as the queued Program Expectations page. Also: the edited doc now differs from what Coach distributed, so he should know the code was pulled.
+
 **Open from this session:** the mobile hamburger drawer is `max-w-xs` (320px) with `p-6` and `text-base` items, leaving ~256px — the split labels (21 chars max) fit comfortably now, but that's the surface to re-check if labels ever grow again. **Markdown tables with more than ~3 columns do not work on this site's phone layout** — the practice-body prose classes set `[&_table]:w-full` with no `overflow-x`, so columns crush rather than scroll. Prefer day-blocks or bullet lists for anything schedule-shaped.
 
 ## Status (2026-07-28 evening — ONE MAV deck posted; Registration & Forms pruned to Rank One)
