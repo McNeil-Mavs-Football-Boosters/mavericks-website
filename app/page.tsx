@@ -109,7 +109,9 @@ function buildQuickLinks(
 }
 
 export default async function Home() {
-  const { current_schedule_year, current_roster_year } =
+  // current_year is the sponsors year (see the sponsor strip heading below);
+  // the Schedule and Roster tiles use their own decoupled years.
+  const { current_schedule_year, current_roster_year, current_year } =
     await getSiteSettingsCore();
   const [{ events, sponsors, mvpTierId }, carousel] = await Promise.all([
     loadHome(),
@@ -177,7 +179,10 @@ export default async function Home() {
       {sponsors.length > 0 ? (
         <section className="container mx-auto px-4 py-12 md:py-16">
           <h2 className="text-2xl md:text-3xl font-bold text-mavs-navy text-center mb-10">
-            Thank You to Our 2025-2026 Sponsors!
+            {/* Year-stamped from current_year (the sponsors year) rather than
+                hardcoded -- this read "2025-2026" for a full season after the
+                sponsor data moved on, because a literal cannot follow the DB. */}
+            Thank You to Our {current_year} Sponsors!
           </h2>
           {topTierSponsors.length > 0 ? (
             <div className="flex flex-wrap items-center justify-center gap-12 mb-8">

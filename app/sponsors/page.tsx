@@ -30,16 +30,20 @@ interface SponsorshipTier {
   price_cents: number;
 }
 
+// Widths are min(Npx, 100%) rather than a bare Npx: the MVP box is 440px,
+// wider than a 390px phone viewport, and a bare max-width let Rudy's logo push
+// the whole page into horizontal scroll. The 100% term clamps to the container
+// on small screens while keeping the intended per-tier hierarchy on desktop.
 const TIER_SIZE_CLASSES: Record<string, string> = {
-  MVP: "max-h-60 max-w-[440px]",
-  Diamond: "max-h-48 max-w-[360px]",
-  Platinum: "max-h-40 max-w-[320px]",
-  Gold: "max-h-32 max-w-[280px]",
-  Blue: "max-h-24 max-w-[200px]",
+  MVP: "max-h-60 max-w-[min(440px,100%)]",
+  Diamond: "max-h-48 max-w-[min(360px,100%)]",
+  Platinum: "max-h-40 max-w-[min(320px,100%)]",
+  Gold: "max-h-32 max-w-[min(280px,100%)]",
+  Blue: "max-h-24 max-w-[min(200px,100%)]",
 };
 
 function tierSizeClasses(tierName: string): string {
-  return TIER_SIZE_CLASSES[tierName] ?? "max-h-32 max-w-[280px]";
+  return TIER_SIZE_CLASSES[tierName] ?? "max-h-32 max-w-[min(280px,100%)]";
 }
 
 function SponsorCard({
@@ -215,7 +219,7 @@ export default async function SponsorsPage() {
               <SponsorCard
                 key={sponsor.id}
                 sponsor={sponsor}
-                sizeClasses="max-h-24 max-w-[200px]"
+                sizeClasses="max-h-24 max-w-[min(200px,100%)]"
               />
             ))}
           </div>
