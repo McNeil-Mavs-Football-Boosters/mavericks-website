@@ -61,26 +61,80 @@ interface SheetRowInternal extends BoosterMemberRow {
 }
 
 /**
- * "Sultana Christensen" -> "Sultana C."
- * "Sylvia Brito " (trailing space) -> "Sylvia B."
- * "Madonna" (single token) -> "Madonna"
- * "" / "   " -> null
+ * Generational suffixes, mapped to their display form so "sr", "SR" and "Sr."
+ * all render identically. Roman numerals take no period.
+ *
+ * "V" is deliberately absent. A lone trailing "V" is far more likely to be a
+ * surname someone abbreviated than the numeral five, and mistaking one for the
+ * other would drop a real last name.
  */
-export function formatShortName(full: string): string | null {
-  const trimmed = full.trim();
-  if (!trimmed) return null;
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return parts[0]!;
-  const last = parts[parts.length - 1]!;
-  const firstParts = parts.slice(0, -1).join(" ");
-  const initial = last[0]?.toUpperCase() ?? "";
-  return initial ? `${firstParts} ${initial}.` : firstParts;
+const GENERATIONAL_SUFFIXES: Record<string, string> = {
+  sr: "Sr.",
+  jr: "Jr.",
+  ii: "II",
+  iii: "III",
+  iv: "IV",
+};
+
+interface SplitName {
+  /** Everything before the surname: first name plus any middle names/initials. */
+  given: string;
+  /** Family name, or "" when the person listed only one token. */
+  surname: string;
+  /** Normalized generational suffix ("Sr.", "III"), or null. */
+  suffix: string | null;
 }
 
 /**
- * Surname = substring after the LAST whitespace in the full name, per the
- * page-level sort contract decided 2026-05-19. Multi-word surnames like
- * "Van Buren" sort under "Buren".
+ * Single place that decides which token of a name is the surname. Both the
+ * display formatter and the sort key go through here so they can never
+ * disagree about where the last name is.
+ *
+ * The suffix handling exists because "TreyVon Cargill Sr" was rendering as
+ * "TreyVon Cargill S." -- the old last-token rule treated "Sr" as the family
+ * name. A suffix is only peeled off when a real name remains underneath it.
+ *
+ * "Sarah Van Buren" -> given "Sarah Van", surname "Buren" (last token wins;
+ * multi-word surnames file under their final word, per the 2026-05-19 sort
+ * contract).
+ */
+export function splitName(full: string): SplitName {
+  const parts = full.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { given: "", surname: "", suffix: null };
+
+  let suffix: string | null = null;
+  const tail = parts[parts.length - 1]!.replace(/\.$/, "").toLowerCase();
+  if (parts.length >= 2 && GENERATIONAL_SUFFIXES[tail]) {
+    suffix = GENERATIONAL_SUFFIXES[tail]!;
+    parts.pop();
+  }
+
+  if (parts.length === 1) return { given: parts[0]!, surname: "", suffix };
+  const surname = parts.pop()!;
+  return { given: parts.join(" "), surname, suffix };
+}
+
+/**
+ * "Sultana Christensen"   -> "Sultana C."
+ * "James R Davis"         -> "James R D."      (middle initial kept)
+ * "TreyVon Cargill Sr"    -> "TreyVon C. Sr."  (suffix kept, not mistaken for the surname)
+ * "Sylvia Brito " (trailing space) -> "Sylvia B."
+ * "Madonna" (single token)-> "Madonna"          (no surname given, none invented)
+ * "" / "   "              -> null
+ */
+export function formatShortName(full: string): string | null {
+  const { given, surname, suffix } = splitName(full);
+  if (!given && !surname) return null;
+  const initial = surname ? `${surname[0]!.toUpperCase()}.` : "";
+  return [given, initial, suffix].filter(Boolean).join(" ");
+}
+
+/**
+ * Sort key: the family name, per the page-level sort contract decided
+ * 2026-05-19. Multi-word surnames like "Van Buren" sort under "Buren", and a
+ * generational suffix is ignored so "TreyVon Cargill Sr" sorts under Cargill,
+ * not under Sr. See splitName() -- it is the only thing that decides which
+ * token is the surname, so the sort key and the displayed initial always agree.
  *
  * Returns "" when no surname was given -- either a blank cell or a
  * single-token name like "Rob". Callers must treat "" as "no sort key" and
@@ -93,10 +147,7 @@ export function formatShortName(full: string): string | null {
  * so that inference can attach the wrong name to a real person.
  */
 export function extractSurname(full: string): string {
-  const trimmed = full.trim();
-  if (!trimmed) return "";
-  const lastWs = trimmed.lastIndexOf(" ");
-  return lastWs === -1 ? "" : trimmed.slice(lastWs + 1);
+  return splitName(full).surname;
 }
 
 /**
