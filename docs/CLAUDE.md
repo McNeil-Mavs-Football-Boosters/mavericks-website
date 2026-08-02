@@ -19,7 +19,35 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-08-02 — board gains a second Treasurer + a real VP of Merchandise; Umberger/Jones headshots)
+## Status (2026-08-02 — board gains a second Treasurer + a real VP of Merchandise; Umberger/Jones headshots; `/boosters/members` season guards, sort fix, dedupe)
+
+**Commits `8ec1f1e` (season guards + no-surname sort + migrations 109/110) and `d2d2160` (generational-suffix fix), both deployed and verified on prod.**
+
+### `/boosters/members` — three fixes and a data cleanup
+
+**The page was never hand-maintained and still isn't.** It reads the membership Form-responses Sheet at request time through the `mcneil-site-reader` service account, dedupes, and renders on 5-minute ISR. Jeremy's question was "do you still have access / do I need to send names" — no to both; a new signup appears within five minutes with no deploy and no migration. Worth stating plainly in here because it looks like a static list and isn't.
+
+**1. Season guards (the real bug).** `getBoosterMembers()` published EVERY row in whatever sheet `GOOGLE_SHEETS_BOOSTERS_ID` pointed at, with no concept of a year, while the page headed the list with `current_board_year`. It was correct only by luck of the env var. Both rollover paths failed **silently**: a new sheet each season means a stale env var serves last year's members forever, and a reused sheet stacks two seasons under one heading. Now the function takes `boardYear` and applies two guards:
+- **The spreadsheet TITLE must name the season.** `seasonAliases("2026-27")` → `["2026-27", "2026-2027"]` because the club names its sheets long-form (`*USE THIS* McNeil HS Football Booster Club Membership 2026-2027 (Responses)`) while `site_settings` carries the short form. Mismatch logs an error and returns `[]`, so the page shows its empty state with the join CTA rather than quietly publishing the wrong year.
+- **Rows predating the season are dropped and counted.** Cutoff is `seasonStart()` = **Jan 1 of the start year**, deliberately generous. April would have fit this year's 4/8 drive opening, but a tight cutoff just trades one silent failure for another by eating an early-bird signup. The drop count is `console.warn`ed, never silent.
+
+The two guards agree — a stale sheet fails both — so no combination publishes stale names. Unit-tested against the real sheet title: 2026-27 accepts, 2025-26 and 2027-28 reject.
+
+**2. No-surname households sort to the END** rather than under their first name. `extractSurname` now returns `""` for a single-token name (was: returned the token as-is, so "Rob" sorted into the R block). **Parent 2's surname is deliberately NOT a fallback sort key** — per Jeremy, the parents may be divorced or otherwise not share a name, so borrowing one files a person under a name that isn't theirs. Three households legitimately land at the bottom: Genikca & Derrick, KC & Sherrita C., Rebecca & David G.
+
+**3. A generational suffix is no longer mistaken for the surname.** `TreyVon Cargill Sr` rendered as **"TreyVon Cargill S."** and sorted under S. Extracted **`splitName()`** as the single place that decides which token is the surname; `formatShortName()` and `extractSurname()` both route through it so the displayed initial and the sort key can never disagree. Trailing `Sr/Jr/II/III/IV` (any case, period optional) is peeled, normalized, and re-appended after the initial → **"TreyVon C. Sr."**, sorted under Cargill. **`V` is deliberately excluded from the suffix table** — a lone trailing "V" is far likelier to be an abbreviated surname than the numeral, and guessing wrong drops a real last name. Regression-covered: `James R Davis` → `James R D.`, `Sarah Van Buren` → `Sarah Van B.` (still files under Buren).
+
+**4. Eight duplicate rows deleted from the Sheet by Jeremy** (the service account is Viewer-only by design — it must not be able to write to the treasurer's payment record). Page went **62 → 59 families**. Pre-edit backup at `MavericksWebsite/backups/membership_responses_2026-08-02.csv` (69 rows).
+
+**Two things this exercise taught that will recur:**
+- **Deleting a duplicate can un-suppress an older one hiding beneath it.** Dedupe keeps latest-per-email, so a household with three rows only shows the newest; remove it and the next surfaces. The delete list has to be derived from a full household grouping (union-find over email ∪ name-set), not from what's currently visible. A first pass got this wrong.
+- **Row numbers are not stable identifiers.** Jeremy deleted a row mid-analysis and shifted every number below it, which silently invalidated a delete list. Always re-resolve targets by `Timestamp + Parent 1` immediately before handing them over, and hand them over bottom-up.
+
+**Deliberately NOT built: a fuzzy name matcher.** Four visible duplicates needed human judgment (Root, Vest, Thrift, Knox — spouses using different emails, parents swapped, partner surname changed). Anything loose enough to catch them also merges Julie Ross with Sandra & Cory Ross, and Liz & Mike Gonzalez with Marina Salazar & Ricardo Gonzalez, which would silently delete paying members from the page. Jeremy adjudicated each pair; the code stayed dumb.
+
+**Payment-tracking gap surfaced along the way (now an Aug 3 agenda item).** Of 40 paid-tier signups, **$1,310 is confirmed paid and every one of those is a Square card**. **$1,980 across 23 signups has no payment recorded**, including a $500 Playoffs and a $250 Touchdown sitting at `email-sent` since April. The `Payable Payment Method` column is 100% Square card — **not one Venmo, check, or cash payment has ever been recorded**. This is a record gap, not evidence anyone skipped paying; most likely paid at a meeting. Donations and sponsorships run the same Payable setup and share the blind spot.
+
+
 
 **Migrations 109 and 110 applied to live Supabase and verified on prod. Last migration applied: 110.** Both are DB-only and went live with no deploy — `/boosters` is ISR `revalidate=60` and `/coaches` is `force-dynamic`. No code changed.
 
