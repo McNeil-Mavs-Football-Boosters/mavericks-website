@@ -19,6 +19,31 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-02 — board gains a second Treasurer + a real VP of Merchandise; Umberger/Jones headshots)
+
+**Migrations 109 and 110 applied to live Supabase and verified on prod. Last migration applied: 110.** Both are DB-only and went live with no deploy — `/boosters` is ISR `revalidate=60` and `/coaches` is `force-dynamic`. No code changed.
+
+**109 — board roster.** **Rocco Pelosi** added as a second **Treasurer** and **Monica Soto** fills the **VP of Merchandise** vacancy. Both are already members of their role Google Groups, so `email_alias` is the role address (`treasurer@`, `merchandise@`), not the shared booster Gmail placeholder that migration 061 stamped on everyone else.
+
+Two decisions worth keeping:
+- **Rocco is inserted at `sort_order` 4 with everything from 4 down shifted by one**, not appended at the end. The ask was that the two Treasurer cards sit next to each other; Ashley Root is at 3 and `sort_order` is an integer, so there was no value to slot between. No unique constraint on the column, so the shift is one statement. **Chevon Williams (inactive, `sort_order` 2) is deliberately left alone** — she's filtered out by `active=false` and moving her would be churn.
+- **Sylvia Brito's vacancy row was soft-deleted and Monica is a NEW row**, not a rename of Sylvia's. That row carries Sylvia's history and `created_at`; renaming a person's record to a different person loses one and falsifies the other. `active=false` matches how Chevon was retired in 061. The "Position Open" / "Join a Committee" card disappears as a side effect, which is the point.
+
+Active board now renders: Carol Glinski (1) · Ashley Root (3) · **Rocco Pelosi (4)** · Kendra Jalbert (5) · Shannon Schoepflin (6) · **Monica Soto (7)** · Jeremy Vest (8) · Debby Mata (9) · Monica Woods (10). Verified on prod: both new names and `merchandise@` present, zero "Position Open", zero "Sylvia".
+
+**110 — headshots for Thomas Umberger (WR) and Devonte Jones (DB).** Faces cropped from their "Welcome to Mav Nation" graphics, uploaded to `coach-photos` as `Coach{Name}Head.jpg`, `photo_url` set. Both objects fetch anonymously 200 / `image/jpeg` and are byte-identical to the local files. **`/coaches` now has exactly one coach with no photo: Ryan Doyle** — and the blocker there is that no graphic has ever been supplied for him, not the tooling.
+
+**Why 093 skipped these two, since it's a fair question:** the July 26 batch read its sources from `~/Downloads`, and Umberger's and Jones's graphics landed there *that evening*, several hours after the session ended. Only Gillis, Matthews and Edwards had files at the time. The gap was logged in `followups.md` and sat there until Jeremy re-sent both on 2026-08-02.
+
+**⚠️ The crop tool had a data-loss bug and it fired.** `coach_photos/crop_faces.py` read `image.JPG` / `image2.JPG` / `image3.JPG` straight out of `~/Downloads` — throwaway names the browser reuses. By the time it was re-run, `image2.JPG` was a *different, higher-resolution* Matthews graphic; Haar found an 80×80 "face" in the bottom-left corner and the script silently overwrote a good, already-shipped Matthews crop with garbage. Recovered by re-downloading all three from the bucket (the live objects were never touched). Three fixes:
+1. **Sources are now pinned in `coach_photos/sources/`**, not read from `~/Downloads`.
+2. **Detections are rejected if implausible** — face width `< 10%` of frame width, or a box below the vertical midpoint. These are portrait graphics; the face is large and high. A silent bad crop is worse than no crop.
+3. **Gillis / Matthews / Edwards are no longer in `JOBS`** — their originals were never pinned, so the shipped 600×600 files are the bucket copies. Don't re-add them without pinning a source.
+
+Jones also needed `use_detection=False`: Haar reliably locks onto his jacket zipper instead of his face, so his box is hand-set.
+
+**Downstream:** `merch/merch_form_spec.md` open item #4 (who works the merch responses sheet) now has an answer — Monica Soto.
+
 ## Status (2026-07-31 → 2026-08-01 — week-1 practice live + practice in nav; BOY checklist posted; sponsors advanced to 2026-27; Meet the Mavs seeded)
 
 **Migrations 101 → 108 all applied to live Supabase and verified on prod. Last migration applied: 108.** Most are DB-only and went live with no deploy (`/schedule/practice/*`, `/events`, `/resources` and `/sponsors` all read at request time); the three code changes are the nav split (`18a46a6`), the `/sponsors` MVP-first order (`2266fcf`), and the homepage-heading + phone-overflow fixes (`6e9da61`).

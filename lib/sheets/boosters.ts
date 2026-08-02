@@ -80,13 +80,23 @@ export function formatShortName(full: string): string | null {
 /**
  * Surname = substring after the LAST whitespace in the full name, per the
  * page-level sort contract decided 2026-05-19. Multi-word surnames like
- * "Van Buren" sort under "Buren". Single-token names return as-is.
+ * "Van Buren" sort under "Buren".
+ *
+ * Returns "" when no surname was given -- either a blank cell or a
+ * single-token name like "Rob". Callers must treat "" as "no sort key" and
+ * push the row to the end of the list, NOT sort it under the first name.
+ *
+ * Changed 2026-08-02 (was: single tokens returned as-is, so "Rob" sorted into
+ * the R block). Per Jeremy: never give someone a last name they did not list.
+ * In particular do NOT borrow Parent 2's surname for a Parent 1 who left it
+ * blank -- the parents may be divorced or otherwise have different surnames,
+ * so that inference can attach the wrong name to a real person.
  */
 export function extractSurname(full: string): string {
   const trimmed = full.trim();
   if (!trimmed) return "";
   const lastWs = trimmed.lastIndexOf(" ");
-  return lastWs === -1 ? trimmed : trimmed.slice(lastWs + 1);
+  return lastWs === -1 ? "" : trimmed.slice(lastWs + 1);
 }
 
 /**
@@ -106,6 +116,39 @@ export function parseTierLabel(
     };
   }
   return { name: trimmed, priceCents: 0 };
+}
+
+/**
+ * Season aliases for a `current_board_year` value, for matching against the
+ * spreadsheet's own title. "2026-27" -> ["2026-27", "2026-2027"] because the
+ * club names its sheets with the long form ("… Membership 2026-2027 (Responses)")
+ * while site_settings carries the short form.
+ */
+export function seasonAliases(boardYear: string): string[] {
+  const m = boardYear.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return [boardYear];
+  const [, start, endShort] = m;
+  return [boardYear, `${start}-${start!.slice(0, 2)}${endShort}`];
+}
+
+/**
+ * First instant that counts as this season's signup window: Jan 1 of the
+ * season's start year. "2026-27" -> 2026-01-01.
+ *
+ * Deliberately generous. The 2026-27 drive opened 2026-04-08, so April would
+ * have fit — but picking a tight cutoff just trades one silent failure for
+ * another: an early-bird signup would vanish from the page with nobody the
+ * wiser. Jan 1 cannot cut a real signup for the season it belongs to, and the
+ * next season's cutoff (Jan 1 of ITS start year) still excludes every row from
+ * this one. Rows dropped by the cutoff are counted and logged, never silent.
+ *
+ * Returns null for an unparseable year, which disables the filter rather than
+ * dropping everything.
+ */
+export function seasonStart(boardYear: string): Date | null {
+  const m = boardYear.match(/^(\d{4})-\d{2}$/);
+  if (!m) return null;
+  return new Date(`${m[1]}-01-01T00:00:00`);
 }
 
 function buildAuth() {
@@ -178,14 +221,40 @@ function dedupe(rows: SheetRowInternal[]): SheetRowInternal[] {
 }
 
 /**
- * Fetch + dedupe booster signup rows from the linked Google Sheet.
+ * Fetch + dedupe booster signup rows for `boardYear` from the linked Sheet.
  * Cached per-request via React `cache()` so the page can call it from
  * multiple sections without double-fetching.
  *
  * Failure mode: any sheet/auth error logs and returns []. Callers must
  * render an explicit empty/error state.
+ *
+ * ── Season safety (added 2026-08-02) ────────────────────────────────────────
+ *
+ * This function used to publish EVERY row in whatever sheet
+ * GOOGLE_SHEETS_BOOSTERS_ID pointed at, with no concept of a season, while the
+ * page headed the list with `current_board_year`. It was correct only by luck
+ * of the env var happening to point at the right sheet. Both rollover paths
+ * failed silently:
+ *
+ *   * New form + new sheet each season -> if nobody updates the env var, the
+ *     page serves last season's members under this season's heading. Forever.
+ *   * Same sheet reused -> two seasons stack up and the family count inflates.
+ *
+ * Neither errored. Two guards now:
+ *
+ *   1. The spreadsheet's TITLE must name the current season. The club names
+ *      its sheets "… Membership 2026-2027 (Responses)", so a stale ID is
+ *      caught by content rather than by anyone remembering. Mismatch -> log
+ *      an error and return [], so the page shows its empty state with the
+ *      join CTA instead of quietly publishing the wrong year.
+ *   2. Rows older than the season start are dropped, and the count is logged.
+ *
+ * The guards agree: a stale sheet fails BOTH (wrong title, and every row
+ * predates the cutoff), so there is no combination that publishes stale names.
  */
-export const getBoosterMembers = cache(async (): Promise<BoosterMemberRow[]> => {
+export const getBoosterMembers = cache(async (
+  boardYear: string,
+): Promise<BoosterMemberRow[]> => {
   const sheetId = process.env.GOOGLE_SHEETS_BOOSTERS_ID;
   if (!sheetId) {
     console.error("[boosters] GOOGLE_SHEETS_BOOSTERS_ID missing");
@@ -194,6 +263,23 @@ export const getBoosterMembers = cache(async (): Promise<BoosterMemberRow[]> => 
   try {
     const auth = buildAuth();
     const sheets = google.sheets({ version: "v4", auth });
+
+    // Guard 1 — the sheet must be this season's sheet.
+    const meta = await sheets.spreadsheets.get({
+      spreadsheetId: sheetId,
+      fields: "properties.title",
+    });
+    const sheetTitle = meta.data.properties?.title ?? "";
+    const aliases = seasonAliases(boardYear);
+    if (!aliases.some((a) => sheetTitle.includes(a))) {
+      console.error(
+        `[boosters] REFUSING TO PUBLISH: sheet "${sheetTitle}" does not name ` +
+          `season ${boardYear} (looked for ${aliases.join(" or ")}). ` +
+          `Point GOOGLE_SHEETS_BOOSTERS_ID at the ${boardYear} responses sheet.`,
+      );
+      return [];
+    }
+
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
       range: READ_RANGE,
@@ -219,11 +305,24 @@ export const getBoosterMembers = cache(async (): Promise<BoosterMemberRow[]> => 
       return [];
     }
 
+    // Guard 2 — drop rows from a previous season, and say how many.
+    const cutoff = seasonStart(boardYear);
+    let preSeasonDropped = 0;
+
     const internal: SheetRowInternal[] = [];
     for (const r of data) {
       const tierRaw = (r[iTier] ?? "").toString();
       const tier = parseTierLabel(tierRaw);
       if (!tier) continue;
+      if (cutoff && iTimestamp >= 0) {
+        const ts = Date.parse((r[iTimestamp] ?? "").toString());
+        // An unparseable timestamp is kept: a real member with a malformed
+        // date should not silently vanish over a formatting quirk.
+        if (!Number.isNaN(ts) && ts < cutoff.getTime()) {
+          preSeasonDropped++;
+          continue;
+        }
+      }
       const parent1Full = (r[iParent1] ?? "").toString();
       const parent2Full =
         iParent2 >= 0 ? (r[iParent2] ?? "").toString() : "";
@@ -241,6 +340,15 @@ export const getBoosterMembers = cache(async (): Promise<BoosterMemberRow[]> => 
         parent2Short: formatShortName(parent2Full),
         parent1Surname: extractSurname(parent1Full),
       });
+    }
+
+    if (preSeasonDropped > 0) {
+      console.warn(
+        `[boosters] ${preSeasonDropped} row(s) predate the ${boardYear} season ` +
+          `(before ${cutoff!.toISOString().slice(0, 10)}) and were excluded. ` +
+          `Expected right after a season rollover on a reused sheet; ` +
+          `investigate if it appears mid-season.`,
+      );
     }
 
     const deduped = dedupe(internal);

@@ -65,8 +65,19 @@ function displayName(m: BoosterMemberRow): string {
   return m.parent1Short ?? m.parent2Short ?? "—";
 }
 
-/** Alphabetical by Parent 1 surname, then full display name for stability. */
+/**
+ * Alphabetical by Parent 1 surname, then full display name for stability.
+ *
+ * Households where Parent 1 gave no surname sort to the END of the list rather
+ * than under their first name (`parent1Surname` is "" for those). Parent 2's
+ * surname is deliberately NOT used as a fallback sort key: the parents may have
+ * different surnames, so borrowing one would file a person under a name that
+ * isn't theirs.
+ */
 function compareByLastName(a: BoosterMemberRow, b: BoosterMemberRow): number {
+  const aHasSurname = a.parent1Surname.length > 0;
+  const bHasSurname = b.parent1Surname.length > 0;
+  if (aHasSurname !== bHasSurname) return aHasSurname ? -1 : 1;
   const surnameCmp = a.parent1Surname
     .toLowerCase()
     .localeCompare(b.parent1Surname.toLowerCase());
@@ -80,7 +91,7 @@ export default async function BoostersMembersPage() {
   const { current_board_year: boardYear } = await getSiteSettingsCore();
   const [tiers, members] = await Promise.all([
     loadTiersForYear(boardYear),
-    getBoosterMembers(),
+    getBoosterMembers(boardYear),
   ]);
 
   const totalMembers = members.length;
