@@ -41,7 +41,7 @@ Verified: target strings gone, all 15 must-survive probes present, page size unc
 
 **⚠️ Two latent bugs found by auditing the LIVE form rather than trusting the generator script.** Method worth reusing: `curl` the public `viewform`, pull `FB_PUBLIC_LOAD_DATA_` out of the HTML, and `json.loads` it — you get every question title, type, entry ID, required flag, and exact choice string without signing in. `scripts/create-sponsor-form.gs` is **NOT** the source of truth; the live form has diverged via the Payable pass.
 
-1. **"No base package — add-on only" is GONE from the required Sponsorship level question.** So a business wanting only the Scoreboard ($3,000, the biggest add-on) **cannot submit** without also buying a base tier, and the website's per-card "Add This Add-On" buttons prefill that now-invalid string, which Google silently ignores — those buttons land on a form with nothing selected. Kendra's spec §3/§4A requires the option, so it was almost certainly lost in the Payable edit, not removed on purpose. Confirm with her, then run `restoreAddOnOnlyChoice`.
+1. ✅ **FIXED 2026-08-04 (`restoreAddOnOnlyChoice`).** **"No base package — add-on only" was GONE from the required Sponsorship level question.** So a business wanting only the Scoreboard ($3,000, the biggest add-on) **cannot submit** without also buying a base tier, and the website's per-card "Add This Add-On" buttons prefill that now-invalid string, which Google silently ignores — those buttons land on a form with nothing selected. Kendra's spec §3/§4A requires the option, so it was almost certainly lost in the Payable edit, not removed on purpose. Confirm with her, then run `restoreAddOnOnlyChoice`.
 2. **Typo:** the first Add-ons choice reads "Quater Page Logo". Moot once the Program Ad choices are removed.
 
 **Verified safe, do not "fix":** the Tunnel and Scoreboard prefill strings match the live form byte-for-byte, and both entry IDs the website uses (`673070323` level, `1109740693` add-ons) are correct. Also confirmed the form collects email via built-in collection in **responder-input mode** (`FB_PUBLIC_LOAD_DATA_[1][10]` → `3`), not as a question item and not requiring sign-in — so there is no missing-email gap despite `Email` not appearing in the item list.
@@ -54,7 +54,17 @@ Every pre-existing entry ID, required flag, and the email-collection mode (`[1][
 
 **⚠️ Operational gotcha that cost a round trip: the Apps Script function dropdown does not follow your intent.** It defaults to the FIRST function in the file and stays there, so clicking Run twice runs the same function twice — and both executions report success. Jeremy's first pass ran `updateSponsorFormAssets` twice and the program-ad removal silently never happened; only a re-parse of the live form caught it. **When handing over a multi-function .gs, say explicitly that the dropdown must be changed per function, and give the exact log line to look for as proof** (here: `Removed:`). Do not treat "it ran fine" as evidence a specific function ran.
 
-**Remaining form work, needs Kendra's OK, not a bug in our code:** `restoreAddOnOnlyChoice` — see BUG 1 above. Until it runs, a Scoreboard-only sponsor cannot submit, and the website's Add-On buttons prefill a dead string.
+**✅ `restoreAddOnOnlyChoice` also ran (2026-08-04 18:04), and the add-on-only path is now verified working end to end.** The level question has 7 choices again and a Scoreboard-only sponsor can submit without buying a base tier.
+
+**Verification worth reusing — test the prefill in a real browser, not by parsing HTML.** Google does NOT reflect prefills into `FB_PUBLIC_LOAD_DATA_`; a structural diff of the clean vs prefilled payload shows *zero* difference, so a parse-based check silently proves nothing. The prefilled values do land in a separate, undocumented structure in the HTML, but the honest test is to load the URL headless and read `[role=radio][aria-checked=true]` / `[role=checkbox][aria-checked=true]`:
+
+| Website button | Level preselected | Add-on preselected |
+|---|---|---|
+| Scoreboard "Add This Add-On" | No base package — add-on only | Scoreboard — $3,000 / two seasons |
+| Tunnel "Add This Add-On" | No base package — add-on only | Tunnel — $350 / season |
+| Blue / Platinum / MVP / Custom | that tier, no add-ons | (none) |
+
+All 9 of the website's prefill strings were also byte-compared against the live choice text — em dash and the curly apostrophe in "Custom (let's talk)" included. A single character of drift silently breaks a prefill, since Google ignores an unmatched value rather than erroring.
 
 **Also corrected outside the repo (see `~/Projects/BoosterClub/`):** the **Title I claim**. Per `BoosterClub/CLAUDE.md`, McNeil is **not** Title I and no high school can be; its feeder middle schools are. The wrong claim was live in `sponsor_renewal_outreach_2026.md` (×2), `booster_club_info.md`, and the cold-outreach body — the last of which also claimed booster meals were players' "most reliable, nutritious meals," which is both unsupported and adjacent to protected eligibility data. All four rewritten to the feeder-schools framing.
 
