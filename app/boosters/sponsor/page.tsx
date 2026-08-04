@@ -62,6 +62,33 @@ const SPONSORSHIP_FUNDS = [
   "Media day to highlight varsity players",
 ];
 
+// What a sponsor has to send us once they commit, per Kendra 2026-07-28. The
+// canonical copy lives at ~/Projects/BoosterClub/sponsor_asset_requirements_2026.md
+// — edit there first, then mirror here. Deliberately carries NO dates: deadlines
+// change every season and stale dates in page copy have bitten this site before.
+const SPONSOR_DELIVERABLES: { title: string; body: string[] }[] = [
+  {
+    title: "Your logo",
+    body: [
+      "For the banner, field sign, and scoreboard, send your logo in a vector format. AI, EPS, SVG, or vector PDF is preferred. If a vector file isn’t available, send the largest PNG you have with a transparent background. Please avoid screenshots or images copied from a website.",
+      "You don’t need to resize anything. Our production vendor sizes the logo for each placement. If you have both a full-color and a white or reversed version, send both.",
+    ],
+  },
+  {
+    title: "Your audio commercial script",
+    body: [
+      "Platinum, Diamond, and MVP levels include 30-second audio commercials at home games. Send us a script of roughly 65 to 75 words that reads in 30 seconds.",
+      "You don’t need to record anything. Our game commentator reads your script live.",
+    ],
+  },
+  {
+    title: "Your promo details",
+    body: [
+      "For social media and newsletter promotion, send your preferred website link, your social media handles, a brief description of your business, and any specific message, offer, or service you’d like us to highlight.",
+    ],
+  },
+];
+
 // Google Form field IDs + exact option strings (from the live sponsorship form).
 // A "Select" button prefills the level (or add-on) the sponsor clicked.
 const SPONSOR_FORM_ENTRY_LEVEL = "entry.673070323";
@@ -377,6 +404,51 @@ export default async function BoostersSponsorPage() {
           </div>
         </section>
       ) : null}
+
+      {/* 3c. What we need from the sponsor after they commit */}
+      <section className="container mx-auto px-4 pb-12 md:pb-16 max-w-3xl">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-mavs-navy">
+            What We&apos;ll Need From You
+          </h2>
+          <div className="h-1 w-20 bg-mavs-green mx-auto mt-3"></div>
+          <p className="text-lg text-gray-600 mt-4">
+            Once you&apos;ve chosen a level, here&apos;s what we need to get your
+            business in front of Mavs families. Email it to{" "}
+            <a
+              href="mailto:fundraising@mcneilmavericks.org?subject=McNeil%20Football%20Sponsorship%20Materials"
+              className="text-mavs-navy font-semibold underline hover:text-mavs-green"
+            >
+              fundraising@mcneilmavericks.org
+            </a>
+            .
+          </p>
+        </div>
+        <div className="space-y-6">
+          {SPONSOR_DELIVERABLES.map((item) => (
+            <div
+              key={item.title}
+              className="bg-white border-2 border-mavs-navy/20 rounded-lg p-6 md:p-8"
+            >
+              <h3 className="text-xl font-bold uppercase text-mavs-navy">
+                {item.title}
+              </h3>
+              <div className="mt-4 space-y-3">
+                {item.body.map((paragraph, i) => (
+                  <p key={i} className="text-base text-gray-700 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-6 text-sm text-gray-600 text-center">
+          Logo artwork is the long-lead item, since banners, field signs, and the
+          scoreboard all go out to a production vendor. Send it as early as you
+          can and we&apos;ll sort out the script and promo details with you after.
+        </p>
+      </section>
 
       {/* 4. Contact CTA card */}
       <section className="container mx-auto px-4 py-12 md:py-16">
