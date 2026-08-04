@@ -19,6 +19,51 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-04 — Freddie's Carwash added, Blue tier; 7th sponsor)
+
+**Migration 112 — Freddie's Carwash live at Blue ($500), 2026-27, sort_order 7.** Jeremy closed them 2026-08-04. `website_url` https://freddiescarwash.com verified HTTP 200 before writing the migration (real business, 2009 Wells Branch Pkwy, north Austin). Tier resolved by name against the live ladder rather than assumed — Blue is 50000 cents, which is the $500 match.
+
+**Logo prep, because none of it is reproducible from the source filename.** Supplied as a 2-page 512pt Illustrator PDF (`freddies-car-wash-logo higher res.pdf`):
+- **Both pages are the same badge.** Pixel-diffed them — max channel difference 1, pure anti-aliasing noise. Used page 1, ignored page 2. Worth checking on any multi-page logo PDF rather than assuming page 2 is an alternate lockup.
+- **Order of operations matters:** rendered at 300dpi → trimmed to artwork bbox → downscaled to 1200px in **RGB** → *then* keyed white→alpha. Deriving alpha after the resize gives the anti-aliased edges correct partial alpha; doing it before produces white fringing.
+- **Keying white was safe here**, unlike Capstone (where white was deliberately kept because its mark is white-on-red). This badge is line art in black + teal with no white-filled shapes.
+- **Palette-snapped RGB to 3 colours** (black / `#0797B0` / white) to get 341KB → 168KB, in line with the other logos. Flat colour, no gradients, so visually lossless.
+- ⚠️ **`Image.fromarray(arr, 'RGBA')` — do not pass the mode argument.** It's deprecated and it silently scrambled the channels, producing a file whose RGB was intact but whose alpha maxed at 74, i.e. an invisible logo that still passed a naive "file exists, mode is RGBA" check. Let Pillow infer mode from the array shape, and **assert on opaque-pixel count and mean ink colour before saving** — that's what caught it.
+
+**⚠️ Storage uploads: the service-role key is `sb_secret_…`, not a JWT — send it as `apikey`, NOT `Authorization: Bearer`.** Bearer returns `400 {"statusCode":"403","error":"Unauthorized","message":"Invalid Compact JWS"}` because Storage tries to parse it as a compact JWS. This is fallout from the June 2026 key rotation and is not documented anywhere else in this guide. Working invocation:
+```
+curl -X POST "$NEXT_PUBLIC_SUPABASE_URL/storage/v1/object/sponsor-logos/<file>.png" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Content-Type: image/png" \
+  --data-binary "@<file>.png"
+```
+A repeat POST to an existing key returns `400 {"statusCode":"409","…KeyAlreadyExists"}` — that's the idempotency signal, not a new failure.
+
+**The badge is square (1:1), the only sponsor logo that is** — every other one is wide. So it renders small: Blue's bounding box is `max-h-24 max-w-[200px]` on `/sponsors` (~96×96) and the homepage strip caps non-MVP logos at `max-h-12` (~48×48). That's the tier system working as designed, but it is the likely source of a "why is our logo smaller than a Gold sponsor's" question, and the honest answer is that the height cap binds first on a square mark.
+
+**Verified on prod:** `/sponsors` and `/boosters/sponsor` show all 6 active sponsors with 4 references each to `freddies-carwash.png`; tier sections are Platinum / Gold / Blue. Public object fetches 200 at 1200×1201 RGBA. Homepage picked it up after the ISR window.
+
+## Status (2026-08-03 — Rudy's is NOT a sponsor; deactivated, MVP tier now empty)
+
+**Migration 111 — Rudy's BBQ deactivated on both season rows.** Jeremy checked and confirmed 2026-08-03: **Rudy's is not a sponsor and never was.** The full history of this logo is worth writing down because it flip-flopped twice:
+
+| | What happened |
+|---|---|
+| 041 | Seeded Rudy's as an MVP-tier **placeholder** (2025-26) |
+| 060 | Removed it as fake (2026-06-12) — correct call |
+| 094 | **Re-inserted it** on a bad confirmation (2026-07-26, "Jeremy confirmed Rudy's is a real sponsor") |
+| 106 | Carried it into the 2026-27 lineup at MVP (2026-07-31) |
+| **111** | **Deactivated, both seasons (2026-08-03) — this is the end of it** |
+
+**Deactivated, not deleted, deliberately.** Jeremy wants Rudy's held in case they *do* sponsor later ("keep in our pocket"). Every public sponsor query filters `.eq("active", true)` — `app/page.tsx`, `app/sponsors/page.tsx`, `app/boosters/sponsor/page.tsx` — so `active = false` is equivalent to gone on the site while the row and the `sponsor-logos/rudys-bbq.png` object survive. If Rudy's signs, run `111_rollback.sql` (or flip just the 2026-27 row) and check the tier matches what they actually pay. **Don't write a fresh INSERT** — that's how this ended up duplicated in concept across 041/094 in the first place.
+
+**Both season rows, not just the live one.** The 2025-26 row is only invisible today because `current_year` points at 2026-27; it would resurface on any year flip back or a 106 rollback. Rudy's was never a sponsor in either season, so neither row should render.
+
+**Consequence: the MVP tier is empty again** (same state migration 060 created for two months). No breakage — both surfaces guard on per-tier sponsor count > 0, so `/sponsors` stops rendering the MVP `h2` entirely and the homepage strip drops its top-tier row. **Side effect worth knowing before the sponsorship push:** the "bigger sponsorship = bigger logo" hierarchy that `/sponsors` demonstrates to prospects now tops out at **Platinum**, and the `max-w-[440px]` MVP bounding box is unexercised again — which is exactly the condition that hid the phone-overflow bug for two months (see the 2026-07-31 status). If a real MVP sponsor lands, re-check `/sponsors` at 390px.
+
+**Verified on prod after the ISR flush (`revalidate = 60`):** zero `rudy` / `rudys-bbq` hits on `/`, `/sponsors`, `/boosters/sponsor`; all 5 remaining sponsors (Capstone, North Austin Oral Surgery, Laurie Flood, Luv Braces, Mama Betty's) still render on both surfaces; `/sponsors` tier sections are now Platinum / Gold / Blue only. **No code change was needed or made** — this is a data-only change, and the DB is read live, so nothing had to be deployed.
+
+**Related open item, not resolved here:** the 2026-08-03 board notes still list Tony C's and Phil's/Amy's as logos to hold as "sponsors" **until signed**. Rudy's is the cautionary tale — don't put a logo on the site off a verbal.
+
 ## Status (2026-08-02 — board gains a second Treasurer + a real VP of Merchandise; Umberger/Jones headshots; `/boosters/members` season guards, sort fix, dedupe)
 
 **Commits `8ec1f1e` (season guards + no-surname sort + migrations 109/110) and `d2d2160` (generational-suffix fix), both deployed and verified on prod.**
@@ -124,7 +169,7 @@ Treat Coach's weekly doc as authoritative over any seeded preseason grid. **The 
 
 | Tier | Price | Sponsor |
 |---|---|---|
-| MVP | $5,000 | Rudy's BBQ *(held at top level per Jeremy, "for now")* |
+| MVP | $5,000 | *(empty — Rudy's was here until migration 111 deactivated it, 2026-08-03; see the 2026-08-03 status)* |
 | Platinum | $1,500 | Capstone Acquisitions, North Austin Oral Surgery |
 | Gold | $1,000 | Laurie Flood Real Estate Team |
 | Blue | $500 | Luv Braces, Mama Betty's Tex-Mex |
@@ -228,6 +273,8 @@ Treat Coach's weekly doc as authoritative over any seeded preseason grid. **The 
 **Gotcha for verifying prod copy with curl+grep:** React's SSR output splits adjacent text nodes with `<!-- -->` comments, so `grep "2026-27 Varsity Roster"` finds **nothing** on a page that renders it correctly. An 8-minute deploy-wait loop spun on exactly this false negative. Strip `<script>`, `<style>`, and `<!--…-->` then collapse tags to text before matching (the one-liner used this session is in the git history of this entry's session, or just re-derive it).
 
 ## Status (2026-07-26 later — Rudy's MVP sponsor restored, open sponsor-page ordering, two email drafts)
+
+> ❌ **SUPERSEDED 2026-08-03 — this was wrong.** Rudy's is **not** a sponsor. Migration **111** deactivated it on both season rows; migration 060 had it right. See the 2026-08-03 status at the top. Left here unedited so the flip-flop is legible.
 
 **Rudy's BBQ restored as MVP sponsor (migration 094):** Jeremy confirmed Rudy's is a *real* sponsor (migration 060 had wrongly removed it as a placeholder). Re-inserted at the MVP tier, sort_order 1, year 2025-26, logo `sponsor-logos/rudys-bbq.png` (object was still in storage). Live on `/sponsors` — the MVP Rudy's logo renders much larger than the Gold logos, giving the intended "the more you sponsor, the bigger the logo" effect.
 

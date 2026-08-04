@@ -5538,3 +5538,112 @@ SET photo_url = 'https://rgdoolafpvhtsdpxbqvj.supabase.co/storage/v1/object/publ
 WHERE year = '2026-27' AND name = 'Devonte Jones';
 
 COMMIT;
+
+-- ===
+-- db/migrations/111_rudys_deactivate_not_a_sponsor.sql
+-- ===
+
+-- 111_rudys_deactivate_not_a_sponsor.sql
+--
+-- Rudy's BBQ is NOT a sponsor. Jeremy confirmed 2026-08-03 after checking --
+-- the logo has been on the site since the migration 041 placeholder seed, was
+-- correctly removed by 060, then wrongly restored by 094 on a bad confirmation,
+-- and carried into the 2026-27 lineup by 106. Ends here.
+--
+-- DEACTIVATE, DO NOT DELETE. Jeremy wants the row (and the logo object
+-- sponsor-logos/rudys-bbq.png) held in case Rudy's does sponsor later --
+-- flipping `active` back to true is then the whole job. Every public sponsor
+-- query filters `.eq("active", true)` (app/page.tsx, app/sponsors/page.tsx,
+-- app/boosters/sponsor/page.tsx), so active=false is equivalent to gone on the
+-- site while the row survives.
+--
+-- Both season rows are deactivated, not just the live one. 2026-27 is what
+-- current_year points at today; the 2025-26 row is only invisible because of
+-- that pointer, and would resurface on any year flip back (or a 106 rollback).
+-- Rudy's was never a sponsor in either season, so neither row should render.
+--
+-- CONSEQUENCE (same as when 060 did this): Rudy's is the only MVP-tier sponsor,
+-- so after this the MVP slot is empty in 2026-27. Both surfaces guard on
+-- sponsor-count > 0 per tier, so nothing breaks -- the /sponsors MVP section
+-- stops rendering its h2 entirely and the homepage strip drops its top-tier
+-- row, leaving the 5 remaining logos (2 Platinum, 1 Gold, 2 Blue) on row 2.
+-- Side effect worth knowing: the "bigger sponsorship = bigger logo" hierarchy
+-- now tops out at Platinum on the page prospects see.
+--
+-- Idempotent.
+
+begin;
+
+update sponsors
+set active = false
+where name = 'Rudy''s BBQ'
+  and year in ('2025-26', '2026-27');
+
+commit;
+
+-- ===
+-- db/migrations/112_sponsor_freddies_carwash.sql
+-- ===
+
+-- 112_sponsor_freddies_carwash.sql
+--
+-- Adds Freddie's Carwash as a Blue-tier ($500) sponsor for 2026-27. Jeremy
+-- closed them 2026-08-04. Seventh sponsor of the season.
+--
+-- Tier: $500 maps to Blue (sponsorship_tiers 2026-27 Blue = 50000 cents),
+-- confirmed against the live ladder rather than assumed. tier_id is resolved by
+-- name at insert time, same pattern as migration 106, so no hardcoded uuid.
+--
+-- sort_order 7, appending after Mama Betty's Tex-Mex (6). Sponsors render in
+-- sort_order within their tier, so this puts Freddie's last among the Blues.
+--
+-- website_url: https://freddiescarwash.com -- verified live (HTTP 200) before
+-- writing this, per the rule set in 106 about not shipping a wrong link on a
+-- paying sponsor. Real business, 2009 Wells Branch Pkwy in north Austin, which
+-- is a few minutes from campus.
+--
+-- LOGO: sponsor-logos/freddies-carwash.png, already uploaded and verified
+-- publicly readable (HTTP 200, 1200x1201 RGBA). Prep notes, because the source
+-- was a 2-page 512pt Illustrator PDF and none of this is reproducible from the
+-- filename alone:
+--   * Both PDF pages are the same circular badge -- pixel-diffed them, max
+--     channel difference 1, so page 1 was used and page 2 ignored.
+--   * Rendered at 300dpi, trimmed to the artwork bbox, downscaled to 1200px
+--     wide in RGB, and only THEN keyed white -> alpha, so the anti-aliased
+--     edges pick up correct partial alpha instead of white fringing.
+--   * Safe to key white here (unlike Capstone, where white was kept because its
+--     mark is white-on-red): this badge is line art in black + teal with no
+--     white-filled shapes, so nothing is lost.
+--   * RGB snapped to a 3-colour palette (black / #0797B0 teal / white) to get
+--     the file from 341KB down to 168KB, in line with the other logos. The mark
+--     is flat colour with no gradients, so this is lossless in appearance.
+--
+-- Note the badge is SQUARE (1:1), unlike every other sponsor logo, which are
+-- all wide. It will therefore render small: the Blue bounding box is
+-- max-h-24/max-w-[200px] on /sponsors, so it lands ~96x96, and the homepage
+-- strip caps non-MVP logos at max-h-12, so ~48x48 there. That is the tier
+-- system working as designed, not a bug -- but if Freddie's ever asks why their
+-- logo looks smaller than a Gold sponsor's, that is the reason.
+--
+-- Idempotent.
+
+begin;
+
+insert into sponsors (name, logo_url, website_url, tier_id, sort_order, year, active)
+select 'Freddie''s Carwash',
+       'freddies-carwash.png',
+       'https://freddiescarwash.com',
+       t.id,
+       7,
+       '2026-27',
+       true
+from sponsorship_tiers t
+where t.year = '2026-27'
+  and t.name = 'Blue'
+  and t.active
+  and not exists (
+    select 1 from sponsors s
+    where s.year = '2026-27' and s.name = 'Freddie''s Carwash'
+  );
+
+commit;
