@@ -19,6 +19,31 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-04 later — sponsor asset requirements published; Program Ad closed; two latent form bugs found)
+
+**Commits `acf5c5b` (page section) and `64aefdf` (migration 113), both pushed to `main` as `jeremyvest-ATXcoder`. Last migration applied: 113.**
+
+**Trigger:** Kendra forwarded the sponsorship-requirements email she had hand-written for a prospect (Allied OMS, 2026-07-28) and asked to have it captured "where appropriate." She was re-typing the logo/script/promo spec per prospect.
+
+**Canonical copy now lives OUTSIDE the repo** at `~/Projects/BoosterClub/sponsor_asset_requirements_2026.md`. Edit there first, then mirror. Three requirements: logo files (vector AI/EPS/SVG/vector-PDF, else largest transparent PNG, no website screenshots, don't resize, full-color + reversed if available), the audio script (65-75 words / 30 seconds, sponsor does not record, commentator reads it live), and promo details (website, handles, business description, offer to highlight).
+
+**New "What We'll Need From You" section on `/boosters/sponsor`**, between Add-Ons and the contact CTA, driven by a `SPONSOR_DELIVERABLES` const. **Carries no dates, deliberately** — the homepage sponsor heading and the migration-105 checklist copy have both gone stale from baked-in date literals. Deadlines stay in outreach email and tier rows.
+
+**⚠️ Migration 113 — the Program Ad add-on was selling a closed window.** The card was live and read "Commit by July 31 to make this season's program", a date four days past, so a business could have committed money for something undeliverable. Jeremy confirmed the program has printed. **Deactivated, not deleted** (same as 111); `113_rollback.sql` reactivates it next season and carries a warning to fix the stale date in the description first, or the bug returns. Scope was one add-on row: the Blue → MVP ladder and the Tunnel / Scoreboard add-ons are untouched. **The separate $25 parent-facing Senior Shoutout needed nothing** — its hero tile self-expired via `expires_at` 2026-08-01 and its event now sorts as past, which is the `expires_at` mechanism from migration 091 working as designed.
+
+**⚠️ Two latent bugs found by auditing the LIVE form rather than trusting the generator script.** Method worth reusing: `curl` the public `viewform`, pull `FB_PUBLIC_LOAD_DATA_` out of the HTML, and `json.loads` it — you get every question title, type, entry ID, required flag, and exact choice string without signing in. `scripts/create-sponsor-form.gs` is **NOT** the source of truth; the live form has diverged via the Payable pass.
+
+1. **"No base package — add-on only" is GONE from the required Sponsorship level question.** So a business wanting only the Scoreboard ($3,000, the biggest add-on) **cannot submit** without also buying a base tier, and the website's per-card "Add This Add-On" buttons prefill that now-invalid string, which Google silently ignores — those buttons land on a form with nothing selected. Kendra's spec §3/§4A requires the option, so it was almost certainly lost in the Payable edit, not removed on purpose. Confirm with her, then run `restoreAddOnOnlyChoice`.
+2. **Typo:** the first Add-ons choice reads "Quater Page Logo". Moot once the Program Ad choices are removed.
+
+**Verified safe, do not "fix":** the Tunnel and Scoreboard prefill strings match the live form byte-for-byte, and both entry IDs the website uses (`673070323` level, `1109740693` add-ons) are correct. Also confirmed the form collects email via built-in collection in **responder-input mode** (`FB_PUBLIC_LOAD_DATA_[1][10]` → `3`), not as a question item and not requiring sign-in — so there is no missing-email gap despite `Email` not appearing in the item list.
+
+**OPEN — the form is still not updated.** `scripts/update-sponsor-form-assets.gs` is written, syntax-checked, and validated against the real question titles, but must be run signed in as `mcneilfootballboosters@gmail.com` (any other account throws "Authorization is required"). Run **`removeProgramAdChoices` first** — until it runs, the form can still take a program-ad order the site no longer advertises. Then `updateSponsorFormAssets` (adds the script + description + highlight questions, upgrades the "Logo & audio" help text). All items are text-only **on purpose**: a Forms file-upload item forces respondent Google sign-in, which is why assets are an email ask until the private `sponsor-assets` bucket is built.
+
+**Also corrected outside the repo (see `~/Projects/BoosterClub/`):** the **Title I claim**. Per `BoosterClub/CLAUDE.md`, McNeil is **not** Title I and no high school can be; its feeder middle schools are. The wrong claim was live in `sponsor_renewal_outreach_2026.md` (×2), `booster_club_info.md`, and the cold-outreach body — the last of which also claimed booster meals were players' "most reliable, nutritious meals," which is both unsupported and adjacent to protected eligibility data. All four rewritten to the feeder-schools framing.
+
+**Open question for Kendra:** last season LuvBraces was asked for a **15-20 second** script; the current spec is **65-75 words / 30 seconds**. Which applies at Diamond, and do Blue/Gold owe any script at all, given they include a "PA announcement" rather than an audio commercial? The site currently says only Platinum/Diamond/MVP need a script.
+
 ## Status (2026-08-04 — Freddie's Carwash added, Blue tier; 7th sponsor)
 
 **Migration 112 — Freddie's Carwash live at Blue ($500), 2026-27, sort_order 7.** Jeremy closed them 2026-08-04. `website_url` https://freddiescarwash.com verified HTTP 200 before writing the migration (real business, 2009 Wells Branch Pkwy, north Austin). Tier resolved by name against the live ladder rather than assumed — Blue is 50000 cents, which is the $500 match.
