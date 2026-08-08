@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Camera } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 
 import { getPastEvents, getUpcomingEvents } from "@/lib/queries/events";
@@ -135,6 +136,7 @@ const VARIANT_CLASSES: Record<
     day: string;
     title: string;
     location: string;
+    photoLink: string;
   }
 > = {
   default: {
@@ -143,6 +145,8 @@ const VARIANT_CLASSES: Record<
     day: "text-mavs-navy",
     title: "text-mavs-navy",
     location: "",
+    // Green matches the "View Photos" button on the event detail page.
+    photoLink: "text-mavs-green",
   },
   "on-green": {
     border: "border-white/20",
@@ -150,6 +154,8 @@ const VARIANT_CLASSES: Record<
     day: "text-white",
     title: "text-white",
     location: "text-white",
+    // On the homepage green band, mavs-green would be invisible.
+    photoLink: "text-white",
   },
 };
 
@@ -205,6 +211,24 @@ export function EventRowCard({
           <p className={`text-sm mt-2 line-clamp-3 ${v.muted}`}>
             {event.description}
           </p>
+        ) : null}
+        {/* Photo-album affordance (migration 114). Lets someone scan the past
+            list and see which events have albums without opening each one.
+            Links straight to the album rather than the detail page — someone
+            hunting for photos wants the photos, not another hop. */}
+        {event.photos_url ? (
+          <a
+            href={event.photos_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1.5 mt-2 text-sm font-semibold hover:underline ${v.photoLink}`}
+          >
+            <Camera className="h-4 w-4" aria-hidden="true" />
+            View photos
+            <span className="sr-only">
+              from {event.title} (opens in a new tab)
+            </span>
+          </a>
         ) : null}
       </div>
 

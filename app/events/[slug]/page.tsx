@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Camera } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -150,6 +151,26 @@ export default async function EventDetailPage({
               className="inline-block bg-mavs-navy text-white px-8 py-3 font-bold uppercase hover:bg-mavs-navy/90 transition-colors"
             >
               Sign Up →
+            </a>
+          </div>
+        </section>
+      ) : null}
+
+      {/* Photo album. Green rather than navy so it reads as a distinct action
+          from Sign Up, since a past event can carry both. Renders only when
+          photos_url is set (migration 114). */}
+      {event.photos_url ? (
+        <section className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <a
+              href={event.photos_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-mavs-green text-white px-8 py-3 font-bold uppercase hover:bg-mavs-green/90 transition-colors"
+            >
+              <Camera className="h-5 w-5" aria-hidden="true" />
+              View Photos
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           </div>
         </section>

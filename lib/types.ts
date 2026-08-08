@@ -203,6 +203,11 @@ export interface EventRow {
   location_url: string | null;
   signup_url: string | null;
   cover_image_url: string | null;
+  /**
+   * Public photo-album URL (migration 114). NULL for most events — every render
+   * site must hide its affordance when null rather than showing a dead control.
+   */
+  photos_url: string | null;
   status: "draft" | "published" | "cancelled";
   featured: boolean;
   updated_at: string;
