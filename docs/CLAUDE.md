@@ -19,6 +19,53 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-08 later — Community Partners; events split on END time; event photo albums)
+
+**Migrations 114 + 115 applied. Commits `4d51286`, `b5934df`, `22f4e90`, all pushed and verified on prod. Last migration applied: 115.**
+
+### Community Partners (migration 115) — Rudy's is finally, genuinely, a real thing
+
+In-kind supporters (meals, gift cards, product) are acknowledged on **`/boosters/donate`** with a logo and a link, and are **never sold as a tier**. This replaced an earlier "Friends level" idea; putting them on the donate page is precisely what stops them implying a purchased level.
+
+**New `sponsors.kind` discriminator (`'sponsor' | 'community_partner'`, CHECK-constrained), NOT an inferred marker.** `tier_id IS NULL` was the tempting shortcut and was rejected: there are zero untiered sponsors, so a null tier means "someone forgot to pick one" and must keep meaning that. Inferring partner-ness from a missing value would let a data-entry slip publish a paying sponsor in the wrong place.
+
+**⚠️ THREE sponsor surfaces must filter `kind = 'sponsor'`** — `app/page.tsx`, `app/sponsors/page.tsx`, `app/boosters/sponsor/page.tsx`. Miss one and a partner renders as a paying sponsor. Any fourth sponsor surface must carry it too.
+
+**Rudy's was CONVERTED, never re-inserted.** They genuinely agreed to provide meals (Jeremy 2026-08-08), ending the saga in the 2026-08-03 entry. The existing 2026-27 row was flipped from deactivated MVP sponsor → active partner (`tier_id` nulled), preserving its id and `created_at`, exactly as migration 111's note demanded ("Don't write a fresh INSERT — that's how this ended up duplicated in concept across 041/094"). **The 2025-26 row stays inactive**: never a sponsor that season, and not retroactively a partner.
+
+**New `PartnerBadge` renders the business NAME when there is no logo.** `SponsorCard` and `SponsorStripLogo` both `return null` on a missing logo — fine for paying sponsors, who always supply artwork, but partners are the group most likely to have none (a taqueria donating meals). Reusing them would mean adding a partner and silently seeing nothing appear.
+
+**⚠️ Acknowledgment, not advertising.** The club is a 501(c)(3). Name + logo + link is acknowledgment; taglines, offers, discounts, or qualitative claims would make it advertising income. The partner render therefore carries **no description field at all** — do not add one. Also **never publish a dollar value** for an in-kind gift; valuing it is the donor's job for their own return.
+
+**`/sponsors` carries a visible bordered "Community Partners" band** linking to `/boosters/donate#community-partners`. A business that donated meals looks for itself on `/sponsors`, so it needs a bridge; Jeremy asked for visible, not a footnote.
+
+**Verified on prod:** zero `Rudy`/`rudys-bbq` on `/`, `/sponsors`, `/boosters/sponsor`; present on `/boosters/donate` with logo + outbound link + working anchor; 6 sponsors / 1 partner at 2026-27; no horizontal overflow at 390px or 1280px.
+
+### Events split on END time, not start time (commit `4d51286`)
+
+`getUpcomingEvents` filtered `starts_at >= now`, so the pool party dropped into **Past at 5:01pm** while people were still driving to it. Now keyed off the end time.
+
+**Events with a NULL `ends_at` fall back to END OF THEIR DAY (America/Chicago).** Load-bearing, not incidental: `ends_at` is deliberately null where the club knows a start but not a finish (migration 102's equipment pickups, where inventing a close time would be fabrication). Treating those as ending instantly would reintroduce the bug for the events carrying the least information.
+
+Expressed against PostgREST as `or=(ends_at.gte.NOW, and(ends_at.is.null, starts_at.gte.START_OF_TODAY))`. **Start-of-day is computed in America/Chicago, never from the server clock** — Vercel runs UTC, so after 7pm CDT the server is already on tomorrow's UTC date.
+
+**Also deleted the homepage's private copy of that query.** `app/page.tsx` had its own inline `.gte("starts_at", now)`, so the homepage and `/events` each owned a definition of "upcoming" and would have disagreed after this change. Both now call `getUpcomingEvents()`.
+
+**Verification worth reusing:** replay a real row at a simulated time. Querying the API with `now` set to 6pm on party day showed the old rule had already dropped it to Past while the new rule kept it Upcoming. Also asserted `upcoming(1) + past(15) == published(16)` — an exact partition, no drops, no double-counting.
+
+### Event photo albums (migration 114)
+
+New nullable `events.photos_url`. Renders as a green **View Photos** button on the event detail page and a camera link on list rows, so the past list is scannable without opening each event. Both hide when null. Seeded with the Aug 7 pool party album.
+
+**`/resources` gets exactly ONE durable row**, "Event Photos" → `/events?filter=past`. A row per album was rejected: the existing Game Photos row works because it is one permanent destination, but event albums accrue one per event forever, turning Forms & Links into a junk drawer plus a manual step someone forgets. The list-row link goes **straight to the album**, not the detail page — someone hunting for photos wants the photos.
+
+**⚠️ Privacy, raised with Jeremy before shipping:** `photos.app.goo.gl` links are public to anyone holding them, and these are photos of minors. Jeremy owns club photos and made the call. `photos_url` is nullable and the UI renders nothing when null, so pulling an album is a one-line UPDATE with no deploy. **Album links also rot silently** — an unshared album shows a dead link and nothing can detect it.
+
+### Still open
+
+- **Sponsor strip → carousel** (6 at a time, one line, ~6s rotation). Waiting on Jeremy's new sponsor list + logos. Costs **zero** Vercel image quota: sponsor logos are plain `<img>` served from Supabase, so they touch neither the optimizer nor Vercel bandwidth. **Undecided:** whether MVP pins to page 1 — going to a strict single line otherwise flattens the "maximum visibility" the letter sells at $5,000.
+- More community partners after Rudy's.
+
 ## Status (2026-08-08 — Vercel image-optimization churn fixed; free tier was at 75% from SEVEN images)
 
 **Commits `a57a88a` + `5267cee`, pushed and verified on prod. Code-only, no migration.**
