@@ -10,7 +10,7 @@ import {
 
 import { EventRowCard } from "@/components/events/EventListView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { SponsorStripLogo } from "@/components/sponsors/SponsorStripLogo";
+import { SponsorCarousel } from "@/components/sponsors/SponsorCarousel";
 import { getUpcomingEvents } from "@/lib/queries/events";
 import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
@@ -30,13 +30,11 @@ type SponsorTile = {
 type HomeData = {
   events: EventRow[];
   sponsors: SponsorTile[];
-  mvpTierId: string | null;
 };
 
 const EMPTY_HOME: HomeData = {
   events: [],
   sponsors: [],
-  mvpTierId: null,
 };
 
 async function loadHome(): Promise<HomeData> {
@@ -44,7 +42,7 @@ async function loadHome(): Promise<HomeData> {
     const { current_year } = await getSiteSettingsCore();
     const supabase = createServerClient();
 
-    const [eventsRes, sponsorsRes, mvpTierRes] = await Promise.all([
+    const [eventsRes, sponsorsRes] = await Promise.all([
       // Shares getUpcomingEvents with /events on purpose. This used to be its own
       // inline `.gte("starts_at", now)` query, which meant the homepage and the
       // events page each owned a private definition of "upcoming" and could
@@ -64,25 +62,15 @@ async function loadHome(): Promise<HomeData> {
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true })
         .returns<SponsorTile[]>(),
-      supabase
-        .from("sponsorship_tiers")
-        .select("id")
-        .eq("year", current_year)
-        .eq("active", true)
-        .eq("name", "MVP")
-        .maybeSingle(),
+      // The MVP-tier lookup that used to live here is gone: it existed solely to
+      // split the strip into a larger top-tier row, and the strip is now a
+      // single-row carousel. One fewer query per homepage render.
     ]);
-
-    if (mvpTierRes.error) {
-      console.error("Failed to load MVP tier:", mvpTierRes.error);
-    }
 
     return {
       events: eventsRes,
       sponsors:
         sponsorsRes.error || !sponsorsRes.data ? [] : sponsorsRes.data,
-      mvpTierId:
-        mvpTierRes.error || !mvpTierRes.data ? null : mvpTierRes.data.id,
     };
   } catch {
     return EMPTY_HOME;
@@ -116,18 +104,11 @@ export default async function Home() {
   // the Schedule and Roster tiles use their own decoupled years.
   const { current_schedule_year, current_roster_year, current_year } =
     await getSiteSettingsCore();
-  const [{ events, sponsors, mvpTierId }, carousel] = await Promise.all([
+  const [{ events, sponsors }, carousel] = await Promise.all([
     loadHome(),
     loadHeroCarouselData(),
   ]);
   const quickLinks = buildQuickLinks(current_schedule_year, current_roster_year);
-  const topTierSponsors = mvpTierId
-    ? sponsors.filter((s) => s.tier_id === mvpTierId)
-    : [];
-  const otherSponsors = mvpTierId
-    ? sponsors.filter((s) => s.tier_id !== mvpTierId)
-    : sponsors;
-
   return (
     <>
       <HeroCarousel
@@ -187,28 +168,12 @@ export default async function Home() {
                 sponsor data moved on, because a literal cannot follow the DB. */}
             Thank You to Our {current_year} Sponsors!
           </h2>
-          {topTierSponsors.length > 0 ? (
-            <div className="flex flex-wrap items-center justify-center gap-12 mb-8">
-              {topTierSponsors.map((s) => (
-                <SponsorStripLogo
-                  key={s.id}
-                  sponsor={s}
-                  sizeClass="max-w-[220px] max-h-20"
-                />
-              ))}
-            </div>
-          ) : null}
-          {otherSponsors.length > 0 ? (
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-              {otherSponsors.map((s) => (
-                <SponsorStripLogo
-                  key={s.id}
-                  sponsor={s}
-                  sizeClass="max-w-[160px] max-h-12"
-                />
-              ))}
-            </div>
-          ) : null}
+          {/* One row, six at a time, sliding by one every few seconds, all at
+              the same size. Replaces the old two-row split that rendered the
+              MVP tier larger on its own row — Jeremy wants a single line and
+              capped it at six. The biggest supporter stays pinned in slot 1 by
+              the carousel so a single row doesn't cost them visibility. */}
+          <SponsorCarousel sponsors={sponsors} />
           <div className="text-center mt-10">
             <Link
               href="/sponsors"

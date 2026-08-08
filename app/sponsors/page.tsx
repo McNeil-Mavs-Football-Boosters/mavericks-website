@@ -28,6 +28,21 @@ interface SponsorshipTier {
   sort_order: number;
   year: string;
   price_cents: number;
+  /** Optional showcase-ordering override in cents (migration 117). NULL = rank by price. */
+  showcase_rank_cents: number | null;
+}
+
+/**
+ * Where a tier sits on this showcase. Falls back to headline price.
+ *
+ * Scoreboard is the reason this exists: it costs $3,000, which by raw price
+ * outranks Diamond ($2,500), but it is a TWO-SEASON commitment worth $1,500 a
+ * season — level with Platinum. Faking the price was rejected because
+ * /boosters/sponsor legitimately sells it at $3,000; the override lives in the
+ * data instead, and every other tier leaves it NULL.
+ */
+function showcaseRank(tier: SponsorshipTier): number {
+  return tier.showcase_rank_cents ?? tier.price_cents;
 }
 
 // Widths are min(Npx, 100%) rather than a bare Npx: the MVP box is 440px,
@@ -37,6 +52,8 @@ interface SponsorshipTier {
 const TIER_SIZE_CLASSES: Record<string, string> = {
   MVP: "max-h-60 max-w-[min(440px,100%)]",
   Diamond: "max-h-48 max-w-[min(360px,100%)]",
+  // Between Platinum and Diamond, matching where Scoreboard ranks.
+  Scoreboard: "max-h-44 max-w-[min(340px,100%)]",
   Platinum: "max-h-40 max-w-[min(320px,100%)]",
   Gold: "max-h-32 max-w-[min(280px,100%)]",
   Blue: "max-h-24 max-w-[min(200px,100%)]",
@@ -64,7 +81,21 @@ function SponsorCard({
     />
   );
   return (
-    <div className="flex items-center justify-center">
+    // ⚠️ sizeClasses goes on the WRAPPER too, not just the <img>.
+    //
+    // The max-width used to live only on the image. That caps how large the
+    // logo DRAWS, but the flex item still takes its base size from the image's
+    // INTRINSIC width, so a wide source file inflated its wrapper far past what
+    // was on screen: North Austin Oral Surgery rendered at 320px inside a 957px
+    // wrapper, Capstone at 320px inside 571px. 957 + 571 + gap blew past the
+    // 1248px row and the Platinum tier wrapped to two lines with only two
+    // sponsors in it.
+    //
+    // Blue looked fine purely by luck — those three source files happen to be
+    // small. Gold would have broken the same way the moment a second logo
+    // joined Laurie Flood. Constraining the wrapper makes layout depend on the
+    // DISPLAYED size instead of whatever pixel dimensions a sponsor sent us.
+    <div className={`${sizeClasses} flex items-center justify-center`}>
       {sponsor.website_url ? (
         <a
           href={sponsor.website_url}
@@ -89,7 +120,7 @@ export default async function SponsorsPage() {
   const [tiersResult, sponsorsResult] = await Promise.all([
     supabase
       .from("sponsorship_tiers")
-      .select("id, name, sort_order, year, price_cents")
+      .select("id, name, sort_order, year, price_cents, showcase_rank_cents")
       .eq("year", current_year)
       .eq("active", true)
       // Premier tier first: MVP -> Diamond -> Platinum -> Gold -> Blue -> Custom.
@@ -98,6 +129,8 @@ export default async function SponsorsPage() {
       // (a $0 placeholder tier) at the top. This is the showcase page, where
       // the biggest supporters should read first; the /boosters/sponsor sign-up
       // ladder keeps its own low-to-high ordering.
+      // Ordering is finished in JS below — PostgREST cannot order by
+      // COALESCE(showcase_rank_cents, price_cents). Only ~9 rows.
       .order("price_cents", { ascending: false }),
     supabase
       .from("sponsors")
@@ -119,7 +152,9 @@ export default async function SponsorsPage() {
     console.error("[app/sponsors] sponsors fetch failed", sponsorsResult.error);
   }
 
-  const tiers: SponsorshipTier[] = (tiersResult.data ?? []) as SponsorshipTier[];
+  const tiers: SponsorshipTier[] = ((tiersResult.data ?? []) as SponsorshipTier[])
+    .slice()
+    .sort((a, b) => showcaseRank(b) - showcaseRank(a));
   const sponsors: Sponsor[] = (sponsorsResult.data ?? []) as Sponsor[];
 
   const sponsorsByTier = new Map<string, Sponsor[]>();
