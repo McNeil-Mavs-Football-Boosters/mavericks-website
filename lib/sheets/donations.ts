@@ -24,12 +24,32 @@ const SHEET_TAB = "Form Responses 1";
 const READ_RANGE = `'${SHEET_TAB}'!A:L`;
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
+/**
+ * ⚠️ These strings must match the sheet's header row EXACTLY. They are the
+ * Google Form's question titles, so editing a question in the form rewrites the
+ * header here and breaks the match.
+ *
+ * That is not hypothetical: `displayAnonymous` read "Display as anonymous" while
+ * the live header was "Display as anonymous?" (trailing question mark, added by a
+ * later form edit). Because that column is required, the whole reader bailed and
+ * returned [] — so the public "Thank You to Our Donors" list silently showed
+ * "Be the first to donate" for EVERY donor, including people who had already
+ * given. Found 2026-08-08 while trying to publish a real donation.
+ *
+ * Matching is deliberately EXACT rather than normalized/fuzzy. `displayAnonymous`
+ * gates whether a donor's real name is published, so a near-match that silently
+ * resolves to the wrong column could out someone who asked to stay anonymous.
+ * Failing hard is the correct behavior; the constant just has to be right.
+ *
+ * If the donor list ever goes empty unexpectedly, CHECK THESE AGAINST THE SHEET
+ * FIRST — dump row 1 of "Form Responses 1" and diff.
+ */
 const COL_HEADERS = {
   yourName: "Your Name",
   donationAmount: "Donation Amount",
   otherAmount: "Other Amount (if selected above)",
   displayPublicly: "Display my donation publicly",
-  displayAnonymous: "Display as anonymous",
+  displayAnonymous: "Display as anonymous?",
   dedication: "Dedication (optional)",
   paymentReceived: "Payment Received",
   paymentReceivedDate: "Payment Received Date",
