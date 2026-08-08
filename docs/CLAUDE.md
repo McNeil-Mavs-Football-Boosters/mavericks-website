@@ -19,6 +19,32 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-08 — Vercel image-optimization churn fixed; free tier was at 75% from SEVEN images)
+
+**Commits `a57a88a` + `5267cee`, pushed and verified on prod. Code-only, no migration.**
+
+Vercel emailed 2026-08-07: the free team had used **75% of 100,000 Image Optimization cache writes**. That number is absurd for this site, and chasing *why* mattered more than the fix.
+
+**Only SEVEN source images are metered.** `coach-card.tsx` and `SponsorStripLogo.tsx` render through a plain `<img>`, so the 10 coach photos and 11 sponsor logos cost nothing. The only `next/image` consumers with a remote src are the **6 hero backgrounds**; everything else (`Header`, `Footer`, `StaticHero`, join/committees/volunteer/donate) points at the local `public/brand/mhs-logo.png`. 75k writes from 7 images is churn, not traffic.
+
+**Root cause: every Supabase Storage object serves `cache-control: no-cache`.** Next sets an optimized image's lifetime to `max(minimumCacheTTL, upstream max-age)` (confirmed in `node_modules/next/dist/docs/01-app/03-api-reference/02-components/image.md`). With `no-cache` upstream it fell to the **Next 16 default of 4 hours** — itself a breaking change from v15's 60s — so every variant was re-optimized 6x a day, and Vercel's image cache is regional so each edge region re-wrote its own copy on that clock.
+
+**Measured, not assumed:** 10 of 10 sampled hero variants returned `x-vercel-cache: MISS`. Re-requesting one immediately returned `HIT` with `age=24` — proving the cache works and was simply expiring on the 4h clock.
+
+**Fix: `minimumCacheTTL: 2678400` (31 days)**, the value the Next docs recommend for cost. ~186x fewer revalidations.
+
+**⚠️ The upstream `no-cache` is NOT fixable from here — don't burn time on it.** It is a Supabase platform override, not our metadata. Proven both directions: hero-01's stored `cacheControl` was successfully set to `max-age=31536000` (confirmed in `storage.objects.metadata`) and it *still* serves `no-cache`; and untouched hero-02, storing the Supabase default `max-age=3600`, serves `no-cache` too. A cache-busted request that reached origin (`cf-cache-status: MISS`) also returned `no-cache`. Neither the `cache-control` request header nor the multipart `cacheControl` form field changes the served header. `minimumCacheTTL` wins anyway since Next takes the larger of the two.
+
+**`deviceSizes` trimmed 8 widths → `[640, 828, 1080, 1920, 2048]`.** First pass capped at 1920 and that was **over-trimmed**: the hero is full-bleed at `sizes="100vw"`, so a retina laptop wants ~3456px and would have gotten a ~1.8x upscale on the one photo that fills the screen. Verified with Playwright at `device_scale_factor=2` that a 1512px retina viewport really does request **w=2048**. Since `minimumCacheTTL` already removes ~186x of the cost, variant count is not the lever worth trading image quality for. **3840 stays dropped** — a 4K variant from an 851KB source behind a dark scrim is pure waste.
+
+**⚠️ TRADEOFF now baked in: replacing an image at the SAME storage path serves stale for up to 31 days.** There is no cache-invalidation mechanism. Upload under a new filename and update the row (which is already how sponsor logos are handled), or add a `?v=N`.
+
+**Verified on prod:** w=640/828/1080/1920/2048 → 200; w=750/1200/3840 → 400 (proof the config is live). Homepage renders with **zero** broken images at 390px and at 1512px retina, zero failed requests.
+
+**Open, low priority:** the hero sources are **851 KB JPEGs**. End users never receive that (Next downsizes), but the optimizer refetches it, so downsizing the six originals to ~1920px would cut Supabase egress and optimization time. Doesn't affect the cache-write metric.
+
+**Only one Next.js project exists on this machine**, so `mavericks-website` is the team's image-optimization consumer. If usage doesn't fall over the coming week, check whether another project was deployed to `jeremy-vest-s-projects` from elsewhere.
+
 ## Status (2026-08-04 later — sponsor asset requirements published; Program Ad closed; two latent form bugs found)
 
 **Commits `acf5c5b` (page section) and `64aefdf` (migration 113), both pushed to `main` as `jeremyvest-ATXcoder`. Last migration applied: 113.**
