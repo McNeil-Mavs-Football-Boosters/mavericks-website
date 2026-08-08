@@ -32,10 +32,16 @@ const nextConfig: NextConfig = {
     // a ?v=N to the stored path.
     minimumCacheTTL: 2678400,
     // Default is 8 widths up to 3840, and every width is a separately cached and
-    // separately BILLED variant. This site's only full-bleed image is a hero
-    // photo sitting behind a dark scrim, where a 4K variant buys nothing
-    // perceptible. Four widths halves the variant count.
-    deviceSizes: [640, 828, 1080, 1920],
+    // separately BILLED variant. Dropping 750/1200/3840 trims the ladder without
+    // hurting anything real.
+    //
+    // 2048 is deliberately KEPT. The hero is full-bleed at sizes="100vw", so a
+    // retina laptop (1728 CSS px at DPR 2) wants ~3456px; capping at 1920 would
+    // upscale ~1.8x and visibly soften it. Since minimumCacheTTL above already
+    // removes ~186x of the revalidation cost, variant count is no longer the
+    // lever worth trading image quality for. 3840 stays dropped — a 4K variant
+    // rendered from an 851KB source, behind a dark scrim, is pure waste.
+    deviceSizes: [640, 828, 1080, 1920, 2048],
   },
 };
 
