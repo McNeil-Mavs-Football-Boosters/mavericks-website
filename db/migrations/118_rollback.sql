@@ -1,0 +1,189 @@
+-- 118_rollback.sql
+-- Restores the practice bodies exactly as they were before 118 (Week 1 present,
+-- next week back in the tentative list at the OLD later times).
+
+begin;
+
+update practice_schedules set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. Varsity and JV practice together.
+
+## Week 1 — August 3–9
+
+### Monday, Aug 3
+- **6:45 a.m.** — Equipment pickup, for players who still need equipment
+- **7:10 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Tuesday, Aug 4 — early start
+- **5:40 a.m.** — Arrival
+- **5:55 a.m.** — Warm-up begins on the field
+- **7:45 a.m.** — Practice ends
+
+### Wednesday, Aug 5
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Thursday, Aug 6
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Friday, Aug 7
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+- **5:00–8:00 p.m.** — Pool party at Avery Ranch
+
+### Saturday, Aug 8
+- **6:45 a.m.** — Arrival
+- **7:00 a.m.** — Warm-up begins on the field
+- **7:30–8:30 a.m.** — Upperclassmen intra-squad scrimmage
+
+### Sunday, Aug 9
+Off day. Recover, reset and prepare.
+
+## After Week 1 — tentative
+
+**Everything below is tentative and subject to change.** Times are AM unless noted. See the Games schedule for scrimmages and Game 1.
+
+- **Mon Aug 10** — 6:30–10:00
+- **Tue Aug 11** — 6:30–10:00
+- **Wed Aug 12** — 6:30–10:00
+- **Thu Aug 13** — See Games: scrimmage vs Hendrickson (home)
+- **Fri Aug 14** — 7:00–10:00
+- **Sat Aug 15** — 9:00–11:00
+- **Mon Aug 17** — 6:30–10:00
+- **Tue Aug 18** — 6:30–10:00
+- **Wed Aug 19** — 6:20–8:15 · First day of school
+- **Thu Aug 20** — See Games: scrimmage vs Eastview (home), time TBD
+- **Fri Aug 21** — 7:00–8:00 · Picture day
+- **Mon Aug 24** — 6:00–8:15
+- **Tue Aug 25** — 6:00–8:15
+- **Wed Aug 26** — 6:20–8:15
+- **Thu Aug 27** — 7:50–8:30
+- **Fri Aug 28** — See Games: game 1 at Bowie (away)$body$
+where year = '2026-27' and team_level = 'varsity';
+
+update practice_schedules set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. Varsity and JV practice together.
+
+## Week 1 — August 3–9
+
+### Monday, Aug 3
+- **6:45 a.m.** — Equipment pickup, for players who still need equipment
+- **7:10 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Tuesday, Aug 4 — early start
+- **5:40 a.m.** — Arrival
+- **5:55 a.m.** — Warm-up begins on the field
+- **7:45 a.m.** — Practice ends
+
+### Wednesday, Aug 5
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Thursday, Aug 6
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+
+### Friday, Aug 7
+- **7:15 a.m.** — Arrival
+- **7:30 a.m.** — Warm-up lines begin on the field
+- **11:00 a.m.** — Practice ends
+- **5:00–8:00 p.m.** — Pool party at Avery Ranch
+
+### Saturday, Aug 8
+- **6:45 a.m.** — Arrival
+- **7:00 a.m.** — Warm-up begins on the field
+- **7:30–8:30 a.m.** — Upperclassmen intra-squad scrimmage
+
+### Sunday, Aug 9
+Off day. Recover, reset and prepare.
+
+## After Week 1 — tentative
+
+**Everything below is tentative and subject to change.** Times are AM unless noted. See the Games schedule for scrimmages and Game 1.
+
+- **Mon Aug 10** — 6:30–10:00
+- **Tue Aug 11** — 6:30–10:00
+- **Wed Aug 12** — 6:30–10:00
+- **Thu Aug 13** — See Games: scrimmage vs Hendrickson (home)
+- **Fri Aug 14** — 7:00–10:00
+- **Sat Aug 15** — 9:00–11:00
+- **Mon Aug 17** — 6:30–10:00
+- **Tue Aug 18** — 6:30–10:00
+- **Wed Aug 19** — 6:20–8:15 · First day of school
+- **Thu Aug 20** — See Games: scrimmage vs Eastview (home), time TBD
+- **Fri Aug 21** — 7:00–8:00 · Picture day
+- **Mon Aug 24** — 6:00–8:15
+- **Tue Aug 25** — 6:00–8:15
+- **Wed Aug 26** — 6:20–8:15
+- **Thu Aug 27** — 7:50–8:30
+- **Fri Aug 28** — See Games: game 1 at Bowie (away)$body$
+where year = '2026-27' and team_level = 'jv';
+
+update practice_schedules set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time.
+
+## Week 1 — August 3–9
+
+### Monday, Aug 3
+- **9:20 a.m.** — Equipment pickup, for players who still need equipment
+- **10:00 a.m.** — Warm-up lines begin on the field
+- **12:00 p.m.** — Practice ends
+
+### Tuesday, Aug 4 — evening practice
+- **6:30 p.m.** — Arrival
+- **6:45 p.m.** — Practice begins on the field
+- **8:15 p.m.** — Practice ends
+
+### Wednesday, Aug 5
+- **9:45 a.m.** — Arrival
+- **10:00 a.m.** — Practice begins on the field
+- **12:00 p.m.** — Practice ends
+
+### Thursday, Aug 6
+- **9:45 a.m.** — Arrival
+- **10:00 a.m.** — Practice begins on the field
+- **12:00 p.m.** — Practice ends
+
+### Friday, Aug 7
+- **9:45 a.m.** — Arrival
+- **10:00 a.m.** — Practice begins on the field
+- **12:00 p.m.** — Practice ends
+- **5:00–8:00 p.m.** — Pool party at Avery Ranch
+
+### Saturday, Aug 8
+- **8:30 a.m.** — Arrival
+- **8:45 a.m.** — Warm-up begins on the field
+- **9:00–10:00 a.m.** — Freshman intra-squad scrimmage
+
+### Sunday, Aug 9
+Off day. Recover, reset and prepare.
+
+## After Week 1 — tentative
+
+**Everything below is tentative and subject to change.** See the Games schedule for scrimmages and Game 1.
+
+- **Mon Aug 10** — 9:00–11:00
+- **Tue Aug 11** — 9:00–11:00
+- **Wed Aug 12** — 9:00–11:00 (or 6:30–8:30 PM)
+- **Thu Aug 13** — See Games: scrimmage vs Hendrickson (home)
+- **Fri Aug 14** — 9:00–11:00
+- **Sat Aug 15** — No practice
+- **Mon Aug 17** — 9:00–11:00
+- **Tue Aug 18** — 9:00–11:00
+- **Wed Aug 19** — 8:10–9:45 · First day of school
+- **Thu Aug 20** — See Games: scrimmage vs Eastview (home), time TBD
+- **Fri Aug 21** — 8:00–10:15 · Picture day
+- **Mon Aug 24** — 8:10–9:50
+- **Tue Aug 25** — 8:10–9:50
+- **Wed Aug 26** — 8:10–9:50
+- **Thu Aug 27** — 8:45–9:50
+- **Fri Aug 28** — 8:30–9:50 · Game 1 at Bowie (away)$body$
+where year = '2026-27' and team_level = 'freshman';
+
+commit;
