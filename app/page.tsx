@@ -11,6 +11,7 @@ import {
 import { EventRowCard } from "@/components/events/EventListView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { SponsorStripLogo } from "@/components/sponsors/SponsorStripLogo";
+import { getUpcomingEvents } from "@/lib/queries/events";
 import { loadHeroCarouselData } from "@/lib/queries/hero";
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
@@ -42,17 +43,14 @@ async function loadHome(): Promise<HomeData> {
   try {
     const { current_year } = await getSiteSettingsCore();
     const supabase = createServerClient();
-    const nowIso = new Date().toISOString();
 
     const [eventsRes, sponsorsRes, mvpTierRes] = await Promise.all([
-      supabase
-        .from("events")
-        .select("*")
-        .eq("status", "published")
-        .gte("starts_at", nowIso)
-        .order("starts_at", { ascending: true })
-        .limit(2)
-        .returns<EventRow[]>(),
+      // Shares getUpcomingEvents with /events on purpose. This used to be its own
+      // inline `.gte("starts_at", now)` query, which meant the homepage and the
+      // events page each owned a private definition of "upcoming" and could
+      // disagree about the same event — exactly what happened when the split
+      // moved from start-time to end-time (2026-08-08). One decision site now.
+      getUpcomingEvents(2),
       supabase
         .from("sponsors")
         .select("id, name, logo_url, website_url, tier_id")
@@ -75,7 +73,7 @@ async function loadHome(): Promise<HomeData> {
     }
 
     return {
-      events: eventsRes.error || !eventsRes.data ? [] : eventsRes.data,
+      events: eventsRes,
       sponsors:
         sponsorsRes.error || !sponsorsRes.data ? [] : sponsorsRes.data,
       mvpTierId:
