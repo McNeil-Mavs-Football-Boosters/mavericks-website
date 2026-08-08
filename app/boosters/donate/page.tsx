@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { PartnerBadge } from "@/components/sponsors/PartnerBadge";
 import { DONATION_FORM_URL } from "@/lib/constants";
+import { getCommunityPartners } from "@/lib/queries/sponsors";
+import { getSiteSettingsCore } from "@/lib/site-settings";
 import {
   getConfirmedDonations,
   type Donation,
@@ -69,7 +72,11 @@ function DonationRow({
 }
 
 export default async function BoostersDonatePage() {
-  const donations = await getConfirmedDonations(20);
+  const { current_year } = await getSiteSettingsCore();
+  const [donations, partners] = await Promise.all([
+    getConfirmedDonations(20),
+    getCommunityPartners(current_year),
+  ]);
 
   return (
     <>
@@ -208,6 +215,40 @@ export default async function BoostersDonatePage() {
           </>
         )}
       </section>
+
+      {/* 5b. Community Partners — businesses giving in-kind support (migration 115).
+          Sits AFTER the individual donor list on purpose: individuals are this
+          page's primary audience, and businesses read as a second, different
+          kind of support rather than competing with them.
+
+          ⚠️ Name + logo + link only. The club is a 501(c)(3), and adding
+          promotional copy (taglines, offers, qualitative claims) would turn
+          acknowledgment into advertising. No dollar values either — valuing an
+          in-kind gift is the donor's job for their own return, not ours. */}
+      {partners.length > 0 ? (
+        <section
+          id="community-partners"
+          // scroll-mt clears the sticky header when /sponsors links to this anchor.
+          className="container mx-auto px-4 pb-12 md:pb-16 scroll-mt-24"
+        >
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-mavs-navy text-center">
+              Community Partners
+            </h2>
+            <div className="h-1 w-20 bg-mavs-green mx-auto mt-3 mb-6"></div>
+            <p className="text-center text-gray-600 max-w-2xl mx-auto">
+              Local businesses supporting McNeil Football with meals, gift cards,
+              and in-kind contributions. We&apos;re grateful for every one of
+              them.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+              {partners.map((partner) => (
+                <PartnerBadge key={partner.id} partner={partner} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* 6. Bottom navy CTA band */}
       <section className="bg-mavs-navy text-white py-12 md:py-16">

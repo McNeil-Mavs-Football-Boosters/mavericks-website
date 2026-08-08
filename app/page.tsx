@@ -54,6 +54,11 @@ async function loadHome(): Promise<HomeData> {
       supabase
         .from("sponsors")
         .select("id, name, logo_url, website_url, tier_id")
+        // Partners (migration 115) are acknowledged only on /boosters/donate.
+        // Missing this filter on ANY sponsor surface republishes an in-kind
+        // partner as if they had bought a tier — the exact Rudy's failure this
+        // project shipped twice. All three surfaces must carry it.
+        .eq("kind", "sponsor")
         .eq("active", true)
         .eq("year", current_year)
         .order("sort_order", { ascending: true })

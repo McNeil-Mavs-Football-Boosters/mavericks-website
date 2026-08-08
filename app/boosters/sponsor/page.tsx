@@ -226,6 +226,11 @@ export default async function BoostersSponsorPage() {
     supabase
       .from("sponsors")
       .select("id, name, logo_url, website_url, tier_id, sort_order, year")
+      // Partners (migration 115) are acknowledged only on /boosters/donate.
+      // Missing this filter on ANY sponsor surface republishes an in-kind
+      // partner as if they had bought a tier — the exact Rudy's failure this
+      // project shipped twice. All three surfaces must carry it.
+      .eq("kind", "sponsor")
       .eq("year", current_year)
       .eq("active", true)
       .order("sort_order", { ascending: true }),

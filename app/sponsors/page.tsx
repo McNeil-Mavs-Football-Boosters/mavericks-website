@@ -102,6 +102,11 @@ export default async function SponsorsPage() {
     supabase
       .from("sponsors")
       .select("id, name, logo_url, website_url, tier_id, sort_order, year")
+      // Partners (migration 115) are acknowledged only on /boosters/donate.
+      // Missing this filter on ANY sponsor surface republishes an in-kind
+      // partner as if they had bought a tier — the exact Rudy's failure this
+      // project shipped twice. All three surfaces must carry it.
+      .eq("kind", "sponsor")
       .eq("year", current_year)
       .eq("active", true)
       .order("sort_order", { ascending: true }),
@@ -225,6 +230,31 @@ export default async function SponsorsPage() {
           </div>
         </section>
       )}
+
+      {/* Community Partners pointer (migration 115).
+          A business that donated meals or gift cards will come looking for
+          itself HERE, because /sponsors is where businesses look — but partners
+          are acknowledged on the donate page so they never imply a purchased
+          level. This is the bridge, and Jeremy asked for it to be visible
+          rather than a footnote, so it's a full bordered band and not a small
+          text link. */}
+      <section className="container mx-auto px-4 pt-10 md:pt-14">
+        <div className="border-2 border-mavs-green/40 rounded-lg p-8 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-mavs-navy">
+            Community Partners
+          </h2>
+          <p className="text-lg text-gray-700 mt-3 max-w-2xl mx-auto">
+            Local businesses also support McNeil Football with meals, gift
+            cards, and other in-kind contributions.
+          </p>
+          <Link
+            href="/boosters/donate#community-partners"
+            className="inline-block mt-6 border-2 border-mavs-navy text-mavs-navy px-6 py-3 font-bold uppercase hover:bg-mavs-navy hover:text-white transition-colors"
+          >
+            See Our Community Partners →
+          </Link>
+        </div>
+      </section>
 
       {/* Footer CTA card */}
       <section className="container mx-auto px-4 py-12 md:py-16">
