@@ -19,6 +19,46 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-08 evening — Scoreboard tier, W Homes, homepage carousel, tier-wrap bug, new Capstone logo)
+
+**Migration 117 applied. Commit `dbdddb3` pushed and verified on prod. Last migration applied: 117.** 8 sponsors, 7 community partners.
+
+### ⚠️ The tier-wrap bug — read this before touching any logo layout
+
+`SponsorCard` put its size cap only on the `<img>`. That caps how large a logo **draws**, but a flex item still takes its base size from the image's **INTRINSIC** width. North Austin rendered at 320px inside a **957px** wrapper and Capstone at 320px inside 571px, so 1576px of flex items overflowed the 1248px row and the Platinum tier wrapped to two lines with only two sponsors in it. Blue looked fine purely by luck (small source files) and Gold would have broken the instant a second logo joined Laurie Flood. **The cap now goes on the wrapper as well**, so layout depends on displayed size rather than whatever pixel dimensions a sponsor happened to email us.
+
+**Verification gotcha, hit twice this session:** measuring "visual rows" by an image's `y` is WRONG under `items-center` — logos of different heights on the SAME row have different `y` but the same **center-y**. Compare centre-y. Also, a check run seconds after deploy can hit a stale edge copy and report the old layout; re-measure before believing a fix failed.
+
+### Rudy's is a paying sponsor again (fifth state change for that row)
+
+$3,000 for two seasons on the scoreboard. Moved out of Community Partners (8 → 7) and onto the sponsor side (6 → 8 with W Homes). Jeremy's own headcount ("you'll be up to 8") independently confirmed it. **Still a conversion, never an INSERT** — the row keeps its id and created_at through all of: 041 seed → 060 remove → 094 re-add → 106 carry → 111 deactivate → 115 partner → 117 sponsor. **Removed from partners rather than listed in both**: paying supersedes in-kind, and one business in two places reads as double-counting. If they are also still donating meals and both should show, that is a deliberate call.
+
+### `sponsorship_tiers.showcase_rank_cents` (new, nullable)
+
+`/sponsors` ranks tiers by price, which would put Scoreboard's $3,000 **above** Diamond's $2,500 — but it is a two-season commitment worth $1,500/season, level with Platinum. Faking the price was rejected because `/boosters/sponsor` legitimately sells it at $3,000. NULL means "rank by price", so **no tier needed backfilling**. Scoreboard = 175000, landing between Platinum (150000) and Diamond (250000). Ordering is finished in JS — PostgREST cannot `ORDER BY COALESCE(...)`. Live order: Scoreboard → Platinum → Gold → Blue.
+
+### Homepage sponsor carousel
+
+`components/sponsors/SponsorCarousel.tsx`. One row, six visible, all the same size, **sliding by one every 4s** so one logo leaves as another arrives — paging six at a time would read as a flash. Replaces the old two-row MVP-larger split.
+
+**The first sponsor is PINNED** (slot 1, by `sort_order`), which settles the long-open "does MVP pin to page 1" question: a plain sliding window would eventually rotate the biggest supporter off screen, and the letter sells the top tier on visibility. Off-window logos stay in the DOM (`display:none`, not unmounted) so crawlers still see every paying sponsor.
+
+Uses **`useSyncExternalStore`** for prefers-reduced-motion — the fix identified for `HeroCarousel`'s `set-state-in-effect` lint error but never applied; copy this pattern if that component is ever touched. **No pause-on-hover**, deliberately (the HeroCarousel freeze bug, commit `5934640`).
+
+Also removed the now-dead MVP-tier lookup from `app/page.tsx` — one fewer query per homepage render.
+
+### Logo pipeline: new `"none"` trim mode
+
+`partner_logos/prep_logos.py` gained a third trim mode, and it exists because of a near-miss. Capstone's official 2026 mark runs **edge to edge** — red block left, black panel right, zero padding. The `"border"` mode diffs against the top-left corner colour, so it would have found the first non-red pixel (the white "C") and **cropped away the entire red section**. On this file trimming is not a no-op, it is destructive. Check whether art has real padding before choosing a mode.
+
+**Capstone's logo was replaced in place** under the same filename, so no DB or code change was needed and every surface picked it up at once. The previous file is kept at `partner_logos/sources/capstone-PREVIOUS-backup.png`.
+
+⚠️ **Storage propagation:** a public-URL fetch immediately after an upsert can still return the OLD bytes from the Cloudflare edge while the origin already has the new object. Confirm against `storage.objects.metadata` (size/eTag) or a cache-busted URL before concluding an upload failed.
+
+**W Homes Collective** added as Gold. ⚠️ Its source is only **204×204**, so it renders soft on retina and cannot be sharpened by upscaling — ask for a larger original.
+
+**Verified on prod:** all four tier sections render on one row each; tier order correct; carousel shows 8-in-DOM / 6-visible / 1 row, advances by one, Rudy's first in every sampled frame; no horizontal overflow at 390/768/1280.
+
 ## Status (2026-08-08 later — Community Partners; events split on END time; event photo albums)
 
 **Migrations 114 + 115 applied. Commits `4d51286`, `b5934df`, `22f4e90`, all pushed and verified on prod. Last migration applied: 115.**
