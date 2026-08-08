@@ -31,12 +31,16 @@ export function PartnerBadge({ partner }: { partner: PartnerBadgeItem }) {
     <img
       src={logoSrc}
       alt={partner.name}
-      className="max-h-16 max-w-[min(180px,100%)] w-auto h-auto object-contain"
+      // Height is the binding constraint for the wide logos and width for the
+      // near-square ones (Chicoine). 80px keeps the heavy colour-block marks
+      // (Jack Allen's, Mighty Fine, Phil's, The League) from dominating while
+      // still leaving Chicoine's thin linework and Tony C's second line legible.
+      className="max-h-20 max-w-[min(200px,100%)] w-auto h-auto object-contain"
     />
   ) : (
     // Matched to the logo box so a name-only partner occupies the same cell and
     // the grid doesn't go ragged.
-    <span className="flex items-center justify-center max-h-16 min-h-16 max-w-[min(180px,100%)] px-3 text-center text-base font-bold uppercase tracking-wide text-mavs-navy">
+    <span className="flex items-center justify-center max-h-20 min-h-20 max-w-[min(200px,100%)] px-3 text-center text-base font-bold uppercase tracking-wide text-mavs-navy">
       {partner.name}
     </span>
   );
