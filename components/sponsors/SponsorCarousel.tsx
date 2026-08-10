@@ -11,32 +11,6 @@ const VISIBLE = 6;
 const INTERVAL_MS = 4000;
 
 /**
- * Homepage sponsor strip: one row, six logos, all the same size.
- *
- * Rotation is a SLIDING WINDOW, not paging. Every tick one logo leaves and one
- * arrives, which is what Jeremy asked for — paging by six would swap the whole
- * row at once and read as a flash rather than a rotation.
- *
- * ── The first sponsor is PINNED ──
- * `sponsors[0]` (ordered by sort_order, so the largest commitment) holds slot 1
- * permanently and the rest cycle through the remaining five slots. This is the
- * answer to the open "does MVP get pinned to page 1" question: a strict window
- * over all sponsors would eventually rotate the biggest supporter off screen,
- * and the sponsorship letter sells the top tier on visibility. Pinning keeps the
- * single-row look while honouring that.
- *
- * ── Behaviour matched to HeroCarousel ──
- * Pauses when the tab is hidden and respects prefers-reduced-motion (rendering
- * a static first window). Deliberately NO pause-on-hover: that feature caused a
- * freeze bug in HeroCarousel (commit 5934640) when the cursor happened to rest
- * over the element after a page load, and it is not worth reintroducing.
- *
- * ── Every logo stays in the DOM ──
- * Off-window logos are hidden with CSS, not unmounted, so crawlers and non-JS
- * visitors still see every sponsor. Sponsors are paying for visibility; they
- * should not be invisible to a search engine because of a rotation.
- */
-/**
  * prefers-reduced-motion as an external store.
  *
  * Written this way on purpose: the equivalent in HeroCarousel calls setState
@@ -57,6 +31,30 @@ function useReducedMotion(): boolean {
   );
 }
 
+/**
+ * Homepage sponsor strip: one row, six logos, all the same size.
+ *
+ * Rotation is a SLIDING WINDOW, not paging. Every tick one logo leaves and one
+ * arrives; paging by six would swap the whole row at once and read as a flash.
+ *
+ * ── Every sponsor is treated equally ──
+ * There is no pinned slot. An earlier version held sponsors[0] in slot 1
+ * permanently so the largest commitment could never rotate off screen, but
+ * Jeremy asked 2026-08-09 for Rudy's to be "the same as everyone else on the
+ * homepage". The window now walks the full list, so each sponsor gets the same
+ * share of screen time and display order is purely sort_order.
+ *
+ * ── Behaviour matched to HeroCarousel ──
+ * Pauses when the tab is hidden and respects prefers-reduced-motion (rendering
+ * a static first window). Deliberately NO pause-on-hover: that caused a freeze
+ * bug in HeroCarousel (commit 5934640) when the cursor happened to rest over the
+ * element after a page load.
+ *
+ * ── Every logo stays in the DOM ──
+ * Off-window logos are hidden with CSS, not unmounted, so crawlers and non-JS
+ * visitors still see every sponsor. Sponsors are paying for visibility; they
+ * should not be invisible to a search engine because of a rotation.
+ */
 export function SponsorCarousel({
   sponsors,
 }: {
@@ -66,17 +64,15 @@ export function SponsorCarousel({
   const [offset, setOffset] = useState(0);
   const reducedMotion = useReducedMotion();
 
-  // Pinned head + rotating tail. The tail cycles through VISIBLE-1 slots.
-  const [pinned, ...tail] = sponsors;
   const animate = rotates && !reducedMotion;
 
   useEffect(() => {
-    if (!animate || tail.length === 0) return;
+    if (!animate || sponsors.length === 0) return;
     let id: ReturnType<typeof setInterval> | null = null;
     const start = () => {
       if (id === null) {
         id = setInterval(
-          () => setOffset((o) => (o + 1) % tail.length),
+          () => setOffset((o) => (o + 1) % sponsors.length),
           INTERVAL_MS,
         );
       }
@@ -94,15 +90,14 @@ export function SponsorCarousel({
       stop();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [animate, tail.length]);
+  }, [animate, sponsors.length]);
 
   // The window is simply the first VISIBLE entries of the rotated order, so
   // there is no separate visibility set to keep in sync.
   const ordered = useMemo(() => {
     if (!rotates) return sponsors;
-    const rotated = tail.map((_, i) => tail[(offset + i) % tail.length]!);
-    return pinned ? [pinned, ...rotated] : rotated;
-  }, [rotates, sponsors, pinned, tail, offset]);
+    return sponsors.map((_, i) => sponsors[(offset + i) % sponsors.length]!);
+  }, [rotates, sponsors, offset]);
 
   return (
     <div
