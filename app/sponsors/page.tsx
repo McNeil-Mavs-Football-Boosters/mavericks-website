@@ -55,6 +55,8 @@ const TIER_SIZE_CLASSES: Record<string, string> = {
   // Between Platinum and Diamond, matching where Scoreboard ranks.
   Scoreboard: "max-h-44 max-w-[min(340px,100%)]",
   Platinum: "max-h-40 max-w-[min(320px,100%)]",
+  // Between Platinum and Gold, matching where Meal ranks.
+  Meal: "max-h-36 max-w-[min(300px,100%)]",
   Gold: "max-h-32 max-w-[min(280px,100%)]",
   Blue: "max-h-24 max-w-[min(200px,100%)]",
 };

@@ -222,6 +222,10 @@ export default async function BoostersSponsorPage() {
       )
       .eq("year", current_year)
       .eq("active", true)
+      // Display-only tiers (migration 122) group sponsors on /sponsors but are
+      // NOT for sale here. Meal has no price and no published benefits; showing
+      // it on the sign-up ladder would invite people to buy an undefined thing.
+      .eq("sellable", true)
       .order("sort_order", { ascending: true }),
     supabase
       .from("sponsors")
