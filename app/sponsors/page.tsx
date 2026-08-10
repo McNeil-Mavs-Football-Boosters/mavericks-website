@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { PartnerBadge } from "@/components/sponsors/PartnerBadge";
+import { getCommunityPartners } from "@/lib/queries/sponsors";
+
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { publicStorageUrl } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -119,7 +122,7 @@ export default async function SponsorsPage() {
   const { current_year } = await getSiteSettingsCore();
   const supabase = createServerClient();
 
-  const [tiersResult, sponsorsResult] = await Promise.all([
+  const [tiersResult, sponsorsResult, partners] = await Promise.all([
     supabase
       .from("sponsorship_tiers")
       .select("id, name, sort_order, year, price_cents, showcase_rank_cents")
@@ -145,6 +148,7 @@ export default async function SponsorsPage() {
       .eq("year", current_year)
       .eq("active", true)
       .order("sort_order", { ascending: true }),
+    getCommunityPartners(current_year),
   ]);
 
   if (tiersResult.error) {
@@ -268,30 +272,28 @@ export default async function SponsorsPage() {
         </section>
       )}
 
-      {/* Community Partners pointer (migration 115).
-          A business that donated meals or gift cards will come looking for
-          itself HERE, because /sponsors is where businesses look — but partners
-          are acknowledged on the donate page so they never imply a purchased
-          level. This is the bridge, and Jeremy asked for it to be visible
-          rather than a footnote, so it's a full bordered band and not a small
-          text link. */}
-      <section className="container mx-auto px-4 pt-10 md:pt-14">
-        <div className="border-2 border-mavs-green/40 rounded-lg p-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-mavs-navy">
+      {/* Community Partners — the real section, moved here from the donate page
+          2026-08-09. These are sub-$500 in-kind supporters: no homepage
+          recognition, but the committee wanted them acknowledged at the bottom
+          of the sponsorship page. Styled to match the tier sections above so it
+          reads as the last rung rather than a bolted-on band.
+
+          No explanatory copy, per Jeremy — the heading carries it. That also
+          keeps this squarely on the acknowledgment side of the 501(c)(3)
+          acknowledgment/advertising line: name, logo, link, nothing else. */}
+      {partners.length > 0 ? (
+        <section className="container mx-auto px-4 py-10 md:py-14 border-t-2 border-mavs-green/30">
+          <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-mavs-navy mb-2">
             Community Partners
           </h2>
-          <p className="text-lg text-gray-700 mt-3 max-w-2xl mx-auto">
-            Local businesses also support McNeil Football with meals, gift
-            cards, and other in-kind contributions.
-          </p>
-          <Link
-            href="/boosters/donate#community-partners"
-            className="inline-block mt-6 border-2 border-mavs-navy text-mavs-navy px-6 py-3 font-bold uppercase hover:bg-mavs-navy hover:text-white transition-colors"
-          >
-            See Our Community Partners →
-          </Link>
-        </div>
-      </section>
+          <div className="h-0.5 w-12 bg-mavs-green mb-8"></div>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {partners.map((partner) => (
+              <PartnerBadge key={partner.id} partner={partner} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Footer CTA card */}
       <section className="container mx-auto px-4 py-12 md:py-16">
