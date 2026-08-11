@@ -19,6 +19,83 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-09/10 — practice rebuilt from Coach's doc; sponsor/partner model settled after heavy churn)
+
+**Migrations 118 → 124 applied. Last migration applied: 124.** Commits `57bdf68` → `1b5ffe2`, all pushed and verified on prod.
+
+### CURRENT STATE (read this first — the tiers moved a lot in three days)
+
+| Surface | Contents |
+|---|---|
+| Platinum | Capstone Acquisitions, North Austin Oral Surgery |
+| Gold | Laurie Flood, Mighty Fine, Rudy's BBQ, The League, Tony C's, W Homes Collective |
+| Blue | Luv Braces, Mama Betty's, Freddie's Carwash |
+| Community Partners | Amy's, Chicoine Chiropractic, Jack Allen's, Phil's Icehouse, Santiago's |
+| Homepage carousel | all 11 sponsors, 6 visible, sliding by one every 4s, **no pinned slot** |
+| Community Partners live at | the BOTTOM of `/sponsors` — no longer on `/boosters/donate` |
+
+### Practice: 118 was wrong, 120 is right
+
+**118** was built from a verbal relay and **120 rebuilt Week 2 from Coach's actual "MAV FOOTBALL WEEKLY SCHEDULE, August 10-15" doc.** Six differences: upper end 9:50→**10:00**; freshman arrival 8:35→**8:30**; Thursday placeholder→**full morning + scrimmage times**; Friday practice→**WEIGHTS / CONDITIONING / FILM**; Saturday upper 9:00-11:00→**7:00/7:25/10:30**; Saturday freshmen "no practice"→**9:30/9:55/10:45**.
+
+118 had explicitly flagged Friday and Saturday as unconfirmed because Coach gave only one set of times for "next week". **Both were wrong, and Friday was not even a practice.** Standing rule reconfirmed: **Coach's weekly doc outranks any verbal relay or preseason grid** — wait for the doc before publishing times if you can.
+
+**⚠️ JV NOW DIVERGES FROM VARSITY.** First time these bodies differ. Coach's doc has only UPPERCLASSMEN (SOPH/JR/SR) and FRESHMEN columns, so JV always shared the upperclassmen body — but Thursday's freshmen cell reads **"FRESHMAN & JV SCRIMMAGE"** at 5:30 p.m. while upperclassmen scrimmage at 7:00. Read literally, JV does the 7:35 a.m. practice then scrimmages at 5:30. That is an **inference from an internally ambiguous doc** (JV are sophomores, so they also sit in the upperclassmen column) and was flagged to Jeremy. Publishing 7:00 for JV was the more dangerous guess — a JV family would arrive 90 minutes late.
+
+Week 1 was removed (Jeremy's call, it had run). **Meet the Mavs is on both Friday blocks, marked mandatory**, with time/venue read from the events row (migration 108) rather than retyped so the practice page and `/events` cannot drift.
+
+**Two verification techniques worth reusing:**
+- **Replay a real row at a simulated time.** Querying with `now` set to 6 p.m. on pool-party day proved the old end-time rule had already dropped it to Past while the new rule kept it Upcoming — far stronger than eyeballing.
+- **Scope assertions to the section you changed.** A whole-body check for the stale `9:50` false-positived on the legitimate `Aug 24 — 8:10–9:50` tentative entry. Same class as the earlier `6:30–10:00` false positive that was really Aug 17/18.
+
+### The sponsor/partner model, and the churn that produced it
+
+Four columns now carry this. **`kind` is the only one currently doing work** — know that before assuming the others are dead:
+
+| Column | Meaning | Currently |
+|---|---|---|
+| `sponsors.kind` | `'sponsor'` (bought a level) vs `'community_partner'` (in-kind only). **Every sponsor surface filters `kind='sponsor'`.** | in use |
+| `sponsors.provides_in_kind` | a paying sponsor who ALSO gives in kind, so they appear in both places | **0 rows** — added by 119 for Rudy's, cleared by 122 |
+| `sponsorship_tiers.showcase_rank_cents` | overrides `/sponsors` ordering when headline price misrepresents per-season value | Scoreboard only |
+| `sponsorship_tiers.sellable` | `false` = display-only, grouped on `/sponsors` but NOT on the `/boosters/sponsor` ladder. Distinct from `active`, which hides from BOTH | Meal only (now inactive) |
+
+**Rudy's changed state five more times in three days** (041→060→094→106→111→115 partner→117 Scoreboard→119 both→122 sponsor-only→123 Meal→124 Gold). Every change was a **conversion of the same row**, never an INSERT — that row keeps its id and created_at throughout, which is the whole reason the earlier duplication mess did not recur.
+
+**⚠️ Rudy's paid $3,000 for a two-season scoreboard and now sits in $1,000 Gold**, below what they bought. 123 hid the Scoreboard section "for now" at Jeremy's request; 124 moved them again. Flagged to him twice. `123_rollback.sql` restores it and the section returns on its own.
+
+**The Meal level lasted one day** (122 created, 124 retired, members moved to Gold). Deactivated not deleted — it is the only row exercising `sellable`.
+
+**Community Partners moved from `/boosters/donate` to the bottom of `/sponsors`** and lost its explanatory copy, per Jeremy: sub-$500 in-kind supporters, no homepage recognition, but the committee wanted them on the sponsorship page. Styled to match the tier sections so it reads as the last rung. **No description field exists on that render, deliberately** — name + logo + link keeps it on the acknowledgment side of the 501(c)(3) acknowledgment/advertising line.
+
+**Homepage carousel pinning was added then removed.** 117 pinned slot 1 so the largest commitment could never rotate off screen; Jeremy asked on 08-09 for Rudy's to be "the same as everyone else", so the window now walks the full list and display order is purely `sort_order`.
+
+### ⚠️ Logo pipeline: the trim-mode rule
+
+`partner_logos/prep_logos.py` has three modes and **choosing wrong silently mangles a logo**:
+
+- **`border`** — only safe when the padding is a **different colour from the mark** (white space around dark art).
+- **`none`** — required when the padding **IS the artwork's own background panel**. Phil's, The League and Mighty Fine shipped cropped because `border` diffed against their panel colour and shrank the panel down to the lettering, so text ran edge to edge. Capstone's mark is worse: it runs edge to edge red-then-black, so `border` would have cropped away the entire red section.
+- **`alpha`** — art that already carries transparency (Chicoine, Santiago's).
+
+**Santiago's logo was pulled from their own site**, not the screenshot supplied — the screenshot had a solid black backing that would have rendered as a black tile. Sources are **pinned** in `partner_logos/sources/`, never read from `~/Downloads` or `~/Desktop`.
+
+⚠️ **W Homes (204×204) and Santiago's (142×171) are too small** and render soft on retina. Ask for larger originals.
+
+### Donations reader: a bug that would have hidden every paid donor
+
+`COL_HEADERS.displayAnonymous` read `"Display as anonymous"` while the live sheet header is **`"Display as anonymous?"`** — a trailing question mark added by a later edit to the Google Form question, which rewrites the sheet header. That column is required, so header resolution failed and the reader returned `[]` for the whole sheet: the public donor list would have shown "Be the first to donate" no matter how many donors the treasurer marked paid. Latent rather than active, since no row has `Payment Received = Yes` yet.
+
+**Matching stays EXACT — no normalisation, no fuzzy fallback.** That column gates whether a donor's real name is published, so a near-match resolving to the wrong column could out someone who asked to stay anonymous. **If the donor list ever goes unexpectedly empty, diff row 1 of the sheet against those constants first.**
+
+Operational note: **the treasurer publishes donors, not us.** The service account is Viewer-only by design. Setting `Payment Received` + `Payment Received Date` in the sheet publishes within 5 minutes, no deploy. Ashley can do it directly; Jeremy does not need to relay.
+
+### Open
+
+- **Rudy's scoreboard recognition** — restore when the scoreboard goes up (`123_rollback.sql`).
+- **Gold wraps 4+2** at 1280px with six logos. Genuine wrapping, not the intrinsic-width bug fixed on 08-08; reduce Gold's max width if a tidier split is wanted.
+- **Meal as a sellable level** — flip `sellable` and supply a price/term and perks if the committee defines them. Left unsellable rather than inventing benefits copy.
+- **Larger logo files** for W Homes and Santiago's.
+
 ## Status (2026-08-08 evening — Scoreboard tier, W Homes, homepage carousel, tier-wrap bug, new Capstone logo)
 
 **Migration 117 applied. Commit `dbdddb3` pushed and verified on prod. Last migration applied: 117.** 8 sponsors, 7 community partners.
