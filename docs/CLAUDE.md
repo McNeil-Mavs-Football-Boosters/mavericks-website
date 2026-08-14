@@ -85,6 +85,22 @@ Product images: pinned sources + prep script in `merch/products_2026/`. The cap 
 - **Round Rock wordmark** if the "E" shield is not wanted — needs a clean source.
 - **Santiago's logo** is 142×171, soft on retina.
 
+## Status (2026-08-14 — Tunnel Crew card gets its own form; per-role `formUrl` on the volunteer page)
+
+**Commit `b3cef74`, pushed as `jeremyvest-ATXcoder`, verified live on prod. Code-only, no migration.**
+
+Shannon thought `/boosters/volunteer` already linked the tunnel crew somewhere specific. The **card** existed; the link did not — all 11 cards pointed at the single `VOLUNTEER_FORM_URL`. Now the Game-Day Tunnel Crew card goes to **"2026 Tunnel Volunteers"** (`TUNNEL_VOLUNTEER_FORM_URL` in `lib/constants.ts`).
+
+**`Opportunity` gained an optional `formUrl`**, with `opportunity.formUrl ?? VOLUNTEER_FORM_URL` at the one link site — chosen over a second `isCommittee`-style hardcoded branch so the next role with a dedicated form is a one-line addition. `Joining a Committee` keeps its own `<Link>` to `/boosters/committees`.
+
+**⚠️ The card copy was underselling the commitment, and that mattered more than the link.** It read "on game days … requires a few volunteers and a trailer." The form actually commits you to **all regular-season varsity games, home AND away** (5 at KRAC, 5 at Dragon / Burger / Gupton / Chaparral, starting Aug 28), **arriving an hour before kickoff at away venues too**, and a job that runs the whole game — inflate before kickoff, down for the second quarter, up at halftime, down and back to storage after. Someone could have signed up expecting home games only. Rewritten from the form's own description. **The trailer claim was dropped** — the form describes the job in detail and never mentions one, so it was asserting something unsupported.
+
+**Verification technique reused from the 2026-08-04 sponsor-form audit:** `curl` the public `viewform`, pull `FB_PUBLIC_LOAD_DATA_` out of the HTML, `json.loads` it. Confirms title, every question, entry IDs, required flags, and the full description without signing in. Do this before wiring any form URL — it is the only way to know the link is the form you think it is.
+
+Then parsed the **rendered prod page** to confirm all 11 cards and their destinations, and HTTP-checked each unique target (both forms + `/boosters/committees` = 200). Worth repeating whenever a link changes: grepping source proves what you wrote, not what ships.
+
+**Standing state: 9 of the 11 cards still share the general form**, so a response can't tell you which card someone clicked. Not a bug — but if per-role routing is ever wanted, the `formUrl` hook is already there.
+
 ## Status (2026-08-09/10 — practice rebuilt from Coach's doc; sponsor/partner model settled after heavy churn)
 
 **Migrations 118 → 124 applied. Last migration applied: 124.** Commits `57bdf68` → `1b5ffe2`, all pushed and verified on prod.
