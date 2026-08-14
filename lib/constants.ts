@@ -4,6 +4,12 @@ export const BOOSTER_FORM_URL =
 export const VOLUNTEER_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSfcpW_jAdJexrfSDcUlRZt78dv3S3omPysOR-RoOfY_1TWWkQ/viewform";
 
+// "2026 Tunnel Volunteers" — a dedicated form for the tunnel crew, since that
+// role needs the player's name/grade and an early-arrival acknowledgment the
+// general volunteer-interest form doesn't collect. Verified live 2026-08-14.
+export const TUNNEL_VOLUNTEER_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe3e5uunfql2oDBI_XsbtU7l2XJ2lMvCCAmZmk27IAbx8LBBg/viewform";
+
 export const DONATION_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSepjuuCP85fsBKgZU2uA4I-h9JWUkH3-ee9Juc8kC_ybrx5CA/viewform";
 

@@ -16,7 +16,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { VOLUNTEER_FORM_URL } from "@/lib/constants";
+import {
+  TUNNEL_VOLUNTEER_FORM_URL,
+  VOLUNTEER_FORM_URL,
+} from "@/lib/constants";
 
 export const metadata = {
   title: "Volunteer | McNeil Mavericks Football Booster Club",
@@ -28,6 +31,9 @@ interface Opportunity {
   icon: LucideIcon;
   title: string;
   description: string;
+  // Optional per-role sign-up form. Omit to fall back to the general
+  // volunteer-interest form, which is where most roles collect interest.
+  formUrl?: string;
 }
 
 const OPPORTUNITIES: Opportunity[] = [
@@ -77,7 +83,8 @@ const OPPORTUNITIES: Opportunity[] = [
     icon: Flag,
     title: "Game-Day Tunnel Crew",
     description:
-      "Help transport, set up, and tear down the run-out tunnel on game days. Requires a few volunteers and a trailer.",
+      "Every regular-season varsity game, home and away. Arrive an hour before kickoff to inflate the tunnel, run it through halftime, then tear down and return it to storage.",
+    formUrl: TUNNEL_VOLUNTEER_FORM_URL,
   },
   {
     icon: Clipboard,
@@ -204,7 +211,7 @@ export default function BoostersVolunteerPage() {
             return (
               <a
                 key={opportunity.title}
-                href={VOLUNTEER_FORM_URL}
+                href={opportunity.formUrl ?? VOLUNTEER_FORM_URL}
                 target="_blank"
                 rel="noopener"
                 className={cardClass}
