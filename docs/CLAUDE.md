@@ -19,6 +19,72 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-13/14 — Meet the Mavs time flip-flop; 3 sponsors added; merch pre-order form + flyer)
+
+**Migrations 125 → 128 applied. Last migration applied: 128.** 13 active sponsors, 6 community partners.
+
+| Tier | |
+|---|---|
+| Platinum | Capstone Acquisitions · North Austin Oral Surgery |
+| Gold | Laurie Flood · Mighty Fine · Rudy's BBQ · The League · Tony C's · W Homes Collective |
+| Blue | **Austin Telco FCU** · Freddie's Carwash · **Kathy Sokolic, REALTOR®** · Luv Braces · Mama Betty's |
+| Community Partners | Amy's · Chicoine · Jack Allen's · Phil's · **Round Rock Express** · Santiago's |
+
+Blue and Gold are both alphabetical within tier; partners carry `sort_order` 0 and are ordered by NAME at query time.
+
+### ⚠️ Meet the Mavs lives in TWO places and they do not share a source
+
+125 moved it to 7:00 PM, 126 put it back to 6:00-8:00 PM hours later — the school gave contradicting information (6:00 turned out to be the **booster club's volunteer call time**, not the family start). Net zero; the value is what migration 108 originally seeded.
+
+**The part worth remembering:** the time is stored in the `events` row **and** written into the Friday block of all three practice bodies (migration 120). Migration 120's own note claimed the two "cannot drift" because the time was read from the events row — **true at BUILD time only.** The practice text is markdown; it drifts the instant the event row changes. Both migrations had to touch both places. **Grep the practice bodies on any future change to this event.**
+
+126 was written as a **forward migration rather than running `125_rollback.sql`**: the rollback fixes the live DB but leaves `db/apply_all.sql` ending at 125, so a rebuild would land on 7:00 PM and silently disagree with production. Rollbacks undo something unshipped; reversing something live is its own forward step.
+
+⚠️ **The 8:00 PM end time has still never been independently confirmed** — it is the same inherited-from-2025 value that produced the wrong start.
+
+### Logo intake: four distinct traps, all caught before publishing
+
+This batch surfaced a failure mode per logo. **Check the file before rendering, not after.**
+
+1. **The WHITE version.** Kathy Sokolic's first file was `Kathy_Logo_White_LG.svg` — 24 white fills to 5 blue. Every surface it appears on is white, so the wordmark would have vanished and left a floating stripe. Caught by *counting fill colours* in the SVG. Fix: ask for the black/jewel variant.
+2. **A fake transparent background.** The supplied Round Rock Express JPEG had the Photoshop transparency **checkerboard baked in as real pixels** (corners alternate `255,255,255` and `220,220,220`). JPEG cannot carry alpha, so nothing was recoverable. Fix: took the official mark from `mlbstatic.com/team-logos/102.svg`. ⚠️ That is the **"E" shield**, not the older ROUND ROCK EXPRESS wordmark-with-train in the supplied image. Also rejected `round-rock-affiliate-logo.svg` — that is the **Texas Rangers** parent-club mark and mostly white.
+3. **Wrong variant for the slot.** W Homes supplied four marks. Each was rendered at the **TRUE Gold box (280×128)** and measured by how much of the slot it filled: circle badge 128×128 (46%), Mark3 stacked 174×128 (62%), Alt2 horizontal 280×62 (48% — width caps first, wasting half the height), **Primary 274×128 (98%) ← chosen**. Measuring at the real display size is the whole technique; the horizontal one looked like the obvious pick and was the second worst.
+4. **My own render harness.** The Express SVG was rasterised through an HTML file that had `background:#fff` on the body, flattening it onto opaque white. Invisible on today's white page, wrong anywhere else. Re-rendered transparent. **Always assert alpha after rasterising an SVG.**
+
+ATFCU was the easy case: vendor primary mark, 1276×301, real transparency, no panel — no judgement needed.
+
+**URL verification is not optional.** Several Texas credit unions abbreviate similarly (A+ FCU, RBFCU both appear in `sponsor_online_asks_2026.md`); `atfcu.org` was confirmed to be Austin Telco by title before publishing. Display names use the full legal name, not the wordmark's lowercase styling — that string is what screen readers announce.
+
+### Merch: pivoted from an inventory store to a PRE-ORDER form
+
+**`scripts/create-merch-preorder-form.gs` REPLACES `create-merch-form.gs`.** Jeremy 2026-08-13: *"the order has not been placed, so we don't need to worry about the inventory."* That removes the constraint the original spec was built around, so: no stock counts, no Choice Eliminator, 4 products not 12, and images fetched from **public Supabase URLs** rather than a hand-staged Drive folder.
+
+`merch/merch_form_spec.md` now opens with a SUPERSEDED banner; the original inventory reasoning is kept below it because the club returns to that situation once the order arrives.
+
+**Three gotchas baked into the generator:**
+1. **No digits in a size label.** Payable takes the *first number* in the option text as the price, so `2XL — $20` charges **$2**. Sizes are spelled `XL`/`XXL`. Same bug that made the sponsor form's "1/4 Page" charge $1,001. **Every generated label was simulated against that parser before shipping** — all correct.
+2. **No quantity on sized apparel.** Payable has no multiplier; multiples must be hand-written as priced options, which per size would be ~15 dropdowns. Sizes are checkboxes at a flat price, one of each per order. The **cap is unsized so it keeps a real quantity dropdown**.
+3. **Never `setCollectEmail(true)`** — in Apps Script that means VERIFIED collection and forces every buyer to sign in to a Google account. Email is a normal required question with format validation.
+
+No address is collected, per Jeremy — handed over in person, and an address field would imply a mail option that is not offered.
+
+**⚠️ The Payable auth gotcha bit again, and here is the fix.** Configuring Payable throws *"Authorization is required to perform that action"* under any account except the form owner. The remedy is the **isolated booster Chrome profile** at `MavericksWebsite/.chrome-debug`, which keeps the booster login separate from Jeremy's other Google accounts. It was already running on port 9222, so the form was opened into it over CDP (`connect_over_cdp("http://127.0.0.1:9222")`) rather than launching a second browser. That is the fastest route when he is mid-task.
+
+**Merch flyer:** `merch/flyer/build_flyer.py` → `McNeil_Merch_Flyer.pdf`. One page, 8.5×11, four products with prices, plus two QR codes.
+- Order QR → the form; verified publicly reachable with **no sign-in wall** before printing.
+- Venmo QR → **extracted at 10× from Jeremy's `McNeil_Football_Venmo_Sign.pdf` and decoded before use.** It is Venmo's own user-code link (`venmo.com/code?user_id=…`), which deep-links into the app. ⚠️ NOT the `/u/McNeil-Football` profile URL that `Sign2.pdf` carried — that variant was swapped out on purpose.
+- **Both QRs are decoded out of the FINISHED PDF**, not the source images, on every build. A flyer with a wrong code is unfixable once printed.
+
+Product images: pinned sources + prep script in `merch/products_2026/`. The cap source was a composite with a *"3D PUFF EMBROIDERY"* vendor swatch beside it; that swatch is cropped off, since on an order form it reads as a second product or a print option rather than a technique sample.
+
+### Open
+
+- **Merch form URL is not recorded** in `lib/constants.ts` or `credentials.md`, and no `/shop` page links it. Deliberate — the spec says no website change in this phase.
+- **Meet the Mavs 8:00 PM end time** unconfirmed.
+- **Rudy's** still in Gold despite paying $3,000 for the scoreboard (`123_rollback.sql`).
+- **Round Rock wordmark** if the "E" shield is not wanted — needs a clean source.
+- **Santiago's logo** is 142×171, soft on retina.
+
 ## Status (2026-08-09/10 — practice rebuilt from Coach's doc; sponsor/partner model settled after heavy churn)
 
 **Migrations 118 → 124 applied. Last migration applied: 124.** Commits `57bdf68` → `1b5ffe2`, all pushed and verified on prod.
