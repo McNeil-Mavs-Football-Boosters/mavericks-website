@@ -3,8 +3,36 @@ import "server-only";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { CHICAGO_TZ } from "@/lib/events-format";
+import { getGamesAsEvents } from "@/lib/queries/game-events";
 import { createServerClient } from "@/lib/supabase/server";
 import type { EventRow } from "@/lib/types";
+
+/**
+ * Whether to fold the season schedule into the result (lib/queries/game-events.ts).
+ *
+ * OPT-IN, not the default, and the distinction is a product one rather than a
+ * technical one. `/events` — list, month and the ICS feed — is "everything on
+ * the calendar", so it asks for games. The HOMEPAGE strip shows the next two
+ * things and is club-events-only: with 44 games in the season it would show two
+ * games essentially forever, and the strip exists to surface booster events that
+ * nothing else advertises. Flip `includeGames` on in app/page.tsx if that call
+ * ever changes — one argument, no other edits.
+ */
+type EventQueryOptions = { includeGames?: boolean };
+
+/** Merge derived game rows into event rows and re-sort by start time. */
+function mergeSorted(
+  events: EventRow[],
+  games: EventRow[],
+  direction: "asc" | "desc",
+): EventRow[] {
+  const sign = direction === "asc" ? 1 : -1;
+  return [...events, ...games].sort(
+    (a, b) =>
+      sign *
+      (new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
+  );
+}
 
 /**
  * An event counts as upcoming until it has ENDED, not until it has started.
@@ -54,61 +82,84 @@ function pastFilter(): string {
   return `ends_at.lt.${nowIso},and(ends_at.is.null,starts_at.lt.${startOfTodayIso})`;
 }
 
-export async function getUpcomingEvents(limit?: number): Promise<EventRow[]> {
+export async function getUpcomingEvents(
+  limit?: number,
+  { includeGames = false }: EventQueryOptions = {},
+): Promise<EventRow[]> {
   const supabase = createServerClient();
-  let query = supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .or(upcomingFilter())
-    .order("starts_at", { ascending: true });
 
-  if (typeof limit === "number") query = query.limit(limit);
-
-  const { data, error } = await query;
+  // ⚠️ The limit is applied AFTER the merge, never in the query. Taking the
+  // first N events and then adding games would return the wrong N — the next
+  // two things on the calendar could easily both be games.
+  const [{ data, error }, games] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .or(upcomingFilter())
+      .order("starts_at", { ascending: true }),
+    includeGames
+      ? getGamesAsEvents({ from: new Date(dayBoundsChicago().startOfTodayIso) })
+      : Promise.resolve<EventRow[]>([]),
+  ]);
 
   if (error) {
     console.error("[queries/events] getUpcomingEvents failed", error);
-    return [];
   }
-  return (data ?? []) as EventRow[];
+  const merged = mergeSorted((data ?? []) as EventRow[], games, "asc");
+  return typeof limit === "number" ? merged.slice(0, limit) : merged;
 }
 
-export async function getPastEvents(limit = 10): Promise<EventRow[]> {
+export async function getPastEvents(
+  limit = 10,
+  { includeGames = false }: EventQueryOptions = {},
+): Promise<EventRow[]> {
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .or(pastFilter())
-    .order("starts_at", { ascending: false })
-    .limit(limit);
+
+  // Same rule: slice after merging. The .limit(limit) below is only there to
+  // bound the events half of the read; the real cut happens on the merged list.
+  const [{ data, error }, games] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .or(pastFilter())
+      .order("starts_at", { ascending: false })
+      .limit(limit),
+    includeGames
+      ? getGamesAsEvents({ to: new Date(dayBoundsChicago().startOfTodayIso) })
+      : Promise.resolve<EventRow[]>([]),
+  ]);
 
   if (error) {
     console.error("[queries/events] getPastEvents failed", error);
-    return [];
   }
-  return (data ?? []) as EventRow[];
+  return mergeSorted((data ?? []) as EventRow[], games, "desc").slice(0, limit);
 }
 
 export async function getEventsInRange(
   rangeStart: Date,
   rangeEnd: Date,
+  { includeGames = false }: EventQueryOptions = {},
 ): Promise<EventRow[]> {
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .gte("starts_at", rangeStart.toISOString())
-    .lt("starts_at", rangeEnd.toISOString())
-    .order("starts_at", { ascending: true });
+  const [{ data, error }, games] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .gte("starts_at", rangeStart.toISOString())
+      .lt("starts_at", rangeEnd.toISOString())
+      .order("starts_at", { ascending: true }),
+    includeGames
+      ? getGamesAsEvents({ from: rangeStart, to: rangeEnd })
+      : Promise.resolve<EventRow[]>([]),
+  ]);
 
   if (error) {
     console.error("[queries/events] getEventsInRange failed", error);
-    return [];
   }
-  return (data ?? []) as EventRow[];
+  return mergeSorted((data ?? []) as EventRow[], games, "asc");
 }
 
 export async function getEventsForIcsFeed(): Promise<EventRow[]> {
@@ -124,19 +175,25 @@ export async function getEventsForIcsFeed(): Promise<EventRow[]> {
     now.getMonth(),
     now.getDate(),
   ).toISOString();
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .gte("starts_at", oneYearAgo)
-    .lte("starts_at", twoYearsAhead)
-    .order("starts_at", { ascending: true });
+  // The feed is what someone subscribes to once and then trusts, so games are
+  // in unconditionally — a subscribed calendar that silently omits every game
+  // is the failure this whole change exists to prevent. The ±window comfortably
+  // contains a full season either side.
+  const [{ data, error }, games] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .gte("starts_at", oneYearAgo)
+      .lte("starts_at", twoYearsAhead)
+      .order("starts_at", { ascending: true }),
+    getGamesAsEvents({ from: new Date(oneYearAgo), to: new Date(twoYearsAhead) }),
+  ]);
 
   if (error) {
     console.error("[queries/events] getEventsForIcsFeed failed", error);
-    return [];
   }
-  return (data ?? []) as EventRow[];
+  return mergeSorted((data ?? []) as EventRow[], games, "asc");
 }
 
 export async function getEventBySlug(slug: string): Promise<EventRow | null> {

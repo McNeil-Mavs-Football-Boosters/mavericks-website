@@ -19,6 +19,25 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-16 later — the season schedule is ON the events calendar, derived not copied)
+
+**Migrations 132 + 133 applied. Last migration applied: 133.** Plus a code change: `lib/queries/game-events.ts` (new), `lib/queries/events.ts`, `lib/events-format.ts`, `lib/types.ts`, `EventListView`, `EventMonthView`, `app/events.ics/route.ts`. tsc + eslint + `next build` clean.
+
+**All 44 upcoming games (varsity, JV, freshmen Green + Blue) now appear on `/events`, in the month view, and in the ICS feed — with zero game rows in the `events` table.** Jeremy picked derive-at-read-time over copying rows in, which is the right call and worth writing down: this project has now been bitten twice by the same fact living in two places (Meet the Mavs' time in an `events` row *and* the practice markdown; the Eastview scrimmage in `games` *and* the Print View PDF). A copy would mean every schedule change gets made twice forever. Feed reconciles exactly: 48 games (12 varsity + 12 JV + 24 freshman) + 16 events = 64 VEVENTs.
+
+### The four decisions inside it
+
+1. **`tbd` / `cancelled` / `postponed` games are excluded from the calendar, deliberately.** A TBD game still carries a `game_date`, but that value is an explicit placeholder — migration 078 stored 6:00 PM purely because the column is NOT NULL. A schedule *table* can render "TBD" in its time cell; a calendar cannot. **A missing entry sends someone to the schedule page; a wrong entry sends them to an empty stadium.** Only `scheduled` and `final` reach the feed.
+2. **`includeGames` is opt-in per call site, and the HOMEPAGE deliberately does not pass it.** `/events` is "the whole calendar" so it opts in; the homepage strip shows the next two things and would be two games essentially forever, burying the booster events it exists to advertise. One argument flips it if that's ever wanted.
+3. **The limit is applied AFTER the merge, never in the query.** Taking the first N events and then adding games returns the wrong N.
+4. **Derived rows carry an `href` and every render site reads it through `eventHref()`** (`lib/events-format.ts`). Games have no `/events/<slug>` detail page, so they link to their schedule page — varsity/JV to `/schedule/games/<level>`, freshmen to `/schedule/games/freshman/<green|blue>`, since the bare freshman route 404s. **Blue rows are dropped entirely when `freshman_has_blue` is false**, because that designation page 404s in that state and a calendar entry into a 404 is worse than no entry.
+
+Titles read "JV Scrimmage vs Eastview High School", "Freshmen Blue at Austin Bowie High School", "Varsity vs Round Rock High School (Homecoming)" — the occasion marker goes in the title, not the description, because the month view renders the title and nothing else. `ends_at` stays null (games have no end time and inventing one is fabrication): the upcoming/past split already treats null as end-of-day, so a 7 PM game stays "upcoming" all day, and the ICS falls back to start + 1 hour. ICS UIDs are the game UUIDs, so a rescheduled game updates in a subscribed calendar instead of duplicating.
+
+**132 — the four Eastview rows got `location = 'Maverick Stadium'`, reversing 130's "leave it NULL" from a few hours earlier.** 130's reasoning (home/away already implies the venue) doesn't survive contact with a calendar: a phone shows the location under the title and offers directions from it. Reversed as a forward migration with the reasoning in the file, not quietly re-done.
+
+**133 — Picture Day (Fri Aug 21) seeded as ONE event, 7:00–9:15 a.m.**, not two. The doc gives upperclassmen 7:00→8:00 and freshmen 8:00→9:15; two rows would put two overlapping "Picture Day" entries on every subscribed calendar and make each parent work out which is theirs. Both windows are spelled out in the description instead — same call migration 102 made for the equipment pickups. ⚠️ **The event's own 7:00–9:15 is the envelope of both groups, not any one athlete's call time.** It stays on the practice pages too (Jeremy: fine), because a family reading Friday's practice block shouldn't have to know to also check `/events`.
+
 ## Status (2026-08-16 — Week 3 practice published; Eastview scrimmage times; Print View PDF corrected in place; Meet the Mavs album)
 
 **Migrations 129 → 131 applied. Last migration applied: 131.** DB-only, no deploy — `/schedule/practice/*` and `/schedule/games/*` both read at request time. All three practice pages and all four games pages verified on prod.

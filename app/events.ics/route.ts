@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { eventHref } from "@/lib/events-format";
 import { getEventsForIcsFeed } from "@/lib/queries/events";
 import type { EventRow } from "@/lib/types";
 
@@ -86,7 +87,7 @@ function buildVEvent(event: EventRow, origin: string): string {
     lines.push(foldIcsLine(`LOCATION:${escapeIcsText(event.location)}`));
   }
 
-  lines.push(foldIcsLine(`URL:${origin}/events/${event.slug}`));
+  lines.push(foldIcsLine(`URL:${origin}${eventHref(event)}`));
   lines.push("END:VEVENT");
 
   return lines.join(CRLF);

@@ -2,7 +2,22 @@ import "server-only";
 
 import { formatInTimeZone } from "date-fns-tz";
 
+import type { EventRow } from "@/lib/types";
+
 export const CHICAGO_TZ = "America/Chicago";
+
+/**
+ * Where a calendar row's title should link.
+ *
+ * Rows from the `events` table go to their own detail page. Rows derived from
+ * the `games` table carry an explicit `href` to the games schedule instead —
+ * they have no detail page, so linking them by slug would 404. Every render site
+ * (list view, month view, and the ICS feed's URL: line) must go through here so
+ * a game can never be linked as if it were an event.
+ */
+export function eventHref(event: EventRow): string {
+  return event.href ?? `/events/${event.slug}`;
+}
 
 /**
  * Returns the Chicago calendar day-of-month (1-31) for an ISO timestamp.

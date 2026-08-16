@@ -7,6 +7,7 @@ import {
   CHICAGO_TZ,
   chicagoMonthKey,
   chicagoMonthLabel,
+  eventHref,
   formatTimeRange,
 } from "@/lib/events-format";
 import type { EventRow } from "@/lib/types";
@@ -16,8 +17,13 @@ interface EventListViewProps {
 }
 
 export default async function EventListView({ filter }: EventListViewProps) {
+  // includeGames: /events is the whole calendar, so the season schedule is
+  // folded in from the games table (lib/queries/game-events.ts). The homepage
+  // strip deliberately does NOT pass this — see the note in lib/queries/events.ts.
   const events: EventRow[] =
-    filter === "past" ? await getPastEvents(10) : await getUpcomingEvents();
+    filter === "past"
+      ? await getPastEvents(10, { includeGames: true })
+      : await getUpcomingEvents(undefined, { includeGames: true });
 
   return (
     <section className="container mx-auto px-4 py-8 md:py-10">
@@ -200,7 +206,7 @@ export function EventRowCard({
           {formatTimeRange(event.starts_at, event.ends_at)}
         </p>
         <h3 className={`text-xl font-bold mt-1 ${v.title}`}>
-          <Link href={`/events/${event.slug}`} className="hover:underline">
+          <Link href={eventHref(event)} className="hover:underline">
             {event.title}
           </Link>
         </h3>
@@ -235,7 +241,7 @@ export function EventRowCard({
       {/* Cover image (md+ only, skip cell entirely if no image) */}
       {event.cover_image_url ? (
         <Link
-          href={`/events/${event.slug}`}
+          href={eventHref(event)}
           className="hidden md:block w-[280px] aspect-video shrink-0"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

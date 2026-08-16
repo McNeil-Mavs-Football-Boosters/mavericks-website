@@ -5,6 +5,7 @@ import { getEventsInRange } from "@/lib/queries/events";
 import {
   CHICAGO_TZ,
   chicagoDayOfMonth,
+  eventHref,
   formatTimeRange,
 } from "@/lib/events-format";
 import type { EventRow } from "@/lib/types";
@@ -57,7 +58,9 @@ export default async function EventMonthView({
   const rangeStartUtc = fromZonedTime(monthStartChicagoLocal, CHICAGO_TZ);
   const rangeEndUtc = fromZonedTime(nextMonthStartChicagoLocal, CHICAGO_TZ);
 
-  const events = await getEventsInRange(rangeStartUtc, rangeEndUtc);
+  const events = await getEventsInRange(rangeStartUtc, rangeEndUtc, {
+    includeGames: true,
+  });
 
   // Bucket events by Chicago day-of-month.
   const dayBuckets = new Map<number, EventRow[]>();
@@ -186,7 +189,7 @@ export default async function EventMonthView({
               {dayEvents.slice(0, 2).map((ev) => (
                 <Link
                   key={ev.id}
-                  href={`/events/${ev.slug}`}
+                  href={eventHref(ev)}
                   className="block bg-mavs-navy text-white text-xs px-2 py-1 rounded truncate mt-1"
                   title={ev.title}
                 >
@@ -340,7 +343,7 @@ function MobileWeekRow({ event }: { event: EventRow }) {
           {formatTimeRange(event.starts_at, event.ends_at)}
         </p>
         <h4 className="text-base font-bold text-mavs-navy mt-1">
-          <Link href={`/events/${event.slug}`} className="hover:underline">
+          <Link href={eventHref(event)} className="hover:underline">
             {event.title}
           </Link>
         </h4>

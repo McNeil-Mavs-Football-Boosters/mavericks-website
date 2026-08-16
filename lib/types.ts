@@ -211,4 +211,15 @@ export interface EventRow {
   status: "draft" | "published" | "cancelled";
   featured: boolean;
   updated_at: string;
+  /**
+   * Where this row's title links. NOT a column — absent on everything that comes
+   * out of the `events` table, which links to `/events/<slug>`.
+   *
+   * Rows DERIVED from the `games` table (lib/queries/game-events.ts) set this to
+   * the relevant games-schedule page, because they have no `/events/<slug>`
+   * detail page to link to and never will. Always read it through `eventHref()`
+   * rather than branching on it at the call site — that helper is the one place
+   * that knows the fallback, and the ICS feed's URL: line depends on it too.
+   */
+  href?: string;
 }
