@@ -19,6 +19,42 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-16 — Week 3 practice published; Eastview scrimmage times; Print View PDF corrected in place; Meet the Mavs album)
+
+**Migrations 129 → 131 applied. Last migration applied: 131.** DB-only, no deploy — `/schedule/practice/*` and `/schedule/games/*` both read at request time. All three practice pages and all four games pages verified on prod.
+
+**129 — Week 3 (Aug 17–23) from Coach's weekly doc**, sent by Jeremy 2026-08-16. Same shape as 120: two columns, UPPERCLASSMEN (SOPH/JR/SR) → varsity + jv bodies, FRESHMEN → freshman body. Mon/Tue are normal mornings (upper 7:00/7:25/10:15, fresh 9:00/9:20/10:40); **Wed Aug 19 is the first day of school and the upperclassmen move INSIDE the school day** — Period 2 Wednesday, Period 6 Thursday, on the field 10:45 a.m., ends 12:00 p.m., **with no arrival time given** (transcribed as-is, none invented). Freshmen stay on a morning block (8:00/8:25/9:40). Fri Aug 21 is picture day, Sat + Sun are players-off.
+
+**The "After Week N — tentative" tail was DROPPED, not carried across.** 120 carried it verbatim; this time the doc proved it wrong (it had Mon Aug 17 at 6:30–10:00 vs the real 7:00–10:15, and Wed Aug 19 at 6:20–8:15 vs a 10:45 a.m. on-field). Every remaining Aug 24–28 entry in that tail is an early-morning window from the **077 preseason grid**, written before anyone knew practice moves into the school day once school starts. Publishing them would have put a family at the field four hours early. Replaced with a pointer to next week's doc and to the Games schedule. **Do not restore the tail from 077 — only from a real published week.**
+
+**⚠️ The JV Thursday inference from 120 was repeated, deliberately.** Upperclassmen cell says "SCRIMMAGE - UPPERCLASSMEN 1ST & 2ND GROUP" 7:00 p.m.; freshmen cell says "FRESHMAN & JV SCRIMMAGE" 5:30 p.m. JV gets 5:30 on both the practice body and the games row. If that reading is ever corrected, **both surfaces move together** — practice markdown and the `games` row are separate copies of the same fact.
+
+**130 — the four Aug 20 Eastview rows went from `tbd` to real times**: varsity 7:00 p.m., JV + freshman Green + Blue 5:30 p.m. 078 had seeded them `result_status = 'tbd'` with a nominal 6:00 PM placeholder, so the games pages had been rendering "TBD" for a scrimmage four days out. Location left NULL, matching the Hendrickson rows.
+
+### The Print View PDF was edited in place — first time we've modified a school-supplied artifact
+
+`documents/schedules/2026-27.pdf` is the school's Excel export (authored 2026-04-28), linked from every games page. It showed **KRAC / TBD** for both preseason scrimmages. Jeremy confirmed 2026-08-16: **both scrimmages are at McNeil's own stadium, not KRAC** — he was at the Aug 13 one — and freshmen and JV scrimmage at the same time. So the site was contradicting its own Print View on both venue and time.
+
+**Five cells patched, ten spans total** (`MavericksWebsite/scripts/patch-schedule-pdf-scrimmages.py`): varsity Aug 13 + Aug 20 → Maverick Stadium / 7:00, JV Aug 13 + Aug 20 → Maverick Stadium / 5:30, freshman Aug 20 → Maverick Stadium / 5:30.
+
+- **Edited, not rebuilt.** PyMuPDF redaction removes the old text with `images`/`graphics` redaction disabled, so row shading, borders, logos and all 260 other text spans survive untouched. New text is drawn with the PDF's **own embedded Calibri subset** (extracted via `doc.extract_font`), at the same 11.4pt, centred on the same column centres the existing rows use (438.28 SITE, 565.02 TIME) — so the corrected cells are typographically indistinguishable from the school's rows.
+- **"Maverick Stadium"** is the exact wording the PDF already uses for McNeil's stadium in its own JV/freshman home rows. Deliberately not "MHS Stadium".
+- **Verified three ways:** span-level diff (exactly 10 removed, 10 added, 260 unchanged, new x-origins matching the existing Maverick Stadium/6:00 rows to 0.05pt), pixel diff of the rendered page (all 9,643 changed pixels inside 5 row bands, x confined to the SITE+TIME columns), and re-download of the live object (md5 identical to the local file).
+- **The script aborts if any target cell doesn't already hold the exact expected string.** Coordinates are hardcoded from this one build; if the school reissues the PDF it must fail loudly rather than blank out whatever now sits there.
+- **The school's original is preserved** at `documents/schedules/2026-27-school-original-2026-04-28.pdf` in the same bucket, and locally at `MavericksWebsite/schedule_pdf/`. The edited copy's PDF metadata `subject` states what was changed and why, so a future diff against the school's version reads as an edit and not a corruption.
+
+⚠️ **Storage upload gotcha:** the project is on the new-style API keys (`sb_secret_…`, not a JWT). `Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY` **alone returns 403 "Invalid Compact JWS"** — the gateway tries to parse it as a JWT. Send **`apikey: $KEY` as well** and it works. Cost 10 minutes; not documented anywhere else in here.
+
+**The freshman Aug 13 row is fixed too — the school's PDF was simply wrong.** It had that game as **away @ Hendrickson, TBD**; Jeremy confirmed the freshmen played **at home at 5:30** like everyone else, which is what our `games` row already said. Held back on the first pass (a past row, both claims secondhand) and corrected once he answered. Its H/A cell is drawn in **Calibri-Italic**, not the bold every regular-season home row uses — the two shaded scrimmage rows are formatted differently in the school's file — so the replacement matches its own row's pair. Final patch is 13 spans across 6 rows; 257 of 270 spans untouched.
+
+### Meet the Mavs photo album (migration 131)
+
+`https://photos.app.goo.gl/fFYzH6d5hxPfyKok6` on `meet-the-mavs-2026`. Second use of the `events.photos_url` mechanism from 114, so it is a one-column UPDATE and nothing else — 114's single durable "Event Photos" row in Forms & Links already covers every album forever. Live on both the detail page ("View Photos") and the past-events list.
+
+**Link verified before writing**: resolves 200 to `photos.google.com/share/…`, album title "Meet the Mavs 2026 - 2027", og:title carries "Friday, Aug 14" — the right event, not a same-name album from another season. 114's two warnings carry forward unchanged: the link is **public to anyone holding it and these are photos of minors** (Jeremy's call, made for the pool party and again here), and **album links rot silently** — nothing detects an unshared album, the site just shows a dead button.
+
+Rollbacks: `129_rollback.sql` restores the Week 2 bodies **byte-identical** (generated from the live rows and md5-verified against them before 129 was applied, so it is a true restore, not a retype); `130_rollback.sql` puts the Eastview rows back to tbd.
+
 ## Status (2026-08-13/14 — Meet the Mavs time flip-flop; 3 sponsors added; merch pre-order form + flyer)
 
 **Migrations 125 → 128 applied. Last migration applied: 128.** 13 active sponsors, 6 community partners.
