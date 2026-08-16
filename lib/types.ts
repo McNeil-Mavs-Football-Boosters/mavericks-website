@@ -46,6 +46,15 @@ export interface Venue {
   name: string;
   address: string;
   maps_url: string;
+  /**
+   * Decimal degrees, or null. NULL is the normal state and means "nobody has
+   * opened this pin" — the ICS feed then omits GEO and the client geocodes the
+   * address, exactly as it did before migration 137. Never populate these by
+   * geocoding an address: an unverified point published as an exact one is
+   * worse than the vague address it replaced.
+   */
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface Game {

@@ -21,6 +21,18 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
+### Migration 137 — coordinates on venues, GEO in the ICS feed, Chaparral's real pin
+
+The calendar was the weakest surface for precision and the one people use while already driving: a VEVENT could only carry `LOCATION`, a text string the phone geocodes itself — which is exactly how Lake Belton sent people to a road centerline. The feed now emits **`GEO:lat;lon`** (RFC 5545 § 3.8.1.6) so clients that support it stop guessing. **31 of 64 events carry GEO**; the rest omit it and behave exactly as before.
+
+⚠️ **GEO is never guessed, and this is the load-bearing rule.** Coordinates are set only for the seven venues whose pin a human opened — Jeremy's five place links, the Lake Belton dropped pin, and Chaparral. Everything else keeps `latitude`/`longitude` NULL. **Geocoding the remaining addresses to fill the columns would have been trivial and wrong**: it stamps unverified points into subscribers' calendars with the authority of an exact location, which is a worse failure than the vague address it replaced. Two street addresses in a row have already turned out to point at the wrong place. NULL is the honest value until someone opens the pin.
+
+**Reading coordinates out of a Maps URL:** take the `!3m5!…!8m2!3d<lat>!4d<lon>` segment — the SELECTED place — not the `!1m8!3m7…` segment earlier in the same URL, which is the associated street address and is a different point. On the Chaparral URL those two differ by ~260 m.
+
+**Chaparral Stadium split from the Westlake campus**, same shape as Maverick Stadium in 135: stadium pin 30.2776477,-97.813297 vs campus address pin 30.2752887,-97.8130021. Varsity plays at Chaparral while the JV and freshman rows say 'Westlake HS' — possibly a different field on the same campus, which is the away-field variance Jeremy flagged — so they stay separate rows and only Chaparral gets the verified pin.
+
+Assertions worth keeping: lat and lon must be set together (half a coordinate is a bug), every coordinate must fall inside a Central Texas bounding box (catches a swapped pair or a dropped minus sign, the realistic hand-entry failures), and any venue with coordinates must also carry the pin they were read from.
+
 ### Migration 136 — Lake Belton, and why the ADDRESS matters as much as the pin
 
 Jeremy: 134's Lake Belton link "points to just the middle of a road." It did. Verified independently before changing anything: `9809 Prairie View Road` geocodes to a **road centerline with no house number, 920 m from the school**, while his pin (31.143741, -97.441674) reverse-geocodes to house number 9809 on **FM 2483**. Belton ISD publishes the campus under both street names and only the FM 2483 form resolves to the building, so **the stored address changed too** — the ICS emits it as `LOCATION`, and a phone geocoding "Prairie View Road" would have been sent to the same wrong stretch of road. Fixing the URL alone would have looked done and left the calendar broken.
@@ -43,7 +55,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 → 136 applied. Last migration applied: 136.** 18 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 137 applied. Last migration applied: 137.** 18 venues, 7 with verified coordinates; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 

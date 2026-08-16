@@ -36,7 +36,7 @@ type GameCalendarRow = Pick<
 > & { updated_at: string; venue: Venue | null };
 
 const SELECT_COLUMNS =
-  "id, team_level, team_designation, opponent, game_date, location, location_url, home_or_away, notes, updated_at, venue:venues(name, address, maps_url)";
+  "id, team_level, team_designation, opponent, game_date, location, location_url, home_or_away, notes, updated_at, venue:venues(name, address, maps_url, latitude, longitude)";
 
 /**
  * Only these two statuses reach a calendar.

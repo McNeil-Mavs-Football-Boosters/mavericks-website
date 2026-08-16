@@ -106,6 +106,16 @@ function buildVEvent(event: EventRow, origin: string): string {
     lines.push(foldIcsLine(`LOCATION:${escapeIcsText(location)}`));
   }
 
+  // GEO (RFC 5545 § 3.8.1.6) — "lat;lon" in decimal degrees. Emitted only for
+  // venues whose pin a human has actually opened (migration 137); everywhere
+  // else the columns are NULL and the client geocodes LOCATION as before. This
+  // is the only field in the feed that can put someone at the right gate rather
+  // than the right road, which is what LOCATION alone got wrong for Lake Belton.
+  const { latitude, longitude } = event.venue ?? {};
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    lines.push(`GEO:${latitude};${longitude}`);
+  }
+
   lines.push(foldIcsLine(`URL:${origin}${eventHref(event)}`));
   lines.push("END:VEVENT");
 
