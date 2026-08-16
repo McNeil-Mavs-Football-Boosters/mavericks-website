@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import type { ResourceLink } from "@/lib/types";
 
 import { ResourceItem } from "./resource-item";
@@ -7,11 +5,9 @@ import { ResourceItem } from "./resource-item";
 export function ResourceSection({
   heading,
   links,
-  footer,
 }: {
   heading: string;
   links: ResourceLink[];
-  footer?: ReactNode;
 }) {
   if (links.length === 0) return null;
 
@@ -23,7 +19,6 @@ export function ResourceSection({
           <ResourceItem key={link.id} link={link} />
         ))}
       </ul>
-      {footer}
     </section>
   );
 }

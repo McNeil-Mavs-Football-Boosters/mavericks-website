@@ -7,24 +7,56 @@ export const dynamic = "force-dynamic";
 
 type SectionKey = ResourceLink["section"];
 
+// "Stadiums & Directions" was retired in migration 147: every game on the site
+// now carries its own verified map pin, so a hand-maintained list of three
+// stadiums was strictly worse than the link sitting next to the game — and two
+// of its three entries were already stale.
 const SECTION_ORDER: ReadonlyArray<{ key: SectionKey; heading: string }> = [
   { key: "registration_forms", heading: "Registration & Forms" },
   { key: "communications", heading: "News & Communications" },
   { key: "resources", heading: "Resources" },
-  { key: "stadiums", heading: "Stadiums & Directions" },
   { key: "other", heading: "Other" },
 ];
+
+const RENDERED_SECTIONS = new Set<SectionKey>(SECTION_ORDER.map((s) => s.key));
+
+/**
+ * The clear bag policy, rendered as a normal Resources entry.
+ *
+ * It is NOT a resource_links row on purpose: the same URL is on both games pages
+ * (lib/constants.ts), and a second copy in the database is the drift trap this
+ * project keeps paying for. Deriving the entry from the constant keeps one
+ * source and still gives it a real card instead of the footnote it used to be
+ * under Stadiums.
+ */
+function clearBagPolicyLink(): ResourceLink {
+  return {
+    id: "clear-bag-policy",
+    section: "resources",
+    label: "Clear Bag Policy",
+    url: CLEAR_BAG_POLICY_URL,
+    description:
+      "What you can and cannot bring into RRISD stadiums on game night.",
+    icon_hint: "external",
+    sort_order: 3,
+    active: true,
+  };
+}
 
 export default async function ResourcesPage() {
   const links = await getResourceLinks();
 
   const grouped = new Map<SectionKey, ResourceLink[]>();
-  for (const link of links) {
-    const bucket = grouped.get(link.section);
+  // A link whose section is no longer rendered (e.g. a stray 'stadiums' row
+  // added after migration 147) falls into "Other" rather than disappearing.
+  // Silently dropping a link someone deliberately added is the worse failure.
+  for (const link of [...links, clearBagPolicyLink()]) {
+    const section = RENDERED_SECTIONS.has(link.section) ? link.section : "other";
+    const bucket = grouped.get(section);
     if (bucket) {
       bucket.push(link);
     } else {
-      grouped.set(link.section, [link]);
+      grouped.set(section, [link]);
     }
   }
 
@@ -52,20 +84,6 @@ export default async function ResourcesPage() {
               key={key}
               heading={heading}
               links={grouped.get(key) ?? []}
-              footer={
-                key === "stadiums" ? (
-                  <p className="mt-3 text-xs">
-                    <a
-                      href={CLEAR_BAG_POLICY_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-mavs-navy hover:underline"
-                    >
-                      Clear bag policy →
-                    </a>
-                  </p>
-                ) : undefined
-              }
             />
           ))}
         </div>

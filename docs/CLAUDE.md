@@ -21,6 +21,18 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
+### Migration 147 — "Stadiums & Directions" retired from /resources; clear bag policy promoted
+
+Jeremy 2026-08-16, and it follows from the venue work rather than being a preference: **every game on the site now carries its own verified pin, so a hand-maintained list of three stadium links is strictly worse than the link sitting next to the game.** It also had the failure mode this whole day was about — the list is only right for the stadiums someone remembered to add. Two of its three rows were already stale: **Dragon Stadium pointed at 300 N Lake Creek Dr, the address migration 135 rejected** once Jeremy sent the real pin, and House Park is a 2025-26 venue not on this season's schedule at all.
+
+**Deactivated, not deleted** (same as 111 and 113), so the rows are recoverable and `active = false` is what `getResourceLinks` already filters on.
+
+**The clear bag policy moved from a footnote under Stadiums to a real entry under Resources** — and is deliberately NOT a `resource_links` row. The same URL is on both games pages via `CLEAR_BAG_POLICY_URL` in `lib/constants.ts`; a second copy in the database is precisely the drift trap this project keeps paying for. The page derives the entry from the constant instead, the same "derive, don't copy" shape as game→calendar rows.
+
+⚠️ **Unknown sections now fall into "Other" instead of vanishing.** Dropping `stadiums` from `SECTION_ORDER` would otherwise mean a future row in that section renders nowhere — silently. The enum value stays (Postgres can't drop one in place, and it's three dead rows); the page-side guard is what makes that safe.
+
+**An assertion caught a miscount again**: the migration asserted 12 active non-stadium links and I had written 11. The transaction rolled back, cost nothing, and the number came from the table on the retry. Second time today — count first, then write the assertion.
+
 ### Migrations 144 → 146 — the last two away venues; every 2026-27 game now has a verified pin
 
 **44 of 48 games** sit at a venue with a human-checked pin; the four without are last season's rows. `/schedule/games/*`, `/events`, the month view and the ICS feed all read the same venue.
@@ -127,7 +139,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 → 146 applied. Last migration applied: 146.** 24 venues, 13 with verified coordinates; **44 of 48 games at a verified pin — every 2026-27 game**; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 147 applied. Last migration applied: 147.** 24 venues, 13 with verified coordinates; **44 of 48 games at a verified pin — every 2026-27 game**; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
