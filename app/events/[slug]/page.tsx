@@ -126,9 +126,9 @@ export default async function EventDetailPage({
               Location
             </h2>
             <p className="font-bold mt-3">{event.location}</p>
-            {event.location_url ? (
+            {event.venue?.maps_url ? (
               <a
-                href={event.location_url}
+                href={event.venue.maps_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-mavs-navy hover:underline mt-2 inline-block"

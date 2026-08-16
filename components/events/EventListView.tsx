@@ -211,7 +211,23 @@ export function EventRowCard({
           </Link>
         </h3>
         {event.location ? (
-          <p className={`text-sm mt-1 ${v.location}`}>{event.location}</p>
+          <p className={`text-sm mt-1 ${v.location}`}>
+            {/* The venue owns the map link (migration 134). No venue = plain
+                text, never a guessed pin — last season's away sites are
+                deliberately unmapped. */}
+            {event.venue?.maps_url ? (
+              <a
+                href={event.venue.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {event.location}
+              </a>
+            ) : (
+              event.location
+            )}
+          </p>
         ) : null}
         {event.description ? (
           <p className={`text-sm mt-2 line-clamp-3 ${v.muted}`}>

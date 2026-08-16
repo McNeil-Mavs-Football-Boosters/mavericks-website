@@ -19,6 +19,22 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Status (2026-08-16 latest — venues table; every location is a map link now)
+
+**Migration 134 applied. Last migration applied: 134.** 17 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+
+**Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
+
+**Why a table instead of filling in 48 URLs.** 18 rows say 'Maverick Stadium' and 5 say 'KRAC', so a corrected pin would have been 18 edits, and every new game row would need someone to remember to paste a URL. It also unlocks what a URL alone can't: **the ICS `LOCATION` now reads "Burger Stadium, 3200 Jones Road, Austin, TX"**, so a subscribed phone can navigate to a Thursday away game. That needs a street address, and there was nowhere to put one.
+
+**One source, enforced.** `events.location_url` is cleared wherever a venue is attached and the column is now commented DEPRECATED. A row that can carry a link in two columns is the same drift trap as Meet the Mavs' time in two places. `location` stays as the display label — which is why 'Maverick Stadium' still reads "Maverick Stadium" and not "McNeil High School"; the venue supplies only the link and the address.
+
+**Every pin is sourced, none guessed.** Dragon Stadium and Burger Stadium came from Jeremy with Google Maps place links (Burger settled a real conflict — Austin ISD says 3200 Jones Road, several listing sites say 3600). The rest came from each district's own pages. A wrong pin sends a family to the wrong stadium, which is precisely what the Print View PDF fix earlier the same day was about.
+
+⚠️ **Aliases are the live hazard.** The same place is already spelled two ways across seasons: `Gupton` (2026-27) vs `Gupton Stadium` (2025-26), `Dragon Stadium` vs `Round Rock HS`, `Chaparral` vs `Chaparral Stadium`. 134 maps the known aliases, but **the answer going forward is to set `venue_id`, not to type a location string and hope it matches.** The migration's assertion fails loudly if any current-season game names a place with no venue; the gap query is in the file's footer. Eight 2025-26 away venues (House Park, Hutto, Manor, Memorial, Monroe, The Pfield, Vandegrift, Weiss) are deliberately unseeded and stay unlinked — archived rows nobody navigates to.
+
+**Fixed in passing: the ICS line folder could corrupt non-ASCII.** It sliced the byte buffer every 75 bytes and could cut a multi-byte character in half. Its TODO claimed "all current event data is ASCII" — already false (`Phil’s Ice House` has a U+2019) and much more dangerous now that `LOCATION` runs 2-3× longer and actually folds. Now splits on character boundaries while measuring bytes; verified round-trip on a curly quote sitting exactly at the boundary and on emoji (surrogate pairs), and the live feed has zero replacement characters and no over-long physical lines.
+
 ## Status (2026-08-16 later — the season schedule is ON the events calendar, derived not copied)
 
 **Migrations 132 + 133 applied. Last migration applied: 133.** Plus a code change: `lib/queries/game-events.ts` (new), `lib/queries/events.ts`, `lib/events-format.ts`, `lib/types.ts`, `EventListView`, `EventMonthView`, `app/events.ics/route.ts`. tsc + eslint + `next build` clean.

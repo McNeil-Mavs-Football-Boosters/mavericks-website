@@ -18,7 +18,7 @@ export async function getGamesForTeam({
 
   let query = supabase
     .from("games")
-    .select("*")
+    .select("*, venue:venues(name, address, maps_url)")
     .eq("year", year)
     .eq("team_level", level);
 

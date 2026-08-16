@@ -91,9 +91,9 @@ export function GamesTable({ games }: { games: Game[] }) {
                     </td>
                     <td className="py-3 pr-4 align-top">
                       {game.location ? (
-                        game.location_url ? (
+                        game.venue?.maps_url ? (
                           <a
-                            href={game.location_url}
+                            href={game.venue.maps_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-mavs-navy hover:underline print:text-black print:no-underline"

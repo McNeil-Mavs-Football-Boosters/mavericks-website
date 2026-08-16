@@ -348,7 +348,20 @@ function MobileWeekRow({ event }: { event: EventRow }) {
           </Link>
         </h4>
         {event.location ? (
-          <p className="text-xs mt-1">{event.location}</p>
+          <p className="text-xs mt-1">
+            {event.venue?.maps_url ? (
+              <a
+                href={event.venue.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {event.location}
+              </a>
+            ) : (
+              event.location
+            )}
+          </p>
         ) : null}
         {event.description ? (
           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">

@@ -39,23 +39,35 @@ function escapeIcsText(s: string): string {
  * UTF-8 encoded, not characters) MUST be split: CRLF + single leading space
  * starts the continuation.
  *
- * TODO non-ASCII safety: subarray(start, start+75).toString('utf8') can split
- * a multi-byte char mid-sequence. All current event data is ASCII; if seed
- * data ever introduces non-ASCII, back the split off to the previous UTF-8
- * char boundary before slicing.
+ * Splits on CHARACTER boundaries while measuring in bytes. The old version
+ * sliced the byte buffer every 75 bytes and could cut a multi-byte character in
+ * half, emitting U+FFFD; its TODO said "all current event data is ASCII", which
+ * was already untrue (`Phil’s Ice House` carries a U+2019 apostrophe) and is
+ * emphatically untrue now that LOCATION carries "name, street address" and runs
+ * two to three times longer (migration 134). A venue name with an accent or a
+ * curly quote would have corrupted the feed for every subscriber.
+ *
+ * Note this measures the ESCAPED line, which is correct — escaping happens
+ * before folding, so the backslashes are part of the octet count.
  */
 function foldIcsLine(line: string): string {
-  const bytes = Buffer.from(line, "utf8");
-  if (bytes.length <= 75) return line;
+  if (Buffer.byteLength(line, "utf8") <= 75) return line;
   const out: string[] = [];
-  let start = 0;
-  while (start < bytes.length) {
-    const chunk = bytes
-      .subarray(start, Math.min(start + 75, bytes.length))
-      .toString("utf8");
-    out.push(chunk);
-    start += 75;
+  let current = "";
+  let currentBytes = 0;
+  // Iterating the string yields whole code points, so a surrogate pair (emoji)
+  // is never split either.
+  for (const char of line) {
+    const charBytes = Buffer.byteLength(char, "utf8");
+    if (currentBytes + charBytes > 75) {
+      out.push(current);
+      current = "";
+      currentBytes = 0;
+    }
+    current += char;
+    currentBytes += charBytes;
   }
+  if (current.length > 0) out.push(current);
   return out.join(`${CRLF} `);
 }
 
@@ -83,8 +95,15 @@ function buildVEvent(event: EventRow, origin: string): string {
     lines.push(foldIcsLine(`DESCRIPTION:${escapeIcsText(event.description)}`));
   }
 
-  if (event.location && event.location.length > 0) {
-    lines.push(foldIcsLine(`LOCATION:${escapeIcsText(event.location)}`));
+  // "Burger Stadium, 3200 Jones Road, Austin, TX" rather than "Burger Stadium".
+  // A calendar app can offer directions from an address and cannot from a name,
+  // which is most of the point of subscribing to an away-game schedule. Falls
+  // back to the bare label when the row has no venue (migration 134).
+  const location = event.venue?.address
+    ? `${event.location ?? event.venue.name}, ${event.venue.address}`
+    : event.location;
+  if (location && location.length > 0) {
+    lines.push(foldIcsLine(`LOCATION:${escapeIcsText(location)}`));
   }
 
   lines.push(foldIcsLine(`URL:${origin}${eventHref(event)}`));

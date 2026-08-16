@@ -94,7 +94,7 @@ export async function getUpcomingEvents(
   const [{ data, error }, games] = await Promise.all([
     supabase
       .from("events")
-      .select("*")
+      .select("*, venue:venues(name, address, maps_url)")
       .eq("status", "published")
       .or(upcomingFilter())
       .order("starts_at", { ascending: true }),
@@ -121,7 +121,7 @@ export async function getPastEvents(
   const [{ data, error }, games] = await Promise.all([
     supabase
       .from("events")
-      .select("*")
+      .select("*, venue:venues(name, address, maps_url)")
       .eq("status", "published")
       .or(pastFilter())
       .order("starts_at", { ascending: false })
@@ -146,7 +146,7 @@ export async function getEventsInRange(
   const [{ data, error }, games] = await Promise.all([
     supabase
       .from("events")
-      .select("*")
+      .select("*, venue:venues(name, address, maps_url)")
       .eq("status", "published")
       .gte("starts_at", rangeStart.toISOString())
       .lt("starts_at", rangeEnd.toISOString())
@@ -182,7 +182,7 @@ export async function getEventsForIcsFeed(): Promise<EventRow[]> {
   const [{ data, error }, games] = await Promise.all([
     supabase
       .from("events")
-      .select("*")
+      .select("*, venue:venues(name, address, maps_url)")
       .eq("status", "published")
       .gte("starts_at", oneYearAgo)
       .lte("starts_at", twoYearsAhead)
@@ -200,7 +200,7 @@ export async function getEventBySlug(slug: string): Promise<EventRow | null> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("events")
-    .select("*")
+    .select("*, venue:venues(name, address, maps_url)")
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();

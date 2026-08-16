@@ -2,7 +2,7 @@ import "server-only";
 
 import { getSiteSettingsCore } from "@/lib/site-settings";
 import { createServerClient } from "@/lib/supabase/server";
-import type { EventRow, Game } from "@/lib/types";
+import type { EventRow, Game, Venue } from "@/lib/types";
 
 /**
  * Games, rendered as calendar rows.
@@ -33,10 +33,10 @@ type GameCalendarRow = Pick<
   | "location_url"
   | "home_or_away"
   | "notes"
-> & { updated_at: string };
+> & { updated_at: string; venue: Venue | null };
 
 const SELECT_COLUMNS =
-  "id, team_level, team_designation, opponent, game_date, location, location_url, home_or_away, notes, updated_at";
+  "id, team_level, team_designation, opponent, game_date, location, location_url, home_or_away, notes, updated_at, venue:venues(name, address, maps_url)";
 
 /**
  * Only these two statuses reach a calendar.
@@ -116,6 +116,7 @@ function toCalendarEvent(
     ends_at: null,
     location: game.location,
     location_url: game.location_url,
+    venue: game.venue,
     signup_url: null,
     cover_image_url: null,
     photos_url: null,

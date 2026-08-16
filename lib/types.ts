@@ -37,6 +37,17 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+/**
+ * A physical place (migration 134). One row per venue; games and events point at
+ * it by id. `address` exists so the ICS feed can emit "Name, address" — a phone
+ * can navigate from that, it cannot navigate from "Burger Stadium".
+ */
+export interface Venue {
+  name: string;
+  address: string;
+  maps_url: string;
+}
+
 export interface Game {
   id: string;
   year: string;
@@ -55,6 +66,12 @@ export interface Game {
   maxpreps_game_url: string | null;
   notes: string | null;
   featured: boolean;
+  /**
+   * Joined from `venues` via venue_id. Null where the venue is unknown — last
+   * season's away sites were deliberately left unmapped (migration 134). Render
+   * sites must fall back to plain text, never to a guessed link.
+   */
+  venue?: Venue | null;
 }
 
 export interface Roster {
@@ -211,6 +228,8 @@ export interface EventRow {
   status: "draft" | "published" | "cancelled";
   featured: boolean;
   updated_at: string;
+  /** Joined from `venues` via venue_id — see Game.venue. */
+  venue?: Venue | null;
   /**
    * Where this row's title links. NOT a column — absent on everything that comes
    * out of the `events` table, which links to `/events/<slug>`.
