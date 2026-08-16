@@ -8112,3 +8112,143 @@ commit;
 
 -- Verification:
 --   select name, latitude, longitude from venues where latitude is not null order by name;
+
+-- ===
+-- db/migrations/138_cavalier_stadium.sql
+-- ===
+
+-- 138_cavalier_stadium.sql
+--
+-- Lake Travis: Cavalier Stadium pin from Jeremy, 2026-08-16.
+--
+-- Third stadium/campus split in a row, and the pattern is now established beyond
+-- doubt: the pin he sent is 30.3248488,-97.9680765 while the campus address pin
+-- inside the SAME URL (3324 Ranch Rd 620 S) is 30.3282475,-97.9666167 - about
+-- 480 m apart. Maverick Stadium was ~200 m from its campus pin (135) and
+-- Chaparral ~260 m (137). Assume they differ until shown otherwise.
+--
+-- So Cavalier Stadium is its own venue and the one game that plays there is
+-- repointed. 'Lake Travis High School' (the campus, with the district address
+-- and no coordinates) stays in the table but is now referenced by nothing - kept
+-- deliberately, because the JV/freshman away fields vary and a future row may
+-- genuinely mean the campus rather than the varsity stadium. An unused venue row
+-- costs nothing; re-deriving a deleted one costs a lookup.
+--
+-- ⚠️ Only ONE game currently plays here (JV, Wed Sep 23) - varsity hosts Lake
+-- Travis at KRAC and the freshmen host at Maverick Stadium. That single row is
+-- an AWAY JV game, and Jeremy has flagged that JV and freshman away fields vary,
+-- so this pin is "the stadium at Lake Travis", not proof that JV plays in it. If
+-- it turns out they play a side field, add that venue and repoint this one row.
+
+begin;
+
+insert into venues (name, address, maps_url, latitude, longitude) values
+  ('Cavalier Stadium',
+   '3324 Ranch Road 620 S, Austin, TX 78738',
+   'https://www.google.com/maps/place/Cavalier+Stadium/@30.3240184,-97.9696299,588m/data=!3m1!1e3!4m15!1m8!3m7!1s0x865b382c58a80363:0x336b14128be316f7!2s3324+Ranch+Rd+620+S,+Austin,+TX+78738!3b1!8m2!3d30.3282475!4d-97.9666167!16s%2Fg%2F11c0px86wt!3m5!1s0x865b3831d8480283:0xf7d2f43ae250066f!8m2!3d30.3248488!4d-97.9680765!16s%2Fg%2F1wg5yf21',
+   30.3248488, -97.9680765)
+on conflict (name) do update
+  set maps_url = excluded.maps_url,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      updated_at = now();
+
+update games
+   set venue_id = (select id from venues where name = 'Cavalier Stadium')
+ where location = 'Lake Travis HS';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where v.name = 'Cavalier Stadium';
+  if n <> 1 then raise exception 'expected 1 game at Cavalier Stadium, got %', n; end if;
+
+  select count(*) into n from games where location = 'Lake Travis HS' and venue_id is null;
+  if n <> 0 then raise exception '% Lake Travis games lost their venue', n; end if;
+
+  -- Carry forward every rule from 136 + 137 on the whole table, so a later
+  -- migration cannot quietly break them.
+  select count(*) into n from venues
+   where maps_url like '%goo.gl%' or maps_url like '%entry=tt%' or maps_url like '%g_ep=%';
+  if n <> 0 then raise exception '% venue URLs are shortened or carry session junk', n; end if;
+
+  select count(*) into n from venues where (latitude is null) <> (longitude is null);
+  if n <> 0 then raise exception '% venues have only half a coordinate', n; end if;
+
+  select count(*) into n from venues
+   where latitude is not null
+     and (latitude not between 29.5 and 31.5 or longitude not between -98.5 and -97.0);
+  if n <> 0 then raise exception '% venue coordinates are outside Central Texas', n; end if;
+end $$;
+
+commit;
+
+-- /schedule/games/* and /events read at request time: live with no deploy.
+
+-- ===
+-- db/migrations/139_stony_point_tiger_stadium.sql
+-- ===
+
+-- 139_stony_point_tiger_stadium.sql
+--
+-- Stony Point: Tiger Stadium pin from Jeremy, 2026-08-16. Fourth stadium/campus
+-- split; the pin is 30.5304036,-97.6642866 and the campus address pin inside the
+-- same URL (1801 Tiger Trail) is 30.5291345,-97.6609148, ~350 m apart.
+--
+-- Running tally of pin-vs-campus distance, which is why this is now the default
+-- assumption rather than a surprise:
+--   Maverick Stadium   ~200 m (135)
+--   Chaparral          ~260 m (137)
+--   Cavalier           ~480 m (138)
+--   Tiger Stadium      ~350 m (this one)
+--
+-- Both seasons' rows move (2025-26 JV and 2026-27 JV) - same treatment the
+-- 'Maverick Stadium' rows got in 135. The archived row is not worth a second
+-- venue and the place has not moved.
+--
+-- 'Stony Point High School' (campus, district address, no coordinates) stays in
+-- the table unreferenced, for the same reason 138 kept the Lake Travis campus
+-- row: away fields vary and a future row may mean the campus.
+
+begin;
+
+insert into venues (name, address, maps_url, latitude, longitude) values
+  ('Stony Point Tiger Stadium',
+   '1801 Tiger Trail, Round Rock, TX 78664',
+   'https://www.google.com/maps/place/Stony+Point+Tiger+Stadium/@30.5304751,-97.6642963,429m/data=!3m1!1e3!4m15!1m8!3m7!1s0x8644d1a95ddb5b4d:0xdf7c6cd9c4b0eae7!2s1801+Tiger+Trail,+Round+Rock,+TX+78664!3b1!8m2!3d30.5291345!4d-97.6609148!16s%2Fg%2F11bw3zlw8g!3m5!1s0x8644d13a7999f74d:0x1264a8be29585b53!8m2!3d30.5304036!4d-97.6642866!16s%2Fg%2F11tk47mzh9',
+   30.5304036, -97.6642866)
+on conflict (name) do update
+  set maps_url = excluded.maps_url,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      updated_at = now();
+
+update games
+   set venue_id = (select id from venues where name = 'Stony Point Tiger Stadium')
+ where location = 'Stony Point HS';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where v.name = 'Stony Point Tiger Stadium';
+  if n <> 2 then raise exception 'expected 2 games at Tiger Stadium (both seasons), got %', n; end if;
+
+  select count(*) into n from games where location = 'Stony Point HS' and venue_id is null;
+  if n <> 0 then raise exception '% Stony Point games lost their venue', n; end if;
+
+  select count(*) into n from venues
+   where maps_url like '%goo.gl%' or maps_url like '%entry=tt%' or maps_url like '%g_ep=%';
+  if n <> 0 then raise exception '% venue URLs are shortened or carry session junk', n; end if;
+
+  select count(*) into n from venues where (latitude is null) <> (longitude is null);
+  if n <> 0 then raise exception '% venues have only half a coordinate', n; end if;
+
+  select count(*) into n from venues
+   where latitude is not null
+     and (latitude not between 29.5 and 31.5 or longitude not between -98.5 and -97.0);
+  if n <> 0 then raise exception '% venue coordinates are outside Central Texas', n; end if;
+end $$;
+
+commit;

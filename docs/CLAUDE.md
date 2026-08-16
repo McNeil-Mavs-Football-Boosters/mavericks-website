@@ -21,6 +21,23 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
+### Migrations 138 + 139 — Cavalier and Tiger Stadium, and the pattern is now the default
+
+Lake Travis and Stony Point, both from Jeremy. Both were the **stadium/campus split again**, which after four in a row is the assumption rather than the surprise — distance between the pin he sends and the campus address pin inside the *same* URL:
+
+| Venue | Pin vs campus |
+|---|---|
+| Maverick Stadium (135) | ~200 m |
+| Chaparral (137) | ~260 m |
+| Tiger Stadium (139) | ~350 m |
+| Cavalier (138) | ~480 m |
+
+**Assume a school's street address is not its stadium.** Every one of these would have dropped a family in the wrong lot, which is exactly what Jeremy reported when he said the HS address link "takes to the wrong parking lot".
+
+Both migrations move **every season's** rows for that location string, same as the Maverick rows in 135 — the archived game doesn't merit a second venue and the place hasn't moved. The campus venues (`Lake Travis High School`, `Stony Point High School`) stay in the table **unreferenced on purpose**: away fields vary, so a future row may genuinely mean the campus, and an unused row costs nothing while re-deriving a deleted one costs a lookup.
+
+Each of these also re-asserts the whole table's invariants — no shortened URLs, no Maps session junk, no half-coordinates, nothing outside the Central Texas box — so a later migration can't quietly break a rule an earlier one established.
+
 ### Migration 137 — coordinates on venues, GEO in the ICS feed, Chaparral's real pin
 
 The calendar was the weakest surface for precision and the one people use while already driving: a VEVENT could only carry `LOCATION`, a text string the phone geocodes itself — which is exactly how Lake Belton sent people to a road centerline. The feed now emits **`GEO:lat;lon`** (RFC 5545 § 3.8.1.6) so clients that support it stop guessing. **31 of 64 events carry GEO**; the rest omit it and behave exactly as before.
@@ -55,7 +72,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 → 137 applied. Last migration applied: 137.** 18 venues, 7 with verified coordinates; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 139 applied. Last migration applied: 139.** 20 venues, 9 with verified coordinates; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
