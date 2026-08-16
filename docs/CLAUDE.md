@@ -21,6 +21,18 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
+### Migrations 144 → 146 — the last two away venues; every 2026-27 game now has a verified pin
+
+**44 of 48 games** sit at a venue with a human-checked pin; the four without are last season's rows. `/schedule/games/*`, `/events`, the month view and the ICS feed all read the same venue.
+
+**144 — Westlake freshman rows repointed to Chaparral Stadium.** No new venue: 137's pin was already there, so the correction was one statement. This answers a question 137 explicitly left open (it kept Chaparral and the Westlake campus as separate venues *because* the freshman rows might have meant a side field). **This is the payoff for venues being rows rather than per-game URLs.**
+
+**145 + 146 — Bowie, and the value of not hardening a hedge.** Jeremy: *"Bowie plays at Berger from what I can tell"* — his own words carried the doubt, so 145 attached the Burger pin (more likely right than an unchecked campus address) but **deliberately left the label reading 'Bowie HS'**, accepting a visible page-says-one-thing/link-says-another inconsistency rather than putting the site back into disagreement with the Print View PDF on the strength of a maybe. He then checked satellite imagery: **there is no stadium on the Bowie campus at all.** Bowie cannot host at its own address, which settles it — AISD sub-varsity plays at the district's shared stadiums, and for Bowie that's Burger, the same venue as varsity the next night.
+
+146 then closed it on **all three surfaces at once** — the games row label, the derived calendar/ICS entry, and the freshman Aug. 27 SITE cell in the Print View PDF (re-patched from the school's original and re-uploaded). Leaving any one behind is how this project got a site that disagreed with its own printed schedule in the first place.
+
+⚠️ **`scripts/patch-schedule-pdf-scrimmages.py` is now `scripts/patch-schedule-pdf.py`** — it no longer patches only scrimmage rows. 14 cells across 7 rows; still aborts unless every target holds the exact string it expects, still verified by span diff (256 of 270 spans untouched) and pixel diff before upload.
+
 ### Migrations 138 → 143 — eight venue pins from Jeremy; the stadium/campus split is universal
 
 Lake Travis, Stony Point, Rouse, Vista Ridge, Cedar Ridge and Westwood, on top of Maverick and Chaparral. **Every single one was a stadium/campus split.** Distance between the pin Jeremy sent and the campus address pin inside the *same* URL:
@@ -115,7 +127,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 → 143 applied. Last migration applied: 143.** 24 venues, 13 with verified coordinates; 40 of 48 games at a pinned venue; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 146 applied. Last migration applied: 146.** 24 venues, 13 with verified coordinates; **44 of 48 games at a verified pin — every 2026-27 game**; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
@@ -164,7 +176,7 @@ Titles read "JV Scrimmage vs Eastview High School", "Freshmen Blue at Austin Bow
 
 `documents/schedules/2026-27.pdf` is the school's Excel export (authored 2026-04-28), linked from every games page. It showed **KRAC / TBD** for both preseason scrimmages. Jeremy confirmed 2026-08-16: **both scrimmages are at McNeil's own stadium, not KRAC** — he was at the Aug 13 one — and freshmen and JV scrimmage at the same time. So the site was contradicting its own Print View on both venue and time.
 
-**Five cells patched, ten spans total** (`MavericksWebsite/scripts/patch-schedule-pdf-scrimmages.py`): varsity Aug 13 + Aug 20 → Maverick Stadium / 7:00, JV Aug 13 + Aug 20 → Maverick Stadium / 5:30, freshman Aug 20 → Maverick Stadium / 5:30.
+**Five cells patched, ten spans total** (`MavericksWebsite/scripts/patch-schedule-pdf.py`): varsity Aug 13 + Aug 20 → Maverick Stadium / 7:00, JV Aug 13 + Aug 20 → Maverick Stadium / 5:30, freshman Aug 20 → Maverick Stadium / 5:30.
 
 - **Edited, not rebuilt.** PyMuPDF redaction removes the old text with `images`/`graphics` redaction disabled, so row shading, borders, logos and all 260 other text spans survive untouched. New text is drawn with the PDF's **own embedded Calibri subset** (extracted via `doc.extract_font`), at the same 11.4pt, centred on the same column centres the existing rows use (438.28 SITE, 565.02 TIME) — so the corrected cells are typographically indistinguishable from the school's rows.
 - **"Maverick Stadium"** is the exact wording the PDF already uses for McNeil's stadium in its own JV/freshman home rows. Deliberately not "MHS Stadium".
