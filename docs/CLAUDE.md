@@ -19,7 +19,15 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-08-16 latest — venues table; every location is a map link; real place pins for the busiest venues)
+## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
+
+### Migration 136 — Lake Belton, and why the ADDRESS matters as much as the pin
+
+Jeremy: 134's Lake Belton link "points to just the middle of a road." It did. Verified independently before changing anything: `9809 Prairie View Road` geocodes to a **road centerline with no house number, 920 m from the school**, while his pin (31.143741, -97.441674) reverse-geocodes to house number 9809 on **FM 2483**. Belton ISD publishes the campus under both street names and only the FM 2483 form resolves to the building, so **the stored address changed too** — the ICS emits it as `LOCATION`, and a phone geocoding "Prairie View Road" would have been sent to the same wrong stretch of road. Fixing the URL alone would have looked done and left the calendar broken.
+
+⚠️ **Short links are expanded, never stored.** He sent a `maps.app.goo.gl` link; it is resolved with `curl -I` and stored in the documented Maps URLs API form. A shortener is opaque — nobody reviewing the migration or diffing it later can see where it points — and it adds a second service that has to stay up (Google turned down the general goo.gl shortener in 2025; `maps.app.goo.gl` survives, but there's no reason to depend on it). Same rule as the Venmo QR sign in the BoosterClub project: never ship an opaque pointer you can't read back. An assertion now fails the migration if any venue URL contains `goo.gl`.
+
+Note this one is a **coordinate search, not a named place** like the 135 pins — more precise (an exact point rather than Google's centroid for a feature), but it opens without a place card.
 
 ### Migration 135 — real place pins for the three busiest venues, and Maverick Stadium splits off
 
@@ -35,7 +43,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 + 135 applied. Last migration applied: 135.** 18 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 136 applied. Last migration applied: 136.** 18 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
