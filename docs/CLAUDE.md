@@ -19,9 +19,23 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Status (2026-08-16 latest — venues table; every location is a map link now)
+## Status (2026-08-16 latest — venues table; every location is a map link; real place pins for the busiest venues)
 
-**Migration 134 applied. Last migration applied: 134.** 17 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+### Migration 135 — real place pins for the three busiest venues, and Maverick Stadium splits off
+
+Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5) and Gupton (2)**; they replace 134's address-search links. Together with Dragon Stadium and Burger, **28 of this season's 44 games now point at an exact pin** rather than a street address. He is checking the rest; those keep their district addresses until he does. DB-only, no deploy — verified live immediately.
+
+⚠️ **Maverick Stadium is now its own venue, NOT an alias of the campus.** 134 folded it into McNeil High School on the theory that the stadium sits on campus and the campus address was the best answer available. Jeremy's link disproves the premise: the stadium pin is 30.4503017,-97.7302712 and the campus pin is 30.4498039,-97.7321648 — ~200 m apart, different entrances. So `games.location = 'Maverick Stadium'` (35 rows, all seasons) and `events.location = 'McNeil High School Stadium'` (2 rows, including Meet the Mavs) moved to the new venue; the cafeteria / team-room / plain-campus events (12) stayed. **Both venues keep the same street address** — 5720 McNeil Drive is what Google itself associates with the stadium pin — so the ICS still navigates correctly while the on-site link goes to the precise pin.
+
+**An assertion caught a bad guess before it shipped**: the migration asserted 14 campus events and there are 12. Counted against the live table first, then wrote the number. Assert on a count you measured, never one you remembered.
+
+**URL hygiene, now enforced by an assertion**: the `?entry=ttu&g_ep=…` tail on a pasted Maps URL is session junk and is stripped; migration 135 fails if any stored venue URL contains it.
+
+**These pins were NOT verified by fetching them.** google.com/maps serves a generic "Google Maps" shell to any non-browser client, so a 200 proves nothing. What is checkable is inside the URL — each carries a place name in its path and coordinates that sit where that place should be — plus Jeremy having opened all three. Don't let a future session "verify" a Maps link by curling it.
+
+### Migration 134 — the table itself
+
+**Migrations 134 + 135 applied. Last migration applied: 135.** 18 venues; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
