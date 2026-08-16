@@ -8314,3 +8314,190 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/141_vista_ridge_football_field.sql
+-- ===
+
+-- 141_vista_ridge_football_field.sql
+--
+-- Vista Ridge: football field pin from Jeremy, 2026-08-16. Sixth split; pin
+-- 30.5192122,-97.7873188 vs the campus at 30.5165045,-97.7878702, ~300 m apart.
+--
+-- ⚠️ THIS URL IS SHAPED DIFFERENTLY from the previous five and the difference
+-- matters when reading coordinates out by hand. The earlier links carried a
+-- STREET ADDRESS in the `!1m8!3m7…!2s<address>` segment; this one carries a
+-- PLACE, `!2sVista+Ridge+High+School`, with its own coordinates. The rule is
+-- unchanged and is about position, not content: the pin is always the LAST
+-- `!3m5!…!8m2!3d<lat>!4d<lon>` group, the selected feature. The earlier group is
+-- context Google threw in, whatever its type.
+--
+-- Because that segment is a place rather than an address, this URL supplies NO
+-- street address, so the venue keeps Leander ISD's published one. That is fine:
+-- `address` feeds the ICS LOCATION text and `latitude/longitude` feed GEO, and
+-- only the latter needs to be exact.
+--
+-- Three rows move, including a 2025-26 JV game - same all-seasons treatment as
+-- every venue since 135. The 2026-27 pair are freshman Blue and Green, so the
+-- Rouse caveat applies: this is "the field at Vista Ridge", not proof the
+-- freshmen play on it.
+
+begin;
+
+insert into venues (name, address, maps_url, latitude, longitude) values
+  ('Vista Ridge Football Field',
+   '200 S Vista Ridge Boulevard, Cedar Park, TX 78613',
+   'https://www.google.com/maps/place/Vista+Ridge+Football+Field/@30.519268,-97.7895439,793m/data=!3m1!1e3!4m14!1m7!3m6!1s0x865b2d2c6700680b:0x36319648a550950d!2sVista+Ridge+High+School!8m2!3d30.5165045!4d-97.7878702!16zL20vMDl6NHR4!3m5!1s0x865b2dbedc7b71f5:0xa5c5b56470d0bb53!8m2!3d30.5192122!4d-97.7873188!16s%2Fg%2F11js4mz_yd',
+   30.5192122, -97.7873188)
+on conflict (name) do update
+  set maps_url = excluded.maps_url,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      updated_at = now();
+
+update games
+   set venue_id = (select id from venues where name = 'Vista Ridge Football Field')
+ where location = 'Vista Ridge HS';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where v.name = 'Vista Ridge Football Field';
+  if n <> 3 then raise exception 'expected 3 games at Vista Ridge (both seasons), got %', n; end if;
+
+  select count(*) into n from games where location = 'Vista Ridge HS' and venue_id is null;
+  if n <> 0 then raise exception '% Vista Ridge games lost their venue', n; end if;
+
+  select count(*) into n from venues
+   where maps_url like '%goo.gl%' or maps_url like '%entry=tt%' or maps_url like '%g_ep=%';
+  if n <> 0 then raise exception '% venue URLs are shortened or carry session junk', n; end if;
+
+  select count(*) into n from venues where (latitude is null) <> (longitude is null);
+  if n <> 0 then raise exception '% venues have only half a coordinate', n; end if;
+
+  select count(*) into n from venues
+   where latitude is not null
+     and (latitude not between 29.5 and 31.5 or longitude not between -98.5 and -97.0);
+  if n <> 0 then raise exception '% venue coordinates are outside Central Texas', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/142_cedar_ridge_stadium.sql
+-- ===
+
+-- 142_cedar_ridge_stadium.sql
+--
+-- Cedar Ridge: football stadium pin from Jeremy, 2026-08-16. Seventh split; pin
+-- 30.4926553,-97.6377619 vs the campus address pin in the same URL (2801 Gattis
+-- School Rd) at 30.4948292,-97.6421454, ~450 m apart.
+--
+-- Four rows move, two per season, all FRESHMAN Blue + Green. Same caveat as
+-- Rouse and Vista Ridge: this is the stadium at Cedar Ridge, not proof the
+-- freshmen play in it. 'Cedar Ridge High School' (campus) stays unreferenced.
+--
+-- Note Cedar Ridge is an RRISD school, so its rows may move to a shared district
+-- facility in a future season the way McNeil's own varsity home games sit at KRAC
+-- rather than Maverick Stadium. If that happens the fix is repointing rows, not
+-- editing this venue - the stadium itself has not moved.
+
+begin;
+
+insert into venues (name, address, maps_url, latitude, longitude) values
+  ('Cedar Ridge High School Football Stadium',
+   '2801 Gattis School Road, Round Rock, TX 78664',
+   'https://www.google.com/maps/place/Cedar+Ridge+High+School+Football+Stadium/@30.4923251,-97.6385667,200m/data=!3m1!1e3!4m15!1m8!3m7!1s0x8644d025c69c508f:0xae9add38c6a1c93e!2s2801+Gattis+School+Rd,+Round+Rock,+TX+78664!3b1!8m2!3d30.4948292!4d-97.6421454!16s%2Fg%2F11p_836m1c!3m5!1s0x8644d1048f24f785:0x2ffd06061a5c04d1!8m2!3d30.4926553!4d-97.6377619!16s%2Fg%2F11t_m4j9mn',
+   30.4926553, -97.6377619)
+on conflict (name) do update
+  set maps_url = excluded.maps_url,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      updated_at = now();
+
+update games
+   set venue_id = (select id from venues where name = 'Cedar Ridge High School Football Stadium')
+ where location = 'Cedar Ridge HS';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where v.name = 'Cedar Ridge High School Football Stadium';
+  if n <> 4 then raise exception 'expected 4 games at Cedar Ridge (both seasons), got %', n; end if;
+
+  select count(*) into n from games where location = 'Cedar Ridge HS' and venue_id is null;
+  if n <> 0 then raise exception '% Cedar Ridge games lost their venue', n; end if;
+
+  select count(*) into n from venues
+   where maps_url like '%goo.gl%' or maps_url like '%entry=tt%' or maps_url like '%g_ep=%';
+  if n <> 0 then raise exception '% venue URLs are shortened or carry session junk', n; end if;
+
+  select count(*) into n from venues where (latitude is null) <> (longitude is null);
+  if n <> 0 then raise exception '% venues have only half a coordinate', n; end if;
+
+  select count(*) into n from venues
+   where latitude is not null
+     and (latitude not between 29.5 and 31.5 or longitude not between -98.5 and -97.0);
+  if n <> 0 then raise exception '% venue coordinates are outside Central Texas', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/143_westwood_warrior_bowl.sql
+-- ===
+
+-- 143_westwood_warrior_bowl.sql
+--
+-- Westwood: Warrior Bowl pin from Jeremy, 2026-08-16. Eighth split; pin
+-- 30.4585172,-97.7979725 vs the campus address pin in the same URL (12400 Mellow
+-- Meadow Dr) at 30.4566119,-97.7980504, ~210 m apart - the tightest of the eight,
+-- and still a different parking lot.
+--
+-- Three rows move (2026-27 freshman Blue + Green, one 2025-26 row). Freshman
+-- caveat applies as with Rouse, Vista Ridge and Cedar Ridge. 'Westwood High
+-- School' (campus) stays unreferenced.
+
+begin;
+
+insert into venues (name, address, maps_url, latitude, longitude) values
+  ('Westwood Warrior Bowl',
+   '12400 Mellow Meadow Drive, Austin, TX 78750',
+   'https://www.google.com/maps/place/Westwood+Warrior+Bowl/@30.4572381,-97.800711,794m/data=!3m1!1e3!4m15!1m8!3m7!1s0x865b32b867e9bfb5:0xd13fe8ad8cfb759e!2s12400+Mellow+Meadow+Dr,+Austin,+TX+78750!3b1!8m2!3d30.4566119!4d-97.7980504!16s%2Fg%2F11c3q4cb8c!3m5!1s0x865b33612b05c789:0x8420ac02db4a7637!8m2!3d30.4585172!4d-97.7979725!16s%2Fg%2F11j2x_qn_f',
+   30.4585172, -97.7979725)
+on conflict (name) do update
+  set maps_url = excluded.maps_url,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      updated_at = now();
+
+update games
+   set venue_id = (select id from venues where name = 'Westwood Warrior Bowl')
+ where location = 'Westwood HS';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where v.name = 'Westwood Warrior Bowl';
+  if n <> 3 then raise exception 'expected 3 games at Warrior Bowl (both seasons), got %', n; end if;
+
+  select count(*) into n from games where location = 'Westwood HS' and venue_id is null;
+  if n <> 0 then raise exception '% Westwood games lost their venue', n; end if;
+
+  select count(*) into n from venues
+   where maps_url like '%goo.gl%' or maps_url like '%entry=tt%' or maps_url like '%g_ep=%';
+  if n <> 0 then raise exception '% venue URLs are shortened or carry session junk', n; end if;
+
+  select count(*) into n from venues where (latitude is null) <> (longitude is null);
+  if n <> 0 then raise exception '% venues have only half a coordinate', n; end if;
+
+  select count(*) into n from venues
+   where latitude is not null
+     and (latitude not between 29.5 and 31.5 or longitude not between -98.5 and -97.0);
+  if n <> 0 then raise exception '% venue coordinates are outside Central Texas', n; end if;
+end $$;
+
+commit;

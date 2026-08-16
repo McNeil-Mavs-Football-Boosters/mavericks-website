@@ -21,7 +21,32 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
-### Migrations 138 → 140 — Cavalier, Tiger and Charles Rouse Stadium; the split is now the default
+### Migrations 138 → 143 — eight venue pins from Jeremy; the stadium/campus split is universal
+
+Lake Travis, Stony Point, Rouse, Vista Ridge, Cedar Ridge and Westwood, on top of Maverick and Chaparral. **Every single one was a stadium/campus split.** Distance between the pin Jeremy sent and the campus address pin inside the *same* URL:
+
+| Venue | Pin vs campus |
+|---|---|
+| Maverick Stadium (135) | ~200 m |
+| Westwood Warrior Bowl (143) | ~210 m |
+| Chaparral (137) | ~260 m |
+| Vista Ridge Football Field (141) | ~300 m |
+| Charles Rouse (140) | ~340 m |
+| Tiger Stadium (139) | ~350 m |
+| Cedar Ridge Stadium (142) | ~450 m |
+| Cavalier (138) | ~480 m |
+
+**Eight for eight. A school's street address is never its stadium** — that is the finding, not a caveat. Every address-derived link in migration 134 would have dropped a family in the wrong lot, which is what Jeremy meant by "the HS address link takes to the wrong parking lot". The lesson generalizes past this project: an address that *resolves* is not an address that is *right*, and only someone who has driven there can tell the difference.
+
+**40 of 48 games are now at a pinned venue.** Only `Bowie HS` and `Westlake HS` remain on district addresses.
+
+⚠️ **Reading coordinates out of a Maps URL — the rule is POSITIONAL, not by content.** Take the LAST `!3m5!…!8m2!3d<lat>!4d<lon>` group, which is the selected feature. The earlier `!1m8!3m7…` group is context Google threw in and its type varies: usually a street address, but on the Vista Ridge URL it is a *place* (`!2sVista+Ridge+High+School`) with its own coordinates. Reading by content rather than position gets the campus instead of the field.
+
+Most of these pins land on **freshman** rows, and Jeremy has been explicit that freshman and JV away fields vary. Treat each as "the stadium at X", not proof that level plays in it — still strictly better than an unverified campus address a quarter-mile off. Campus venues stay in the table **unreferenced on purpose** for the row that eventually does mean the campus.
+
+Every one of these migrations re-asserts the whole table's invariants — no shortened URLs, no Maps session junk, no half-coordinates, nothing outside the Central Texas box — so a later migration can't quietly break an earlier one's rule.
+
+⚠️ **`/events.ics` is CDN-cached for an hour** (`Cache-Control: public, max-age=3600, s-maxage=3600`), unlike every page on the site, which is request-time. A venue change shows on `/events` and the schedule instantly and on the feed up to an hour later. **Verify the feed with a cache-buster** (`/events.ics?cb=1`) or you will "confirm" a stale GEO count and think the migration failed — which is exactly what happened once here.
 
 Lake Travis, Stony Point and Rouse, all from Jeremy, all the **stadium/campus split again**. After five in a row this is the assumption, not the surprise — distance between the pin he sends and the campus address pin inside the *same* URL:
 
@@ -90,7 +115,7 @@ Jeremy sent verified Maps place links for **Maverick Stadium (18 games), KRAC (5
 
 ### Migration 134 — the table itself
 
-**Migrations 134 → 140 applied. Last migration applied: 140.** 21 venues, 10 with verified coordinates; 34 of 48 games at a pinned venue; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
+**Migrations 134 → 143 applied. Last migration applied: 143.** 24 venues, 13 with verified coordinates; 40 of 48 games at a pinned venue; 44 current-season games and all 16 located events resolved. tsc + build clean; the only two eslint errors in the repo are pre-existing (`HeroCarousel`, `resource-item`) and untouched.
 
 **Why the schedule had no map links:** `games.location_url` has existed since the beginning and was NULL on all 48 rows — the games table and game cards have *always* rendered a link the moment that column has a value. The data was simply never there. Events were the opposite: 10 of 14 had a URL, but the events *list* and *month view* printed the location as plain text, so Meet the Mavs had working directions on its detail page and dead text on the calendar.
 
