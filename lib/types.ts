@@ -57,10 +57,16 @@ export interface Venue {
   longitude: number | null;
 }
 
+/**
+ * The three squads. Single source for the union: `games` and `rosters` both
+ * key off it, and `gameLevels` in lib/queries/events.ts narrows against it.
+ */
+export type TeamLevel = "varsity" | "jv" | "freshman";
+
 export interface Game {
   id: string;
   year: string;
-  team_level: "varsity" | "jv" | "freshman";
+  team_level: TeamLevel;
   team_designation: string | null;
   opponent: string;
   opponent_url: string | null;
@@ -86,7 +92,7 @@ export interface Game {
 export interface Roster {
   id: string;
   year: string;
-  team_level: "varsity" | "jv" | "freshman";
+  team_level: TeamLevel;
   team_designation: string | null;
   body: string;
   source_note: string | null;

@@ -5,20 +5,32 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { CHICAGO_TZ } from "@/lib/events-format";
 import { getGamesAsEvents } from "@/lib/queries/game-events";
 import { createServerClient } from "@/lib/supabase/server";
-import type { EventRow } from "@/lib/types";
+import type { EventRow, TeamLevel } from "@/lib/types";
 
 /**
- * Whether to fold the season schedule into the result (lib/queries/game-events.ts).
+ * Whether to fold the season schedule into the result (lib/queries/game-events.ts),
+ * and if so which squads.
  *
  * OPT-IN, not the default, and the distinction is a product one rather than a
  * technical one. `/events` — list, month and the ICS feed — is "everything on
- * the calendar", so it asks for games. The HOMEPAGE strip shows the next two
- * things and is club-events-only: with 44 games in the season it would show two
- * games essentially forever, and the strip exists to surface booster events that
- * nothing else advertises. Flip `includeGames` on in app/page.tsx if that call
- * ever changes — one argument, no other edits.
+ * the calendar", so it asks for games and passes no `gameLevels`.
+ *
+ * The HOMEPAGE strip is the interesting case. It originally took no games at
+ * all, because all 44 rows would have shown two games essentially forever and
+ * buried the booster events the strip exists to advertise. Jeremy 2026-08-17:
+ * varsity should not be excluded. So it now asks for games with
+ * `gameLevels: ["varsity"]`, which is ~14 rows instead of 44 and keeps the
+ * JV/freshman rows (three or four per week, all on the same night) out.
+ *
+ * ⚠️ `gameLevels` filters on team_level ONLY. Varsity scrimmages come along
+ * automatically, because "scrimmage" is a value in `notes` rather than a level.
+ * There is deliberately no way to ask for "all scrimmages, any level" — that
+ * would put four near-identical rows on the strip for a single Thursday night.
  */
-type EventQueryOptions = { includeGames?: boolean };
+type EventQueryOptions = {
+  includeGames?: boolean;
+  gameLevels?: readonly TeamLevel[];
+};
 
 /** Merge derived game rows into event rows and re-sort by start time. */
 function mergeSorted(
@@ -84,7 +96,7 @@ function pastFilter(): string {
 
 export async function getUpcomingEvents(
   limit?: number,
-  { includeGames = false }: EventQueryOptions = {},
+  { includeGames = false, gameLevels }: EventQueryOptions = {},
 ): Promise<EventRow[]> {
   const supabase = createServerClient();
 
@@ -99,7 +111,10 @@ export async function getUpcomingEvents(
       .or(upcomingFilter())
       .order("starts_at", { ascending: true }),
     includeGames
-      ? getGamesAsEvents({ from: new Date(dayBoundsChicago().startOfTodayIso) })
+      ? getGamesAsEvents({
+          from: new Date(dayBoundsChicago().startOfTodayIso),
+          levels: gameLevels,
+        })
       : Promise.resolve<EventRow[]>([]),
   ]);
 
@@ -112,7 +127,7 @@ export async function getUpcomingEvents(
 
 export async function getPastEvents(
   limit = 10,
-  { includeGames = false }: EventQueryOptions = {},
+  { includeGames = false, gameLevels }: EventQueryOptions = {},
 ): Promise<EventRow[]> {
   const supabase = createServerClient();
 
@@ -127,7 +142,10 @@ export async function getPastEvents(
       .order("starts_at", { ascending: false })
       .limit(limit),
     includeGames
-      ? getGamesAsEvents({ to: new Date(dayBoundsChicago().startOfTodayIso) })
+      ? getGamesAsEvents({
+          to: new Date(dayBoundsChicago().startOfTodayIso),
+          levels: gameLevels,
+        })
       : Promise.resolve<EventRow[]>([]),
   ]);
 
@@ -140,7 +158,7 @@ export async function getPastEvents(
 export async function getEventsInRange(
   rangeStart: Date,
   rangeEnd: Date,
-  { includeGames = false }: EventQueryOptions = {},
+  { includeGames = false, gameLevels }: EventQueryOptions = {},
 ): Promise<EventRow[]> {
   const supabase = createServerClient();
   const [{ data, error }, games] = await Promise.all([
@@ -151,8 +169,16 @@ export async function getEventsInRange(
       .gte("starts_at", rangeStart.toISOString())
       .lt("starts_at", rangeEnd.toISOString())
       .order("starts_at", { ascending: true }),
+    // Threaded even though today's only caller (the month view) passes no
+    // levels. Accepting an option and then ignoring it is the kind of silent
+    // divergence that gets found months later by someone wondering why their
+    // filter did nothing.
     includeGames
-      ? getGamesAsEvents({ from: rangeStart, to: rangeEnd })
+      ? getGamesAsEvents({
+          from: rangeStart,
+          to: rangeEnd,
+          levels: gameLevels,
+        })
       : Promise.resolve<EventRow[]>([]),
   ]);
 

@@ -128,11 +128,21 @@ function toCalendarEvent(
 }
 
 /**
- * Games in [from, to) as calendar rows, ascending. Both bounds are optional;
- * omitting them returns the whole season.
+ * Games in [from, to) as calendar rows, ascending. Every bound is optional;
+ * omitting them all returns the whole season, every level.
+ *
+ * `levels` narrows to specific squads. The homepage uses it to take varsity
+ * only — see the EventQueryOptions note in lib/queries/events.ts for why. It
+ * filters on team_level and nothing else, so a varsity SCRIMMAGE is included
+ * exactly like a varsity district game: "scrimmage" lives in `notes`, it is not
+ * a level, and a row that says Varsity is a varsity row either way.
  */
 export async function getGamesAsEvents(
-  range: { from?: Date; to?: Date } = {},
+  range: {
+    from?: Date;
+    to?: Date;
+    levels?: readonly Game["team_level"][];
+  } = {},
 ): Promise<EventRow[]> {
   const { current_schedule_year, freshman_has_blue } =
     await getSiteSettingsCore();
@@ -144,6 +154,9 @@ export async function getGamesAsEvents(
     .eq("year", current_schedule_year)
     .in("result_status", CALENDAR_STATUSES);
 
+  // An explicitly EMPTY array means "no levels", not "all levels". Treating it
+  // as unset would silently turn a caller's narrowing into a firehose.
+  if (range.levels) query = query.in("team_level", [...range.levels]);
   if (range.from) query = query.gte("game_date", range.from.toISOString());
   if (range.to) query = query.lt("game_date", range.to.toISOString());
 

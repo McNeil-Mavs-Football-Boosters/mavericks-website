@@ -19,9 +19,19 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-16)
+## Where things stand (read this first — updated 2026-08-17)
 
-**Last migration applied: 147.** Working tree clean, `main` pushed through `8940730`, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
+**Last migration applied: 147.** Working tree clean, `main` pushed through `286c987`, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
+
+**2026-08-17 (code-only, no migration): Q2 Stadium concessions on `/boosters/volunteer`.** Eight volunteer shift dates from Marcus Horton, rendered as an opportunity card linking to a `#q2-concessions` section. Three things to know before touching it:
+
+- **The list expires itself.** Shifts filter on `endsAt > now` per request, and the route is **`force-dynamic` specifically so that filter is not frozen at build time**. When the last date passes, the section AND its card disappear together, so the anchor can never point at nothing. Do not make this page static.
+- **Nov 7 carries `-06:00` while the other seven carry `-05:00`.** DST ends Sun Nov 1 2026, so that shift is genuinely CST — which is also why it starts 90 minutes earlier. The offsets are not a copy-paste error; do not normalize them.
+- **The page is an async server component** because it reads the clock. `react-hooks/purity` rejects `Date.now()` inside a synchronous render; `app/events/page.tsx` already established async-server-component as the pattern for time-dependent pages here.
+
+Dates are **hardcoded in the page, not in the DB** — they are volunteer shifts rather than club events, and eight of them on `/events` would bury the booster events that strip exists to advertise. Two open items in `followups.md`: the "baseball coordinates scheduling, football keeps the proceeds" explanation is **inferred, not confirmed**, and it is now public; and nobody has yet written what the shift actually involves (Carol has owed that since Aug 3).
+
+Drive-by in the same commit: opportunity cards branch on an optional `href` field instead of comparing against the literal title `"Joining a Committee"`.
 
 **What the 2026-08-16 session shipped**, newest first — full detail in the three Status entries below:
 
