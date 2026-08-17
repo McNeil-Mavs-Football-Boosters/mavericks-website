@@ -172,3 +172,12 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 - wife wants roster and season images
 - put bylaws document of booster club but only for board members. 
 
+
+## Q2 Stadium concessions on /boosters/volunteer (2026-08-16)
+
+- [ ] **The eight Q2 shift dates are hardcoded in `app/boosters/volunteer/page.tsx`, not in the DB.** They came from Marcus Horton by text, they are volunteer shifts rather than club events, and putting eight of them on `/events` would bury the booster events that strip exists to advertise. The tradeoff is that a new or changed date is a code edit and a deploy, not a migration. If Marcus starts sending these regularly, move them into `events` (or a `volunteer_shifts` table) and render from there.
+- [ ] **Past shifts drop off on their own** — the page filters on `endsAt > now` per request, and the route is `force-dynamic` specifically so that filter is not frozen at build time. When the last date passes, the section AND its card both disappear, so the `#q2-concessions` anchor can never point at nothing. Do not make this page static.
+- [ ] ⚠️ **Nov 7 carries a different UTC offset on purpose.** DST ends Sun Nov 1 2026, so the seven shifts through Oct 28 are `-05:00` (CDT) and Nov 7 is `-06:00` (CST). That is also why Nov 7 starts 90 minutes earlier. Do not normalize the offsets to match each other.
+- [ ] **The sign-up address is the BASEBALL booster treasurer** (`treasurer@mcneilbaseball.com`). Baseball coordinates scheduling for all of these dates and football keeps the proceeds. The page explains this in so many words because an unexplained baseball address on a football site reads as a typo. **Unverified**: that explanation is inferred from what Marcus sent, not confirmed by him. If the arrangement is actually different, that sentence has to change.
+- [ ] **Still missing: a plain description of what the shift involves.** Carol has owed a write-up of the program plus a sign-up link since the Aug 3 meeting. Nobody who has not done it knows what "working concessions at Q2" actually asks of them. Worth adding once it arrives.
+- [ ] Cleanup done along the way: the opportunity cards now route off an optional `href` field instead of a `title === "Joining a Committee"` string comparison. One decision site; a card is internal if it has `href`, external otherwise.
