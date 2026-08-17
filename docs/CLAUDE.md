@@ -19,6 +19,37 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
+## Where things stand (read this first — updated 2026-08-16)
+
+**Last migration applied: 147.** Working tree clean, `main` pushed through `8940730`, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
+
+**What the 2026-08-16 session shipped**, newest first — full detail in the three Status entries below:
+
+| Area | State |
+|---|---|
+| Practice | Week 3 (Aug 17–23) live from Coach's weekly doc, all three levels |
+| Games | Aug 20 Eastview scrimmage has real times; **every 2026-27 game (44 rows) sits at a venue with a human-verified map pin** |
+| Events calendar | The season schedule is **derived** onto `/events`, the month view and the ICS feed — no game rows in the `events` table. ICS carries `GEO:` for pinned venues |
+| Print View PDF | The school's PDF is **edited in place** by `MavericksWebsite/scripts/patch-schedule-pdf.py` — 7 rows corrected, re-uploaded to storage |
+| /resources | "Stadiums & Directions" retired; Clear Bag Policy promoted into Resources |
+
+### The five rules this session established — break them and you reintroduce a bug we already paid for
+
+1. **Derive, never copy.** Games render onto the calendar at read time; the clear bag policy renders from a constant. Every duplicated fact on this site (Meet the Mavs' time, the Eastview scrimmage) has drifted. If you're about to write the same value into a second table, stop.
+2. **A pin is only as good as the human who opened it.** Eight for eight, a school's street address was NOT its stadium (200–480 m off). Coordinates get set from a link someone opened, never from geocoding an address, and `latitude`/`longitude` stay NULL otherwise.
+3. **Never publish a time or place you're not sure of.** TBD games are excluded from the calendar entirely — a missing entry sends someone to the schedule page, a wrong one sends them to an empty stadium. Same reason the tentative practice tail was dropped rather than carried.
+4. **Count, then assert.** Two migrations today failed on numbers written from memory (12 vs 11 links, 12 vs 14 events). The assertions did their job both times; the habit is to query the count first.
+5. **Fix every surface in the same sitting.** A game's venue lives in the games row, the derived calendar entry, and the printed PDF. Changing one and not the others is exactly how the site ended up disagreeing with its own Print View.
+
+### Open items from this session
+
+- **Week 4 practice (Aug 24–28)** — the bodies say times will be posted when Coach publishes them. **Do not restore the old tentative tail from migration 077**; it predates school starting and its times are wrong.
+- **Freshman/JV away fields vary** (Jeremy). The Rouse, Vista Ridge, Cedar Ridge and Westwood pins are "the stadium at that school", not proof those levels play in it. Repointing one row is one statement.
+- **Label inconsistency, deliberate**: for the same Westlake trip, varsity reads "Chaparral" and the freshman rows read "Westlake HS", both linking to the same pin. Not misleading (same campus, ~260 m); normalize only if Jeremy asks.
+- **2025-26 away venues stay unpinned on purpose** — House Park, Hutto, Manor, Memorial, Monroe, The Pfield, Vandegrift, Weiss. Archived rows nobody navigates to.
+- **If the school reissues the schedule PDF**, re-run the patch script against the new original. It aborts unless every target cell holds the exact expected string, so it will fail loudly rather than blank the wrong cells.
+- Full list, including everything older: `followups.md`.
+
 ## Status (2026-08-16 latest — venues table; every location is a map link; exact pins replacing address searches)
 
 ### Migration 147 — "Stadiums & Directions" retired from /resources; clear bag policy promoted
