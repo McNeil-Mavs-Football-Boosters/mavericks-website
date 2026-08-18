@@ -50,10 +50,13 @@ export interface CoachMealLocation {
 /**
  * Four pickup locations.
  *
- * ⚠️ RUDY'S: the spreadsheet labels all three Rudy's dates "183" but gives only
- * the Round Rock Ave address. Jeremy's call 2026-08-17 was to publish the
- * spreadsheet address and drop the "183" suffix, so the label and the address
- * name the same store. Do not reintroduce "183" without an address to match it.
+ * ⚠️ RUDY'S ADDRESS WAS WRONG IN THE SOURCE SPREADSHEET and is now corrected.
+ * The sheet said "2400 Round Rock Ave"; Jeremy confirmed 2026-08-18 the real
+ * pickup is "2400 N Interstate Hwy 35" - same street number, wrong street.
+ * That also reconciles it with the form's "(Old Settlers and I-35)" label,
+ * which is what surfaced the discrepancy in the first place. Do not "restore"
+ * the Round Rock Ave address from the spreadsheet; the spreadsheet is the one
+ * that is wrong.
  *
  * Tony C's and The League genuinely share an address - they are next door to
  * each other, both TC4 & Co. That is confirmed, not a data-entry error.
@@ -62,7 +65,7 @@ export const COACH_MEAL_LOCATIONS = {
   rudys: {
     sponsorName: "Rudy's BBQ",
     label: "Rudy's BBQ (Old Settlers and I-35)",
-    address: "2400 Round Rock Ave, Round Rock, TX 78681",
+    address: "2400 N Interstate Hwy 35, Round Rock, TX 78681",
     phone: "512-244-2936",
   },
   tonycs: {
