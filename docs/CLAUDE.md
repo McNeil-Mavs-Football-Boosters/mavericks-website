@@ -19,7 +19,20 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-17)
+## Where things stand (read this first — updated 2026-08-18)
+
+**2026-08-18 — Coaches Meal Pickup is LIVE and verified end to end.** `/boosters/coach-meals`, ten Sundays, one volunteer each. Google Form writes → website reads the responses sheet → Apps Script sends confirmations and reminders. **No migration, no table, no API route, no client component** — the "Claim this date" button is a prefilled form link, the same mechanism `/boosters/sponsor` uses for tiers.
+
+Chosen over a native Supabase build after Jeremy pushed back on the premise: collisions were never his worry, the sheet is a better year-to-year record for the club, and Apps Script sends as the booster Gmail — which removed the Resend domain verification and the cron infrastructure the native plan needed. "First to submit gets it" comes free, because a form is append-only and first-wins is a read-time rule rather than a locking problem.
+
+Full detail, including the four silent-failure modes that were each hit for real, is in `~/Projects/BoosterClub/CLAUDE.md`. The two that constrain future edits here:
+
+- **`lib/sheets/coach-meals.ts` returns a discriminated union, not `[]`.** Every other sheet reader logs and returns empty; empty *here* renders all ten dates OPEN and invites the double-booking the feature exists to prevent. On read failure the page shows an error state and no availability. Do not "make it consistent" with the others.
+- **The ten option strings live in three files and Google silently ignores an unmatched prefill.** Run `MavericksWebsite/scripts/check-coach-meal-options.py` after touching any of them. Jeremy edited the form's wording on day one and the site kept showing ten open dates while holding a real signup.
+
+Also live: **DKIM** (`google._domainkey`, verified SPF/DKIM/DMARC all PASS with domain `mcneilmavericks.org`) and send-as for `secretary@` / `fundraising@` / `boosters@`. That unblocks real parent-facing email from the club's own addresses for the first time — relevant to the newsletter, and it closes the J9 spec's last DNS gap.
+
+---
 
 **Last migration applied: 148.** Working tree clean, `main` pushed, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
 
