@@ -188,15 +188,17 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 - [ ] **The 12 freshman Blue game rows were deliberately NOT deleted.** `freshman_has_blue = false` already makes them unreachable on every surface (both Blue routes 404, and `getGamesAsEvents` filters them out of `/events`, the month view and the ICS feed), so deleting them buys nothing — and they are the on-file record of the 5:00 timing. If Coach says 5:00, the fix is one UPDATE moving the ten Green regular-season rows to the Blue times, not a re-derivation. Delete them only once the time is settled and has held.
 - [ ] **Nothing in the UI says "Green" any more, by design.** `showDesignation` follows the flag, so labels read plain "Freshmen" everywhere — which is exactly what Coach described. The `/schedule/games/freshman/green` and `/roster/freshman/green` URLs are unchanged; only the wording dropped. Do not "fix" the URLs to match the labels; the route requires a designation and a bare `/roster/freshman` 404s by design.
 
-## Coaches meal pickup — built, NOT yet configured (2026-08-17)
+## Coaches meal pickup — LIVE (2026-08-17)
 
-`/boosters/coach-meals` is built and the volunteer card points at it, but the three constants in `lib/constants.ts` are still `__REPLACE_` placeholders, so **the page currently renders its error state**. That is deliberate and safe (see below), but it means this must not be advertised until the form exists.
+`/boosters/coach-meals` is live and the volunteer card points at it. Form, sheet, prefill and the service-account read are all verified working.
 
-- [ ] **Run `MavericksWebsite/scripts/create-coach-meals-form.gs`** as `mcneilfootballboosters@gmail.com`. It logs `COACH_MEALS_FORM_URL`, `COACH_MEALS_SHEET_ID` and `COACH_MEALS_DATE_ENTRY_ID` — paste all three into `lib/constants.ts`. **The entry id is the one you cannot get any other way**; the script extracts it via `toPrefilledUrl()` so nobody has to hunt for it the way the sponsor form's ids were found.
-- [ ] **Share the responses sheet with `mcneil-site-reader@mcneil-mavericks-site.iam.gserviceaccount.com` as Viewer.** Without it the page stays in its error state — same service account as the boosters and donations readers.
-- [ ] **Install the Apps Script triggers**: paste `scripts/coach-meals-automation.gs` into the form's bound script and run `installTriggers` once. Do a `DRY_RUN = true` pass first and read the log before letting it mail anyone.
-- [ ] **Verify the prefill in a real browser.** Google does NOT reflect prefilled values into `FB_PUBLIC_LOAD_DATA_`, so parsing the HTML proves nothing — load each of the ten "Claim this date" URLs headless and assert the right checkbox reads `aria-checked="true"`. This is the same lesson the sponsor form taught.
-- [ ] **Aug 23 is the first date.** Its reminder window has effectively already passed, so that one gets handled by hand regardless.
+- Form: `16LyaEA3uXJBkZMZIEk9DDSMIk2mj8D1fLc53TM4_zU4` (edit) / published id `1FAIpQLSdr8u2xR_l2sHZ2_H5bzHFbOO1nnhQyt2_KHSYJ55ba5NO2Gw`
+- Sheet: `1L8rVexiZAeNUVAAwgRiESQDFmSo5Xvd7xgUtWPu_NA0` — already readable by `mcneil-site-reader`, tab `Form Responses 1`, headers A-I match the reader exactly
+- Date checkbox: `entry.692485844`
+
+- [ ] **Install the Apps Script triggers** — paste `scripts/coach-meals-automation.gs` into the form's bound script, run `installTriggers` once. **Do a `DRY_RUN = true` pass and read the log first.** Until this is done there are NO confirmation emails and NO reminders; the page works, but a volunteer gets no restaurant details and Jeremy gets no notification.
+- [ ] **Set the form theme colour to `#011858`** (paint-palette icon). Cosmetic; Apps Script cannot do it.
+- [ ] **Aug 23 is the first date** and its reminder window has already passed, so that one gets handled by hand regardless.
 
 ### ⚠️ Three things that fail silently here — do not "simplify" any of them
 

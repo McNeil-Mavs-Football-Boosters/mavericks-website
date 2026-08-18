@@ -33,7 +33,7 @@ export const CLEAR_BAG_POLICY_URL =
 // are already covered.
 export const COACH_MEALS_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdr8u2xR_l2sHZ2_H5bzHFbOO1nnhQyt2_KHSYJ55ba5NO2Gw/viewform";
-export const COACH_MEALS_SHEET_ID = "__REPLACE_WITH_SHEET_ID__";
+export const COACH_MEALS_SHEET_ID = "1L8rVexiZAeNUVAAwgRiESQDFmSo5Xvd7xgUtWPu_NA0";
 
 // The `entry.NNNNNNNNN` parameter for the "Which date(s) can you cover?"
 // checkbox. Prefill works by repeating this param once per checked option, and
