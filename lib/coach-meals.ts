@@ -61,25 +61,25 @@ export interface CoachMealLocation {
 export const COACH_MEAL_LOCATIONS = {
   rudys: {
     sponsorName: "Rudy's BBQ",
-    label: "Rudy's BBQ",
+    label: "Rudy's BBQ (Old Settlers and I-35)",
     address: "2400 Round Rock Ave, Round Rock, TX 78681",
     phone: "512-244-2936",
   },
   tonycs: {
     sponsorName: "Tony C's Coal Fired Pizza",
-    label: "Tony C's - Avery Ranch",
+    label: "Tony C's (Avery and Parmer)",
     address: "10526 W Parmer Ln, Austin, TX 78717",
     phone: "512-255-9463",
   },
   league: {
     sponsorName: "The League Kitchen & Tavern",
-    label: "The League - Avery Ranch",
+    label: 'The League (Avery and Parmer)',
     address: "10526 W Parmer Ln, Austin, TX 78717",
     phone: "512-366-5627",
   },
   mightyfine: {
     sponsorName: "Mighty Fine Burgers",
-    label: "Mighty Fine - Arbor Walk",
+    label: 'Mighty Fine (Mopac and Braker)',
     address: "10515 N Mopac Expy, Austin, TX 78759",
     phone: "512-524-2400",
   },
@@ -99,16 +99,16 @@ export interface CoachMealSlot {
 }
 
 export const COACH_MEAL_SLOTS: readonly CoachMealSlot[] = [
-  { date: "2026-08-23", startsAt: "2026-08-23T12:30:00-05:00", endsAt: "2026-08-23T13:00:00-05:00", locationKey: "rudys",      optionText: "August 23 - Rudy's BBQ" },
-  { date: "2026-08-30", startsAt: "2026-08-30T12:30:00-05:00", endsAt: "2026-08-30T13:00:00-05:00", locationKey: "tonycs",     optionText: "August 30 - Tony C's" },
-  { date: "2026-09-06", startsAt: "2026-09-06T12:30:00-05:00", endsAt: "2026-09-06T13:00:00-05:00", locationKey: "league",     optionText: "September 6 - The League" },
-  { date: "2026-09-13", startsAt: "2026-09-13T12:30:00-05:00", endsAt: "2026-09-13T13:00:00-05:00", locationKey: "rudys",      optionText: "September 13 - Rudy's BBQ" },
-  { date: "2026-09-20", startsAt: "2026-09-20T12:30:00-05:00", endsAt: "2026-09-20T13:00:00-05:00", locationKey: "mightyfine", optionText: "September 20 - Mighty Fine" },
-  { date: "2026-09-27", startsAt: "2026-09-27T12:30:00-05:00", endsAt: "2026-09-27T13:00:00-05:00", locationKey: "tonycs",     optionText: "September 27 - Tony C's" },
-  { date: "2026-10-04", startsAt: "2026-10-04T12:30:00-05:00", endsAt: "2026-10-04T13:00:00-05:00", locationKey: "rudys",      optionText: "October 4 - Rudy's BBQ" },
-  { date: "2026-10-11", startsAt: "2026-10-11T12:30:00-05:00", endsAt: "2026-10-11T13:00:00-05:00", locationKey: "league",     optionText: "October 11 - The League" },
-  { date: "2026-10-18", startsAt: "2026-10-18T12:30:00-05:00", endsAt: "2026-10-18T13:00:00-05:00", locationKey: "mightyfine", optionText: "October 18 - Mighty Fine" },
-  { date: "2026-10-25", startsAt: "2026-10-25T12:30:00-05:00", endsAt: "2026-10-25T13:00:00-05:00", locationKey: "tonycs",     optionText: "October 25 - Tony C's" },
+  { date: "2026-08-23", startsAt: "2026-08-23T12:30:00-05:00", endsAt: "2026-08-23T13:00:00-05:00", locationKey: "rudys",      optionText: "August 23 - Rudy's BBQ (Old Settlers and I-35)" },
+  { date: "2026-08-30", startsAt: "2026-08-30T12:30:00-05:00", endsAt: "2026-08-30T13:00:00-05:00", locationKey: "tonycs",     optionText: "August 30 - Tony C's (Avery and Parmer)" },
+  { date: "2026-09-06", startsAt: "2026-09-06T12:30:00-05:00", endsAt: "2026-09-06T13:00:00-05:00", locationKey: "league",     optionText: 'September 6 - The League (Avery and Parmer)' },
+  { date: "2026-09-13", startsAt: "2026-09-13T12:30:00-05:00", endsAt: "2026-09-13T13:00:00-05:00", locationKey: "rudys",      optionText: "September 13 - Rudy's BBQ (Old Settlers and I-35)" },
+  { date: "2026-09-20", startsAt: "2026-09-20T12:30:00-05:00", endsAt: "2026-09-20T13:00:00-05:00", locationKey: "mightyfine", optionText: 'September 20 - Mighty Fine (Mopac and Braker)' },
+  { date: "2026-09-27", startsAt: "2026-09-27T12:30:00-05:00", endsAt: "2026-09-27T13:00:00-05:00", locationKey: "tonycs",     optionText: "September 27 - Tony C's (Avery and Parmer)" },
+  { date: "2026-10-04", startsAt: "2026-10-04T12:30:00-05:00", endsAt: "2026-10-04T13:00:00-05:00", locationKey: "rudys",      optionText: "October 4 - Rudy's BBQ (Old Settlers and I-35)" },
+  { date: "2026-10-11", startsAt: "2026-10-11T12:30:00-05:00", endsAt: "2026-10-11T13:00:00-05:00", locationKey: "league",     optionText: 'October 11 - The League (Avery and Parmer)' },
+  { date: "2026-10-18", startsAt: "2026-10-18T12:30:00-05:00", endsAt: "2026-10-18T13:00:00-05:00", locationKey: "mightyfine", optionText: 'October 18 - Mighty Fine (Mopac and Braker)' },
+  { date: "2026-10-25", startsAt: "2026-10-25T12:30:00-05:00", endsAt: "2026-10-25T13:00:00-05:00", locationKey: "tonycs",     optionText: "October 25 - Tony C's (Avery and Parmer)" },
 ];
 
 export function locationForSlot(slot: CoachMealSlot): CoachMealLocation {
