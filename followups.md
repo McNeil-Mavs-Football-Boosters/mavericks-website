@@ -196,7 +196,9 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 - Sheet: `1L8rVexiZAeNUVAAwgRiESQDFmSo5Xvd7xgUtWPu_NA0` — already readable by `mcneil-site-reader`, tab `Form Responses 1`, headers A-I match the reader exactly
 - Date checkbox: `entry.692485844`
 
-- [ ] **Install the Apps Script triggers** — paste `scripts/coach-meals-automation.gs` into the form's bound script, run `installTriggers` once. **Do a `DRY_RUN = true` pass and read the log first.** Until this is done there are NO confirmation emails and NO reminders; the page works, but a volunteer gets no restaurant details and Jeremy gets no notification.
+- [x] ~~Install the Apps Script triggers.~~ Done 2026-08-17. **Standalone** project (not form-bound — Forms hides that entry point), so the script opens the form by `FORM_ID` and installs an installable `onFormSubmit` trigger via `.forForm(form)`. Two triggers live: submit handler + daily 9am CT job.
+- **Reminder cadence: day before and day of** (Jeremy 2026-08-17, changed from 7d/2d). The unclaimed-date alert deliberately stays at **7 days** and goes to Jeremy alone — a day-before warning about an uncovered Sunday is useless, there is no time left to find anyone.
+- ⚠️ **`onCoachMealSubmit` must NOT go back to "my row is the last row".** As an installable trigger on the FORM it can fire before Google appends the response to the sheet; position arithmetic then reads every date as lost and tells the person who legitimately WON that someone beat them. It now finds its own row by content, scanning from the end, and resolves ownership over the rows strictly before it — correct whether or not the write has landed. Covered by the offline test harness.
 - [ ] **Set the form theme colour to `#011858`** (paint-palette icon). Cosmetic; Apps Script cannot do it.
 - [ ] **Aug 23 is the first date** and its reminder window has already passed, so that one gets handled by hand regardless.
 
