@@ -21,7 +21,11 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-17)
 
-**Last migration applied: 147.** Working tree clean, `main` pushed through `286c987`, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
+**Last migration applied: 148.** Working tree clean, `main` pushed, prod verified. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and unrelated.
+
+**2026-08-17 — ONE freshman team (migration 148).** Coach told Jeremy McNeil is fielding a single freshman squad this season, which is the case `freshman_has_blue` was built for, so it is a flag flip and a retired roster row rather than a structural change. `freshman_has_blue` → false; the 2026-27 Freshmen **Blue** roster row deactivated (not deleted). No code change: both Blue routes now 404, `showDesignation` goes false so **every user-visible label reads plain "Freshmen" with no colour**, the nav drops both Blue entries, the practice title stops reading "Green & Blue", and `getGamesAsEvents` filters Blue out of `/events`, the month view and the ICS feed. The `/…/freshman/green` URLs are unchanged — only the wording dropped, and a bare `/roster/freshman` still 404s by design.
+
+⚠️ **The open question this leaves is a TIME, and it has a deadline.** Blue and Green were the *same 12 fixtures* — identical opponent, venue and home/away on every date — differing **only** in kickoff. Both scrimmages are 5:30 for both squads (so Aug 20 Eastview is unaffected), but all **10 regular-season games are Blue 5:00 p.m. vs Green 6:30 p.m.**, and Green survived. **The site therefore publishes 6:30 for all ten and nobody has confirmed that.** If the answer is 5:00, every freshman game time is 90 minutes late. First affected game **Thu Aug 27 at Austin Bowie**. The 12 Blue game rows are **deliberately left in place** — invisible via the flag, and the on-file record of the 5:00 timing, so the fix is one UPDATE rather than a re-derivation.
 
 **2026-08-17 (code-only, no migration): Q2 Stadium concessions on `/boosters/volunteer`.** Eight volunteer shift dates from Marcus Horton, rendered as an opportunity card linking to a `#q2-concessions` section. Three things to know before touching it:
 
