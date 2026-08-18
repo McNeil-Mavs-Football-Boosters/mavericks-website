@@ -22,3 +22,21 @@ export const VENMO_HANDLE = "@McNeil-Football";
 
 export const CLEAR_BAG_POLICY_URL =
   "https://www.roundrockisd.org/page/clear-bag-policy";
+
+// ── Coaches meal pickup ──
+// Created by MavericksWebsite/scripts/create-coach-meals-form.gs. That script
+// logs all three of these values at the end of its run; paste them here.
+//
+// ⚠️ Until these are filled in, /boosters/coach-meals renders its error state
+// rather than an empty table. That is deliberate: an all-open table on a page
+// that cannot actually read signups would invite people to claim dates that
+// are already covered.
+export const COACH_MEALS_FORM_URL = "__REPLACE_WITH_PUBLISHED_FORM_URL__";
+export const COACH_MEALS_SHEET_ID = "__REPLACE_WITH_SHEET_ID__";
+
+// The `entry.NNNNNNNNN` parameter for the "Which date(s) can you cover?"
+// checkbox. Prefill works by repeating this param once per checked option, and
+// Google silently IGNORES a value it cannot match rather than erroring — so a
+// wrong id here produces a link that opens the form with nothing checked and no
+// visible symptom. The generator extracts it via toPrefilledUrl(); do not guess.
+export const COACH_MEALS_DATE_ENTRY_ID = "__REPLACE_WITH_ENTRY_ID__";

@@ -88,7 +88,8 @@ const OPPORTUNITIES: Opportunity[] = [
     icon: Coffee,
     title: "Picking Up Coaches Meals",
     description:
-      "Grab and deliver meals for the coaching staff on practice or game days.",
+      "A restaurant donates lunch for the coaching staff the Sunday before each varsity game. Pick it up, drop it off between 12:30 and 1:00. See which Sundays are still open.",
+    href: "/boosters/coach-meals",
   },
   {
     icon: Pizza,
