@@ -31,7 +31,8 @@ export const CLEAR_BAG_POLICY_URL =
 // rather than an empty table. That is deliberate: an all-open table on a page
 // that cannot actually read signups would invite people to claim dates that
 // are already covered.
-export const COACH_MEALS_FORM_URL = "__REPLACE_WITH_PUBLISHED_FORM_URL__";
+export const COACH_MEALS_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdr8u2xR_l2sHZ2_H5bzHFbOO1nnhQyt2_KHSYJ55ba5NO2Gw/viewform";
 export const COACH_MEALS_SHEET_ID = "__REPLACE_WITH_SHEET_ID__";
 
 // The `entry.NNNNNNNNN` parameter for the "Which date(s) can you cover?"
@@ -39,4 +40,4 @@ export const COACH_MEALS_SHEET_ID = "__REPLACE_WITH_SHEET_ID__";
 // Google silently IGNORES a value it cannot match rather than erroring — so a
 // wrong id here produces a link that opens the form with nothing checked and no
 // visible symptom. The generator extracts it via toPrefilledUrl(); do not guess.
-export const COACH_MEALS_DATE_ENTRY_ID = "__REPLACE_WITH_ENTRY_ID__";
+export const COACH_MEALS_DATE_ENTRY_ID = "692485844";
