@@ -19,7 +19,21 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-18)
+## Where things stand (read this first — updated 2026-08-19)
+
+**2026-08-19 — Picture Day photo ordering (migrations 149 + 150).** Coach sent the photographer's ImageQuix link and asked for it on the Picture Day event, two days before pictures (Fri Aug 21). `/events/picture-day-2026` now carries an **"Order Photos →"** button, and the Friday Aug 21 block on all three practice pages links to that event.
+
+**`events.signup_label` is new, and NULL means "Sign Up".** The detail page's CTA was the hardcoded string `Sign Up →`, which is right for all three events already using `signup_url` — youth camp, senior program ad, pool party — because every one is a Google Form. This destination is a **store** (`vando.imagequix.com/P9M6G96?keyword=McNeilHSFBF26` → `shop.imagequix.com/g1001432099`). "Sign Up" on a checkout misdescribes the click, and relabelling the shared button would have broken the three rows that mean it literally. Read it as `signup_label ?? "Sign Up"` and the old rows are untouched.
+
+**The URL exists in exactly ONE place, and that is the point.** Migration 133 deliberately keeps picture day on the practice pages *as well as* `/events`, so the link had four candidate homes. The practice bodies point at `/events/picture-day-2026`, not at the vendor — paste the vando URL into all four and a reissued gallery leaves three stale checkouts live with nothing to signal it.
+
+**Why a column and not the description.** Only the detail page runs `description` through ReactMarkdown. The `/events` list card and the ICS feed render it as **plain text**, so a markdown link there shows literally as `[Order photos](https://…)` in every subscribed calendar, and a bare URL eats the call times out of the card's `line-clamp-3`. Reusing `photos_url` was also rejected: its button reads "View Photos" and sits beside the free club Google Photos albums (migration 114), so a paid vendor storefront would render as a free album.
+
+⚠️ **A vendor link cannot be verified with curl, and a headless UA gets lied to.** The page is a JS SPA: `curl` returns an empty shell, and Playwright's default headless-Chromium user agent is served **"Page Not Found"**. Under a normal desktop UA it resolves and the title is exactly `McNeil HS (RRISD) F26 Football`. That was checked before publishing — a link to the wrong school's gallery is worse than no link, and nothing on this site can detect it later. Same class of rot as `photos_url`: if the photographer closes the gallery the site shows a dead checkout silently. Both columns are nullable and every render site hides its affordance when NULL, so pulling it down is a one-line UPDATE, no deploy.
+
+The description gained one sentence attributing the charge to the photographer. The club takes real money on this site for memberships and sponsorships, so an unattributed "Order Photos" button on a club page reads as a club charge.
+
+**Not done, deliberately:** the `/events` list card shows no signup affordance for any event (only `photos_url`), and this did not add one — that would have changed how the three Google-Form events render, which nobody asked for.
 
 **2026-08-18 — Coaches Meal Pickup is LIVE and verified end to end.** `/boosters/coach-meals`, ten Sundays, one volunteer each. Google Form writes → website reads the responses sheet → Apps Script sends confirmations and reminders. **No migration, no table, no API route, no client component** — the "Claim this date" button is a prefilled form link, the same mechanism `/boosters/sponsor` uses for tiers.
 

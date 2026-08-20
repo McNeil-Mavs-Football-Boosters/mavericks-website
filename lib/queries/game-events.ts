@@ -118,6 +118,7 @@ function toCalendarEvent(
     location_url: game.location_url,
     venue: game.venue,
     signup_url: null,
+    signup_label: null,
     cover_image_url: null,
     photos_url: null,
     status: "published",

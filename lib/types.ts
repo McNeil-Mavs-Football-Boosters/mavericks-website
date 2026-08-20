@@ -234,6 +234,16 @@ export interface EventRow {
   location: string | null;
   location_url: string | null;
   signup_url: string | null;
+  /**
+   * CTA label for `signup_url` (migration 149). NULL means "Sign Up" — the
+   * default for the Google Form signups. Set it when the destination is not a
+   * signup: Picture Day points at the photographer's STORE, and a checkout
+   * button that says "Sign Up" misdescribes what clicking it does.
+   *
+   * Always read as `signup_label ?? "Sign Up"`. Meaningless without
+   * `signup_url`, and never rendered on its own.
+   */
+  signup_label: string | null;
   cover_image_url: string | null;
   /**
    * Public photo-album URL (migration 114). NULL for most events — every render

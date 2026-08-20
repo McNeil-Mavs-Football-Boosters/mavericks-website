@@ -140,7 +140,11 @@ export default async function EventDetailPage({
         </section>
       ) : null}
 
-      {/* Sign-up CTA */}
+      {/* Sign-up CTA. The label is per-row (migration 149): most destinations are
+          Google Forms and default to "Sign Up", but Picture Day points at the
+          photographer's store, where "Sign Up" would misdescribe a checkout.
+          Falls back to the original string so the three existing signup_url
+          events render exactly as they always have. */}
       {event.signup_url ? (
         <section className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
@@ -150,7 +154,8 @@ export default async function EventDetailPage({
               rel="noopener noreferrer"
               className="inline-block bg-mavs-navy text-white px-8 py-3 font-bold uppercase hover:bg-mavs-navy/90 transition-colors"
             >
-              Sign Up →
+              {event.signup_label ?? "Sign Up"} →
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           </div>
         </section>
