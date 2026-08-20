@@ -37,17 +37,17 @@
 
 export const COACH_MEAL_HEADCOUNT = 12;
 /**
- * Compact label for the per-date rows, where the column is only ~11rem wide.
- * The prose below spells out that these are two DIFFERENT commitments - pick up
- * at 12:30, be at the school at 1:00 - because "between 12:30 and 1:00" read as
- * one loose window and volunteers were arriving at the coaches' lunch late.
+ * These are two DIFFERENT commitments - pick up at 12:30, be at the school at
+ * 1:00 - and every surface says so separately. There is deliberately NO combined
+ * "12:30 to 1:00" label any more: it read as one loose window, which is how a
+ * volunteer ends up arriving at the coaches' lunch as it finishes. The per-date
+ * rows stack the two lines rather than compressing them back into a range.
  *
  * Keep these three in step with PICKUP_TIME / DROPOFF_TIME / DROPOFF_PLACE in
  * `MavericksWebsite/scripts/coach-meals-automation.gs`, which is what the
  * confirmation and reminder emails say. Site and email must not disagree about
  * where to be and when.
  */
-export const COACH_MEAL_WINDOW = "12:30 to 1:00 p.m.";
 export const COACH_MEAL_PICKUP_TIME = "12:30 p.m.";
 export const COACH_MEAL_DROPOFF_TIME = "1:00 p.m.";
 export const COACH_MEAL_DROPOFF_PLACE = "the Horseshoe lot at McNeil";

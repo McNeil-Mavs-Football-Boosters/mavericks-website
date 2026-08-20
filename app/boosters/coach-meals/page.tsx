@@ -10,7 +10,6 @@ import {
   COACH_MEAL_HEADCOUNT,
   COACH_MEAL_LOCATIONS,
   COACH_MEAL_SLOTS,
-  COACH_MEAL_WINDOW,
   COACH_MEAL_PICKUP_TIME,
   COACH_MEAL_DROPOFF_TIME,
   COACH_MEAL_DROPOFF_PLACE,
@@ -96,8 +95,8 @@ export default async function CoachMealsPage() {
             Our coaching staff meets for lunch the Sunday before each varsity
             game. A local restaurant donates the meal for {COACH_MEAL_HEADCOUNT}{" "}
             coaches, and we just need a parent to pick it up at{" "}
-            {COACH_MEAL_PICKUP_TIME} and drop it off at {COACH_MEAL_DROPOFF_TIME}{" "}
-            in {COACH_MEAL_DROPOFF_PLACE}.
+            {COACH_MEAL_PICKUP_TIME} and drop it off at {COACH_MEAL_DROPOFF_TIME} in{" "}
+            {COACH_MEAL_DROPOFF_PLACE}.
           </p>
           <p className="font-semibold text-mavs-navy">
             You are not buying the food. It is donated and already paid for. The
@@ -169,7 +168,10 @@ export default async function CoachMealsPage() {
                           {formatInTimeZone(start, CHICAGO_TZ, "MMMM d")}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          {COACH_MEAL_WINDOW}
+                          Pick up {COACH_MEAL_PICKUP_TIME}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Drop off {COACH_MEAL_DROPOFF_TIME}
                         </p>
                       </div>
 
