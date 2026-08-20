@@ -21,6 +21,12 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-19)
 
+**2026-08-19 — "bring a snack" on the Thursday scrimmage (migration 152).** Coach's Thursday reminder said meals are not provided for scrimmages; nothing on the site did. Now a bullet in the Thursday Aug 20 block on all three practice pages. Verified live on all three.
+
+⚠️ **PERIOD 2 vs PERIOD 6 IS NOT A DISCREPANCY.** McNeil runs an **every-other-day block**: periods 1-4 one day, 5-8 the next. Varsity athletics is **daily in the same time slot**, called **2nd period on 1-4 days and 6th period on 5-8 days**. Thursday Aug 20 is a 5-8 day, so the page's "Period 6" and coach's "2nd period" describe the same class. A coach message naming the other period number is **not** a correction — check which block day it is before touching a practice body. "Released at 11:00" in that message means released from the athletics period to lunch or the next class, not the end of football.
+
+**On-field times: the page is deliberately more precise than the reminders.** The weekly schedule follows arrival-plus-25 throughout (7:00→7:25, 9:00→9:20, 8:00→8:25, 4:30→4:55, 6:00→6:25); coach's reminders round to :00 and :30. Arrival times agree exactly, and those are what govern a parent's drop-off, so the precise numbers stay.
+
 **2026-08-19 — Senior Night moved to Oct 9 (migration 151).** It was on the **Sept 4 home opener vs Lake Belton**; Jeremy moved it to **Oct 9 vs Stony Point** (home, KRAC, 7:00 p.m.). DB-only, no deploy — `/events`, `/schedule/games/*` and the month view read at request time, and the title updated immediately. Verified on prod: exactly two occasion markers in 2026-27, `(Senior Night)` on Oct 9 and `(Homecoming)` on Oct 23.
 
 **Oct 9 is deliberately NOT the last home game** (Oct 23 vs Round Rock is). Keeping Senior Night off Homecoming was the point — `notes` is the only occasion field and `gameTitle()` appends it in parens, so one shared night would render `(Homecoming) (Senior Night)` on a single row. Do not "correct" this to the final home game.
