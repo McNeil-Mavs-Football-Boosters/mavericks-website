@@ -48,7 +48,15 @@ async function loadHome(): Promise<HomeData> {
       // events page each owned a private definition of "upcoming" and could
       // disagree about the same event — exactly what happened when the split
       // moved from start-time to end-time (2026-08-08). One decision site now.
-      getUpcomingEvents(2),
+      //
+      // gameLevels: ["varsity"] is the whole reason this can include games at
+      // all. `includeGames` on its own pulls all four squads — 44 games, three
+      // or four of them on the SAME evening — and the strip would have been
+      // "Freshmen vs X / JV vs X" essentially forever, burying both the varsity
+      // game and the booster events it exists to advertise. Varsity alone is
+      // ~12 rows across 12 weeks, roughly one a week, which is what a parent
+      // means by "the game". /events stays the whole calendar.
+      getUpcomingEvents(3, { includeGames: true, gameLevels: ["varsity"] }),
       supabase
         .from("sponsors")
         .select("id, name, logo_url, website_url, tier_id")
