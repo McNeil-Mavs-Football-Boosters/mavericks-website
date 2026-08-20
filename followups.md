@@ -212,5 +212,5 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 ### Open questions
 
 - **Rudy's address.** Jeremy's call 2026-08-17 was to publish the spreadsheet's address (2400 Round Rock Ave) and drop the "183" label so the two agree. Flagging once more only because the sheet's meal rows all said "183", which is a different store — if a volunteer ever reports going to the wrong Rudy's, this is why.
-- **Manager contacts** are name-only in the confirmation email ("Ask for Brian Hickson or Val Martin") plus the store phone. Their direct emails and cells are deliberately NOT sent to volunteers. Say the word if a volunteer should get more.
+- **Manager contacts** are name-only in the confirmation email ("Ask for Brian Hickson" — Val Martin removed 2026-08-19 at Jeremy's request) plus the store phone. Their direct emails and cells are deliberately NOT sent to volunteers. Say the word if a volunteer should get more.
 - **Reminders are Apps Script, not Resend**, specifically to sidestep the unverified sending domain. The J9 spec's `send.mcneilmavericks.org` work (§5) is still open and still worth doing for everything else.

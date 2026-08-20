@@ -2,9 +2,9 @@
  * Coaches meal pickup slots for the 2026 season.
  *
  * Twelve coaches meet for lunch the Sunday before each varsity game (no
- * scrimmages). A restaurant donates the food; a parent volunteer picks it up
- * and delivers it between 12:30 and 1:00 p.m. Ten Sundays, four pickup
- * locations.
+ * scrimmages). A restaurant donates the food; a parent volunteer picks it up at
+ * 12:30 and drops it at the school's Horseshoe lot at 1:00. Ten Sundays, four
+ * pickup locations.
  *
  * ── THIS FILE IS THE SINGLE SOURCE FOR THE SLOT LIST ──
  * Three things read it and they must not drift:
@@ -36,7 +36,21 @@
  */
 
 export const COACH_MEAL_HEADCOUNT = 12;
+/**
+ * Compact label for the per-date rows, where the column is only ~11rem wide.
+ * The prose below spells out that these are two DIFFERENT commitments - pick up
+ * at 12:30, be at the school at 1:00 - because "between 12:30 and 1:00" read as
+ * one loose window and volunteers were arriving at the coaches' lunch late.
+ *
+ * Keep these three in step with PICKUP_TIME / DROPOFF_TIME / DROPOFF_PLACE in
+ * `MavericksWebsite/scripts/coach-meals-automation.gs`, which is what the
+ * confirmation and reminder emails say. Site and email must not disagree about
+ * where to be and when.
+ */
 export const COACH_MEAL_WINDOW = "12:30 to 1:00 p.m.";
+export const COACH_MEAL_PICKUP_TIME = "12:30 p.m.";
+export const COACH_MEAL_DROPOFF_TIME = "1:00 p.m.";
+export const COACH_MEAL_DROPOFF_PLACE = "the Horseshoe lot at McNeil";
 
 export interface CoachMealLocation {
   /** Must match `sponsors.name` exactly so the logo lookup resolves. */

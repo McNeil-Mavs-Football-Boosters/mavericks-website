@@ -11,6 +11,9 @@ import {
   COACH_MEAL_LOCATIONS,
   COACH_MEAL_SLOTS,
   COACH_MEAL_WINDOW,
+  COACH_MEAL_PICKUP_TIME,
+  COACH_MEAL_DROPOFF_TIME,
+  COACH_MEAL_DROPOFF_PLACE,
   locationForSlot,
   mapsUrlForAddress,
 } from "@/lib/coach-meals";
@@ -92,8 +95,9 @@ export default async function CoachMealsPage() {
           <p>
             Our coaching staff meets for lunch the Sunday before each varsity
             game. A local restaurant donates the meal for {COACH_MEAL_HEADCOUNT}{" "}
-            coaches, and we just need a parent to pick it up and drop it off
-            between {COACH_MEAL_WINDOW}
+            coaches, and we just need a parent to pick it up at{" "}
+            {COACH_MEAL_PICKUP_TIME} and drop it off at {COACH_MEAL_DROPOFF_TIME}{" "}
+            in {COACH_MEAL_DROPOFF_PLACE}.
           </p>
           <p className="font-semibold text-mavs-navy">
             You are not buying the food. It is donated and already paid for. The
