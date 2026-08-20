@@ -21,6 +21,14 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-19)
 
+**2026-08-19 — Senior Night moved to Oct 9 (migration 151).** It was on the **Sept 4 home opener vs Lake Belton**; Jeremy moved it to **Oct 9 vs Stony Point** (home, KRAC, 7:00 p.m.). DB-only, no deploy — `/events`, `/schedule/games/*` and the month view read at request time, and the title updated immediately. Verified on prod: exactly two occasion markers in 2026-27, `(Senior Night)` on Oct 9 and `(Homecoming)` on Oct 23.
+
+**Oct 9 is deliberately NOT the last home game** (Oct 23 vs Round Rock is). Keeping Senior Night off Homecoming was the point — `notes` is the only occasion field and `gameTitle()` appends it in parens, so one shared night would render `(Homecoming) (Senior Night)` on a single row. Do not "correct" this to the final home game.
+
+⚠️ **`notes` does double duty on `games`** — the literal `'Scrimmage'`, which `gameTitle()` splices into the MIDDLE of the title, and occasion markers, which it appends. The builder handles one or the other, never both, so never put an occasion marker on a scrimmage row (Aug 13 and Aug 20 are the rows at risk).
+
+⚠️ **Do not verify prod with a `curl` poll loop.** A 15-second `until` loop against `www.mcneilmavericks.org` trips **Vercel's bot checkpoint**, which returns HTTP 403 with a "Vercel Security Checkpoint" page. Every content grep then fails and it reads exactly like a deploy that never landed. Verify through the real browser over CDP (`.chrome-debug`, port 9222) instead — that session passes the checkpoint.
+
 **2026-08-19 — Picture Day photo ordering (migrations 149 + 150).** Coach sent the photographer's ImageQuix link and asked for it on the Picture Day event, two days before pictures (Fri Aug 21). `/events/picture-day-2026` now carries an **"Order Photos →"** button, and the Friday Aug 21 block on all three practice pages links to that event.
 
 **`events.signup_label` is new, and NULL means "Sign Up".** The detail page's CTA was the hardcoded string `Sign Up →`, which is right for all three events already using `signup_url` — youth camp, senior program ad, pool party — because every one is a Google Form. This destination is a **store** (`vando.imagequix.com/P9M6G96?keyword=McNeilHSFBF26` → `shop.imagequix.com/g1001432099`). "Sign Up" on a checkout misdescribes the click, and relabelling the shared button would have broken the three rows that mean it literally. Read it as `signup_label ?? "Sign Up"` and the old rows are untouched.
