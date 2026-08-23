@@ -23,7 +23,11 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 **2026-08-22 — Batrice Law Firm, Gold $1,000 (migration 154). Last migration applied: 154.** `batricelawfirm.com`, verified against `sponsorship_tiers` (Gold = 100000 cents) rather than assumed. 14 paid sponsors now: Platinum 2, Gold 7, Blue 5, plus 6 community partners. Live on `/sponsors` in the Gold section and in the homepage strip.
 
-⚠️ **Its logo is a SCREENSHOT and violates the club's own asset standard.** `sponsor_asset_requirements_2026.md` says vector preferred, else largest transparent PNG, and explicitly "Do not send screenshots or images copied from a website." This is a 260x254 grab of their site resized to 240px. It is fine for the web strip and **nothing else** — Gold includes a **field sign at every varsity game and a business sign on McNeil Drive**, which a 246px screenshot cannot produce. A vector or large transparent PNG still has to be requested from the firm. Publishing it anyway was deliberate: `LogoImg` returns null on a null `logo_url`, so a paid Gold sponsor with no file renders as nothing.
+**Its logo is a screenshot of their site, and per Jeremy (2026-08-22) THAT IS FINE AND FINAL unless the firm sends better artwork.** "If they don't send a logo, then they get what they get until they do." This is **not an open task** — do not chase the firm, do not flag it as incomplete, do not swap the file. If they send vector or a large transparent PNG, replace it then.
+
+The standing rule this sets, reusable for every future sponsor: `sponsor_asset_requirements_2026.md` asks for vector, else largest transparent PNG, and says "do not send screenshots or images copied from a website." When a sponsor ignores it, **publish the best available asset rather than withholding acknowledgment** — `LogoImg` returns null on a null `logo_url`, so a paid sponsor with no file renders as nothing at all, which is worse for them and for us. Quality is the sponsor's side of the deal.
+
+⚠️ **The one real consequence is physical, not web.** Gold includes a **field sign at every varsity game and a business sign on McNeil Drive**, and a 246px screenshot cannot produce either. If those get produced from this file the vendor will reject it or print something bad — that is the moment to ask the firm, not now.
 
 **The navy background is kept on purpose** — the wordmark is white, so a transparent cut of *this* file would be invisible on the white sponsor cards. Fix it with real artwork, not by knocking out the background.
 
