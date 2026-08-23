@@ -19,7 +19,20 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-19)
+## Where things stand (read this first — updated 2026-08-22)
+
+**2026-08-22 — Week 4 practice schedule, Aug 24-30 (migration 153). Last migration applied: 153.** From Coach's Word doc. Whole-body replacement in all three bodies, verified live on all three pages.
+
+**The page now uses Coach's own `P2/P6` notation, glossed once at the top, and NO day names a single period.** Week 3 said "Practice is during Period 2" on Wednesday and "Period 6" on Thursday, which is what made a coach message saying "2nd period" look like a contradiction. It never was — every-other-day block, athletics daily in one slot, 2nd on a 1-4 day and 6th on a 5-8 day. Coach now writes P2/P6 on every weekday at the same 11:15 start. Migration 153 asserts no body contains "during Period 2/6" again.
+
+**Mon-Wed carry TWO sessions** for varsity/JV — early morning practice *and* the 11:15 P2/P6 block. Not a duplicated row. Thu/Fri are "no early practice" plus the P2/P6 block only.
+
+**Two Week 3 items were dropped on purpose.** The picture-day ordering pointer (150) lived in the Friday Aug 21 block; picture day has passed and the button still lives on the event itself. The scrimmage no-meals warning (152) lived in the Thursday Aug 20 block, and dropping it was **required** — Aug 27/28 are GAMES, meals ARE provided for games, and Coach lists a Thursday team dinner. Migration 153 asserts that line did not survive.
+
+⚠️ **`153_rollback.sql` is a deliberate no-op.** The prior body was a week that has already passed, so restoring it would put a stale schedule in front of families. Correct Week 4 with a NEW migration.
+
+**Open:** Thursday Aug 27 **team dinner time is TBA** in Coach's doc and reads "time to be announced" on the page. It needs a follow-up migration once Coach sets it.
+
 
 **Migrations 151 + 152 applied. Last migration applied: 152.** Commits `d215e59`, `b139b33`, `2ac653a`, `840cd08`, `c8ca782` — all pushed, `main` in sync, working tree clean. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and untouched. Everything below verified on prod.
 
