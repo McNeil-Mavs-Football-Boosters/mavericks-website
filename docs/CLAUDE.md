@@ -19,7 +19,41 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-22)
+## Where things stand (read this first — updated 2026-08-23)
+
+**2026-08-23 — Week 4 game times + Burger Annex (migration 155). Last migration applied: 155.** From Coach's "THIS WEEK'S SCHEDULE" graphic for Aug 27-28. Three cells moved, one was deliberately left alone:
+
+| | was | now |
+|---|---|---|
+| Freshmen Thu Aug 27 | 6:30 p.m., Burger Stadium | **5:00 p.m., Burger Annex** |
+| JV Thu Aug 27 | 6:00 p.m., Maverick Stadium | **untouched** |
+| Varsity Fri Aug 28 | 7:00 p.m. | **7:30 p.m.** |
+
+**The JV row was checked and left alone on purpose.** Jeremy's note said freshmen *and* JV times had changed; the JV row already read Thursday 6:00 p.m. at Maverick Stadium, which is exactly what the graphic says. The graphic calls that place "McNeil High School"; this site and the school's own PDF call it **Maverick Stadium** in every JV and freshman home row, so renaming it would have put the site back in disagreement with its own Print View for nothing. Verified against the original PDF (JV table, Aug. 27: Maverick Stadium / H / 6:00) before deciding.
+
+⚠️ **`Burger Annex` is a SECOND venue row at the same address, and that distinction is the point.** Austin ISD's Toney Burger Athletic Center at 3200 Jones Road holds two football fields: **Burger Stadium** (~15,000 seats, turf, locker rooms) and the **Burger Annex** (~680 seats, press box and scoreboard, no dressing or training facilities). Sub-varsity plays the annex; varsity plays the stadium the next night. So the site now carries **two different site strings on consecutive days on purpose** — which is the exact opposite of the reasoning in migration 145, where two different strings 24 hours apart were read as weak evidence of a mistake. That inference was fine with one source; Coach's graphic is a second source and it names the field.
+
+⚠️ **The annex row REUSES the stadium's verified pin.** The two fields are ~200 m apart inside one complex off one entrance and there is no separately verified coordinate for the annex. Reusing the checked pin puts a parent in the right lot off the right road; inventing coordinates would put an unverified pin on the map, which 145/146 spent two migrations removing. **The display label is what tells them which field.** If a verified annex coordinate turns up it is a one-row UPDATE. Never geocode one — see the standing rule in `followups.md`.
+
+**Both freshman Aug 27 rows moved to the annex, including the hidden Blue one.** Updating only the visible Green row would leave a row in `games` asserting the freshman game is at Burger Stadium, and a raw query would disagree with the site. This did NOT delete or migrate the Blue rows — Jeremy's 2026-08-22 call that they stay is unchanged. Green moved 6:30 → 5:00 and Blue was already 5:00, so both freshman rows read 5:00 **for this date only**. Later weeks still say 6:30 — see the blocking item below.
+
+🚨 **THIS ANSWERS THE BLOCKING QUESTION IN `followups.md` AND THE OTHER NINE GAMES ARE STILL UNFIXED.** The open item "which kickoff slot does the single freshman team play?" existed because Blue and Green were the same 12 fixtures differing only in time (Blue 5:00 / Green 6:30), Green is the row that survived migration 148, and nobody had confirmed 6:30 was right. **Coach's graphic says the freshmen play at 5:00 — the Blue slot.** Aug 27 is now correct. The nine remaining regular-season freshman games (Sep 3, Sep 10, Sep 17, Sep 23, Oct 1, Oct 8, Oct 15, Oct 22, Oct 29) **still publish 6:30 and are very likely 90 minutes late.** That was deliberately not changed in 155: one week's graphic is one data point, and moving nine future games on inference is the class of change this project asks about first. Jeremy was asked 2026-08-23; until he answers, the fix is the one-liner the followup already specifies — move the nine Green rows to the Blue times.
+
+**The school's Print View PDF was patched to match, so all four surfaces agree** (`games` row → `/schedule/games/*`, `/events` + month view, the ICS feed, and the printed schedule). `scripts/patch-schedule-pdf.py` now makes **16** edits, up from 13: freshman Aug. 27 site `Bowie HS` → `Burger Annex` (replacing the earlier `Burger Stadium`), freshman Aug. 27 time `5:00/6:30` → `5:00`, and varsity Aug. 28 time `7:00` → `7:30`. Re-run from the school's original and re-uploaded to `documents/schedules/2026-27.pdf` (338,639 bytes, verified live).
+
+⚠️ **THE PDF'S EMBEDDED CALIBRI IS A SUBSET WITH NO LOWERCASE `x`.** Excel embedded only the glyphs the school's own text uses, and no cell in the original schedule contains an `x` — so "Burger Anne**x**" could not be drawn, and none of the four embedded Calibri faces has it either. The script's glyph guard caught this instead of silently drawing a blank cell. It now falls back to a **full Calibri from disk** for the whole affected style, and **aborts loudly** if it can't find one rather than substituting another typeface.
+
+⚠️ **That fallback path is MACHINE-SPECIFIC: `/Applications/Microsoft Word.app/Contents/Resources/DFonts/Calibri.ttf`.** Calibri is a Microsoft font; macOS does not ship it and it is only present because Office is installed. On a machine without Office this script stops with the glyph list. Carlito is a legitimate metric-compatible substitute but is **not** installed and is **not** a silent fallback — add it to `FULL_FACE_PATHS` deliberately or not at all.
+
+**Two new self-checks in the patch script, both of which earned their place immediately.** (1) It re-opens the saved file and asserts every patched cell reads its new value — the first version of that check was wrong itself (it compared `get_text("words")` bbox-bottom against a baseline) and aborted on a correct file. (2) It diffs the **whole document's** text against the school's original and aborts unless the only difference is the 16 cells. That one exists because the script now calls `doc.subset_fonts()` — needed to get a full 1.3 MB Calibri back down to 338 KB — and font subsetting rewrites every embedded face in the file, so a dropped glyph in a row nobody looked at is a real and invisible failure mode.
+
+⚠️ **The full Calibri's space glyph extracts as U+00A0, not U+0020.** Nothing is wrong with the render; `get_text` just reports nbsp, and the school's own text has real nbsp in a few cells too. Both self-checks normalize before comparing. Don't chase it.
+
+**Verified live on prod** (single cache-busted requests, not a poll loop — see the Vercel checkpoint warning below): `/schedule/games/freshman/green` reads `Thu, Aug 27 … Burger Annex away 5:00pm`, `/schedule/games/jv` still reads `Maverick Stadium home 6:00pm`, `/schedule/games/varsity` reads `Burger Stadium away 7:30pm`, `/events` shows exactly three Aug 27-28 rows with one freshman game, the homepage strip leads with Varsity Aug 28 @ 7:30 PM, and the ICS feed carries `DTSTART:20260827T220000Z` / `LOCATION:Burger Annex` and `DTSTART:20260829T003000Z` for varsity.
+
+⚠️ **`/events.ics` is `Cache-Control: public, max-age=3600, s-maxage=3600`** — a plain fetch after a DB-only change returns the pre-change feed for up to an hour and reads exactly like a migration that didn't apply. Append a cache-buster (`?cb=$(date +%s)`) when verifying. `games.updated_at` does advance on UPDATE, so `DTSTAMP` moves and subscribed calendars see a changed event.
+
+**No code changed, so no deploy was needed** — `/schedule/games/*`, `/events` and the ICS route all read at request time.
 
 **2026-08-22 — Batrice Law Firm, Gold $1,000 (migration 154). Last migration applied: 154.** `batricelawfirm.com`, verified against `sponsorship_tiers` (Gold = 100000 cents) rather than assumed. 14 paid sponsors now: Platinum 2, Gold 7, Blue 5, plus 6 community partners. Live on `/sponsors` in the Gold section and in the homepage strip.
 
