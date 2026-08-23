@@ -21,6 +21,19 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-22)
 
+**2026-08-22 — Batrice Law Firm, Gold $1,000 (migration 154). Last migration applied: 154.** `batricelawfirm.com`, verified against `sponsorship_tiers` (Gold = 100000 cents) rather than assumed. 14 paid sponsors now: Platinum 2, Gold 7, Blue 5, plus 6 community partners. Live on `/sponsors` in the Gold section and in the homepage strip.
+
+⚠️ **Its logo is a SCREENSHOT and violates the club's own asset standard.** `sponsor_asset_requirements_2026.md` says vector preferred, else largest transparent PNG, and explicitly "Do not send screenshots or images copied from a website." This is a 260x254 grab of their site resized to 240px. It is fine for the web strip and **nothing else** — Gold includes a **field sign at every varsity game and a business sign on McNeil Drive**, which a 246px screenshot cannot produce. A vector or large transparent PNG still has to be requested from the firm. Publishing it anyway was deliberate: `LogoImg` returns null on a null `logo_url`, so a paid Gold sponsor with no file renders as nothing.
+
+**The navy background is kept on purpose** — the wordmark is white, so a transparent cut of *this* file would be invisible on the white sponsor cards. Fix it with real artwork, not by knocking out the background.
+
+⚠️ **`sponsors.sort_order` is ONE GLOBAL SEQUENCE encoding tier-then-alphabetical**, not a per-tier index: Platinum 1-2, Gold 3-9, Blue 10-14. `/sponsors` and `/boosters/sponsor` both `.order("sort_order")`, so **appending a new sponsor at max+1 puts it last in its tier and breaks the alphabetical run.** Migration 154 RECOMPUTES the sequence from `tier price_cents DESC, name` instead of hand-shifting rows — copy that pattern for the next sponsor. Community partners are excluded and stay at 0; they are unranked and `getCommunityPartners` sorts them by name.
+
+**Storage uploads need the `apikey` header.** These are new-format `sb_secret_…` keys, not legacy JWTs, so `Authorization: Bearer` alone returns `400 Invalid Compact JWS` from the Storage API. Send **both** `apikey:` and `Authorization: Bearer`. Bucket is `sponsor-logos`; `logo_url` holds the bare filename and `publicStorageUrl()` builds the URL.
+
+**macOS screenshot filenames contain U+202F** (narrow no-break space) before AM/PM, not a normal space. A pasted path fails with "No such file" while `ls` shows the file. Glob for it.
+
+
 **2026-08-22 — Week 4 practice schedule, Aug 24-30 (migration 153). Last migration applied: 153.** From Coach's Word doc. Whole-body replacement in all three bodies, verified live on all three pages.
 
 **The page now uses Coach's own `P2/P6` notation, glossed once at the top, and NO day names a single period.** Week 3 said "Practice is during Period 2" on Wednesday and "Period 6" on Thursday, which is what made a coach message saying "2nd period" look like a contradiction. It never was — every-other-day block, athletics daily in one slot, 2nd on a 1-4 day and 6th on a 5-8 day. Coach now writes P2/P6 on every weekday at the same 11:15 start. Migration 153 asserts no body contains "during Period 2/6" again.
