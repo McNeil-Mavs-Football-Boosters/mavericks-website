@@ -31,7 +31,22 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ⚠️ **`153_rollback.sql` is a deliberate no-op.** The prior body was a week that has already passed, so restoring it would put a stale schedule in front of families. Correct Week 4 with a NEW migration.
 
-**Open:** Thursday Aug 27 **team dinner time is TBA** in Coach's doc and reads "time to be announced" on the page. It needs a follow-up migration once Coach sets it.
+**Jeremy's calls on Week 4 (2026-08-22) — all four settled, do not revisit:**
+1. **Team dinner time stays "time to be announced."** TBA in Coach's doc; leave it. A follow-up migration
+   sets the time if Coach publishes one. Do not guess a time and do not remove the line.
+2. **Freshmen Saturday and Sunday are "no scheduled activities"** — confirmed correct. Coach's doc leaves
+   the freshman cells blank because the varsity "ATHLETES - NO SCHEDULED ACTIVITIES" row spans the table.
+   Stating it beats a blank that reads like missing times.
+3. **"4:00 p.m. Varsity grades sent to athletes" stays on the public page.** It reads coach-internal;
+   Jeremy wants it published as written.
+4. **The hidden freshman Blue game rows stay in the DB** — not deleted, not migrated.
+
+⚠️ **Freshman Blue rows still exist for every 2026-27 game and are INVISIBLE, not gone.** Migration 148 set
+`freshman_has_blue = false`, so `getGamesAsEvents` filters Blue out of `/events`, the month view and the
+ICS feed — but the rows are still in `games`. Thursday Aug 27 has a hidden Blue row at Burger Stadium 5:00
+p.m. sitting underneath the visible Green game at 6:30. Consequences: a raw `games` query returns roughly
+double the freshman games anyone can see, and any count written from SQL without the Blue filter will
+disagree with the page. Filter on the flag, or expect the mismatch.
 
 
 **Migrations 151 + 152 applied. Last migration applied: 152.** Commits `d215e59`, `b139b33`, `2ac653a`, `840cd08`, `c8ca782` — all pushed, `main` in sync, working tree clean. `tsc` + `next build` clean; the repo's only two eslint errors (`HeroCarousel`, `resource-item`) are pre-existing and untouched. Everything below verified on prod.
