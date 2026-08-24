@@ -9820,3 +9820,371 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/157_seed_2026_varsity_roster.sql
+-- ===
+
+-- 157_seed_2026_varsity_roster.sql
+--
+-- Seed the 45-player 2026-27 VARSITY roster. Source: "Varsity McNeil Roster
+-- 2026.xlsx", sheet "Var Roster 821", handed over by the coaching staff and
+-- given to Claude by Jeremy 2026-08-24. This is the long-open item from
+-- booster_club_info.md ("get the 2026-27 rosters from the coaching staff").
+--
+-- DB-ONLY, NO DEPLOY. current_roster_year is ALREADY '2026-27' (migration 095,
+-- applied 2026-07-28), and /roster/varsity has been rendering its "Coming Soon"
+-- empty state against the player-less stub row that 057 created. Neither roster
+-- page exports `dynamic` or `revalidate` and neither has generateStaticParams,
+-- so they render on demand and this goes live the moment it commits.
+--
+-- ⚠️ VARSITY ONLY. The same workbook carries a "JV Roster 821" sheet, but it has
+-- NO jersey numbers at all and Jeremy asked for the varsity roster. /roster/jv
+-- keeps its Coming Soon state. Do not seed JV from that sheet without deciding
+-- what to do about the missing numbers.
+--
+-- ⚠️ The freshman Blue row is active = false since 148. Not touched here.
+--
+-- ── DECISIONS MADE ABOUT THE SOURCE DATA ──
+--
+-- 1. GRADE. The sheet stores CLASS as 12/11/10. Stored here as 'Sr.'/'Jr.'/'So.'
+--    with the trailing period, because PlayerTable renders grade verbatim with
+--    no mapping table and all 111 existing player rows use that form. Storing
+--    "12" would put a bare number in a column that reads "Sr." everywhere else.
+--
+-- 2. NAME SPLIT. First token = first_name, everything after = last_name, which
+--    is the rule every prior seed follows. That gives 'Aymane' / 'El Anssari'
+--    -- byte-identical to how 031 already stored the same player on JV -- and
+--    'Jerrion' / 'Gary Darks'.
+--    ONE deliberate exception, spelled out rather than detected: Amery A.
+--    Schoepflin is stored 'Amery A.' / 'Schoepflin', because "A." is a middle
+--    initial and not a surname. Precedent for a multi-token first_name is
+--    031's ('7','Ja Corian','Hubbard'). PlayerTable interpolates
+--    "{first} {last}", so the rendered name is identical either way; this is
+--    about the column meaning something.
+--    ⚠️ Do NOT replace this with a middle-initial detector. There is exactly one
+--    such row and a guesser would be wrong the first time a surname is an
+--    initial.
+--
+-- 3. JERSEY NUMBERS ARE TEXT AND SOME ARE DUAL. '(5/2)', '(8/18)', '(9/10)',
+--    '64/65' and '84/80' are stored exactly as the sheet has them, parentheses
+--    and all. The notation is inconsistent in the source (three parenthesised,
+--    two not) and that inconsistency is preserved -- it is the coaches' data,
+--    and normalising it would make the site disagree with the printed roster
+--    and the PDF. jersey_number is text precisely for this (013).
+--    Consequence to know about: PlayerTable's client-side jersey sort parses
+--    the string to a number and sends anything non-numeric to +Infinity. That
+--    never fires here because sort_order is the PRIMARY key of the sort and is
+--    dense 1..45 below, but it is why sort_order must not be left at its 0
+--    default.
+--
+-- 4. SORT ORDER is the sheet's own reading order: left block top-to-bottom
+--    interleaved with the right block, which is jersey-ascending across both.
+--    Dense 1..45, no gaps.
+--
+-- 5. POSITIONS ARE VERBATIM, including 'DL/ LB' with the stray space after the
+--    slash (row 25, right block). Same rule 031 used when it preserved 'WIlliams'
+--    and 'Deshay' from its source. If the staff want it cleaned up, that is a
+--    follow-up UPDATE with their say-so, not a silent fix here.
+--
+-- 6. HEIGHT AND WEIGHT ARE NULL. The sheet does not carry them. PlayerTable
+--    renders an em dash for both. NULL::int on weight is required -- it types
+--    the column in the VALUES list.
+--
+-- 7. rosters.body IS LEFT EMPTY. The sheet's staff credit block (head coach,
+--    assistants, trainers, principal, athletic director) is NOT copied into it,
+--    because it contradicts the live /coaches page: this sheet says Athletic
+--    Director is Jeff Cheatham, while 055 and 062 have Jerry Gardner as "Head
+--    Coach and Athletic Director". Publishing both would put the site in
+--    disagreement with itself. Unresolved as of 2026-08-24 -- the credit block
+--    does appear on the downloadable PDF, which is a verbatim reproduction of
+--    what the coaches sent.
+--
+-- No duplicate jersey numbers, no missing positions, no missing grades --
+-- checked across all 45 rows before writing this.
+--
+-- Rollback: 157_rollback.sql
+
+begin;
+
+-- Guard the starting state. If the stub roster row is missing, or players have
+-- already been loaded, stop rather than double-seed. 038's cleanup note and
+-- 029's "cleanup path" comment both exist because a re-run is otherwise silent.
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and team_level = 'varsity'
+     and team_designation is null and active = true;
+  if n <> 1 then
+    raise exception 'expected exactly 1 active 2026-27 varsity roster row, found %', n;
+  end if;
+
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null;
+  if n <> 0 then
+    raise exception '2026-27 varsity roster already has % player rows - not re-seeding', n;
+  end if;
+end $$;
+
+-- Resolve the roster row by its natural key inside the statement, so no id
+-- literal is hardcoded and the insert cannot land on the wrong roster.
+insert into players (
+  roster_id,
+  jersey_number, first_name, last_name,
+  position, grade, height, weight,
+  sort_order, active
+)
+select
+  r.id,
+  v.jersey_number, v.first_name, v.last_name,
+  v.position, v.grade, null, null::int,
+  v.sort_order, true
+from rosters r
+cross join (values
+  ('0'     , 'Tyson'    , 'Cox'         , 'LB'    , 'Sr.',  1),
+  ('26'    , 'Derrick'  , 'Williams'    , 'DL'    , 'Jr.',  2),
+  ('1'     , 'Isaiah'   , 'Jones'       , 'DB'    , 'Sr.',  3),
+  ('27'    , 'Eli'      , 'Weaver'      , 'DB'    , 'Sr.',  4),
+  ('3'     , 'Conan'    , 'Shin'        , 'DB'    , 'So.',  5),
+  ('28'    , 'Tramaurie', 'Mayweather'  , 'RB'    , 'Sr.',  6),
+  ('4'     , 'Jerrion'  , 'Gary Darks'  , 'DB'    , 'Sr.',  7),
+  ('29'    , 'Aymane'   , 'El Anssari'  , 'K'     , 'Sr.',  8),
+  ('(5/2)' , 'Zylen'    , 'Hall'        , 'RB'    , 'Sr.',  9),
+  ('30'    , 'Quamere'  , 'Southernland', 'DL'    , 'Sr.', 10),
+  ('6'     , 'Ade'      , 'Carter'      , 'WR'    , 'So.', 11),
+  ('32'    , 'Jordan'   , 'Deshay'      , 'TE/HB' , 'Sr.', 12),
+  ('7'     , 'Tremaine' , 'Memminger'   , 'DB'    , 'Jr.', 13),
+  ('33'    , 'Michael'  , 'Sieber'      , 'K'     , 'Sr.', 14),
+  ('(8/18)', 'Kaden'    , 'Kearney'     , 'DB/RB' , 'Jr.', 15),
+  ('34'    , 'Akmal'    , 'Waqif'       , 'LB'    , 'Jr.', 16),
+  ('(9/10)', 'Ford'     , 'Askins'      , 'DL'    , 'Sr.', 17),
+  ('35'    , 'Ciecero'  , 'Stroman'     , 'DL'    , 'Jr.', 18),
+  ('11'    , 'Orion'    , 'Covault'     , 'QB'    , 'Sr.', 19),
+  ('38'    , 'Kieran'   , 'Jalbert'     , 'LB'    , 'Jr.', 20),
+  ('12'    , 'Kees'     , 'Glinski'     , 'HB'    , 'Sr.', 21),
+  ('40'    , 'Asher'    , 'Johnson'     , 'DB'    , 'Sr.', 22),
+  ('13'    , 'Aiden'    , 'Creque'      , 'WR'    , 'Sr.', 23),
+  ('51'    , 'Preston'  , 'Higgins'     , 'OL'    , 'Jr.', 24),
+  ('14'    , 'Jeremy'   , 'Powell'      , 'WR/QB' , 'So.', 25),
+  ('52'    , 'Zackary'  , 'Hauser'      , 'OL'    , 'Sr.', 26),
+  ('15'    , 'Lucas'    , 'Rosilmo'     , 'DB'    , 'Sr.', 27),
+  ('55'    , 'Ethan'    , 'Nguyen'      , 'DL'    , 'Sr.', 28),
+  ('16'    , 'Quincy'   , 'Sampson'     , 'WR'    , 'Jr.', 29),
+  ('61'    , 'Gianni'   , 'Aviles'      , 'DL'    , 'Sr.', 30),
+  ('17'    , 'Treyvon'  , 'Cargill'     , 'WR'    , 'So.', 31),
+  ('64/65' , 'Jace'     , 'Hicks'       , 'OL'    , 'So.', 32),
+  ('19'    , 'Garrett'  , 'Root'        , 'TE/HB' , 'Sr.', 33),
+  ('66'    , 'Kaeden'   , 'Frazier'     , 'DL/OL' , 'So.', 34),
+  ('20'    , 'Owen'     , 'Mazorra'     , 'WR/DB' , 'Jr.', 35),
+  ('71'    , 'Favour'   , 'Omagbon'     , 'OL'    , 'So.', 36),
+  ('21'    , 'Evan'     , 'Vest'        , 'DB'    , 'Sr.', 37),
+  ('72'    , 'Daniel'   , 'Christensen' , 'OL'    , 'Jr.', 38),
+  ('22'    , 'Mcharo'   , 'Criswell'    , 'RB'    , 'Sr.', 39),
+  ('75'    , 'Wesley'   , 'Davis'       , 'OL'    , 'Jr.', 40),
+  ('23'    , 'James'    , 'Evans'       , 'DL'    , 'Sr.', 41),
+  ('76'    , 'Kyle'     , 'Rayburn'     , 'OL'    , 'Jr.', 42),
+  ('25'    , 'Jacob'    , 'Machado'     , 'WR'    , 'Jr.', 43),
+  ('84/80' , 'Amery A.' , 'Schoepflin'  , 'TE/HB' , 'Sr.', 44),
+  ('90'    , 'Jesus'    , 'Galaza'      , 'DL/ LB', 'Sr.', 45)
+) as v(jersey_number, first_name, last_name, position, grade, sort_order)
+where r.year = '2026-27'
+  and r.team_level = 'varsity'
+  and r.team_designation is null
+  and r.active = true;
+
+-- source_note is invisible once players exist -- app/roster/[level]/page.tsx
+-- only reads it for the Coming Soon subline -- so this is provenance for the
+-- next person, not display copy.
+--
+-- pdf_storage_path turns the Print View button back on. It has been NULL for
+-- 2026-27 since 095 flipped the year and silently unlinked the 2025-26 PDFs;
+-- PrintViewLink renders nothing at all on NULL, which is why it just vanished
+-- rather than 404ing.
+--
+-- ⚠️ THE VALUE IS BUCKET-PREFIXED. lib/storage.ts publicObjectUrl() builds
+-- /storage/v1/object/public/${path}, so the leading 'documents/' is part of the
+-- stored string, not something the helper adds.
+--
+-- The object was uploaded to documents/rosters/varsity-2026.pdf and fetched
+-- back byte-identical BEFORE this line was written -- 040 exists purely because
+-- a path was written that did not match the object name (singular 'freshman'
+-- vs the plural object). Do not write this UPDATE against a path you have not
+-- actually GET'd.
+update rosters
+   set source_note = 'Varsity roster provided by the McNeil coaching staff, received 2026-08-24',
+       pdf_storage_path = 'documents/rosters/varsity-2026.pdf'
+ where year = '2026-27'
+   and team_level = 'varsity'
+   and team_designation is null;
+
+-- Count, then assert. 45 players on exactly one roster row.
+do $$
+declare n int;
+begin
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null and p.active = true;
+  if n <> 45 then
+    raise exception 'expected 45 varsity players after seed, found %', n;
+  end if;
+
+  select count(distinct p.sort_order) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null;
+  if n <> 45 then
+    raise exception 'sort_order is not unique across the 45 rows (% distinct)', n;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/158_varsity_roster_cleanups.sql
+-- ===
+
+-- 158_varsity_roster_cleanups.sql
+--
+-- Two corrections to the 45 varsity players seeded by 157, both confirmed by
+-- Jeremy 2026-08-24 after he took them back to the source.
+--
+--   1. Drop the wrapping parentheses from the three parenthesised dual jersey
+--      numbers, so all five dual numbers read the same way.
+--          '(5/2)'  -> '5/2'
+--          '(8/18)' -> '8/18'
+--          '(9/10)' -> '9/10'
+--      '64/65' and '84/80' were already bare and are untouched. The source
+--      spreadsheet is inconsistent about it; the coaches' meaning is identical
+--      either way, so this is presentation, not data.
+--
+--   2. 'DL/ LB' -> 'DL/LB' (Jesus Galaza, #90). Confirmed a typo -- every other
+--      slash position in the sheet has no spaces. This is the ONLY position
+--      cell with whitespace around its slash.
+--
+-- ⚠️ 157's header says positions and jersey strings are stored VERBATIM. That
+-- was correct at the time -- the rule then was "do not silently normalise the
+-- coaches' data." It is superseded HERE, and only for these two rules, because
+-- Jeremy went and confirmed both. Do not read 157 alone and "restore" the
+-- parens or the space.
+--
+-- ⚠️ THE SAME TWO RULES ALSO LIVE IN scripts/make-varsity-roster-pdf.py
+-- (normalize_jersey / normalize_position), because the downloadable PDF is
+-- generated from the spreadsheet and not from this table. The site and the
+-- printed roster have to agree. If you change one, change the other.
+--
+-- ── The staff-block question from 157 is RESOLVED, and it was never a conflict ──
+-- 157 left rosters.body empty because the spreadsheet's credit block named Jeff
+-- Cheatham as Athletic Director while /coaches has Jerry Gardner as "Head Coach
+-- and Athletic Director". Jeremy 2026-08-24: **Gardner is the McNeil AD;
+-- Cheatham is the ROUND ROCK ISD (district) AD.** Different jobs, both right.
+-- Nothing to fix on /coaches, and the PDF keeps the credit block exactly as the
+-- coaching staff sent it. body stays empty -- that was never the reason to fill
+-- it in.
+--
+-- Also updates pdf_storage_path to the regenerated PDF. It goes to a NEW
+-- FILENAME rather than overwriting varsity-2026.pdf on purpose: Storage serves
+-- no-cache but next.config.ts sets minimumCacheTTL to 31 days, and replacing an
+-- object at a live path has served stale bytes before. New name + UPDATE is the
+-- house rule. The old object is left in the bucket; nothing points at it.
+--
+-- DB-ONLY, NO DEPLOY. Roster pages render on demand.
+--
+-- Rollback: 158_rollback.sql
+
+begin;
+
+-- Guard: 157 must have run, and these rows must still look the way it left them.
+-- If someone has already hand-fixed them, stop rather than report a false count.
+do $$
+declare n int;
+begin
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null;
+  if n <> 45 then
+    raise exception 'expected the 45 rows seeded by 157, found %', n;
+  end if;
+
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null
+     and p.jersey_number like '(%)';
+  if n <> 3 then
+    raise exception 'expected 3 parenthesised jersey numbers, found %', n;
+  end if;
+
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null
+     and p.position ~ '\s/|/\s';
+  if n <> 1 then
+    raise exception 'expected exactly 1 position with whitespace around its slash, found %', n;
+  end if;
+end $$;
+
+-- 1. Unwrap the parenthesised jersey numbers.
+--    Anchored ^\(...\)$ so it only ever fires on a WHOLE wrapped cell, matching
+--    normalize_jersey() in the PDF generator.
+update players p
+   set jersey_number = regexp_replace(p.jersey_number, '^\((.*)\)$', '\1')
+  from rosters r
+ where p.roster_id = r.id
+   and r.year = '2026-27' and r.team_level = 'varsity'
+   and r.team_designation is null
+   and p.jersey_number ~ '^\(.*\)$';
+
+-- 2. Close the gap around the slash. Mirrors normalize_position().
+update players p
+   set position = regexp_replace(p.position, '\s*/\s*', '/', 'g')
+  from rosters r
+ where p.roster_id = r.id
+   and r.year = '2026-27' and r.team_level = 'varsity'
+   and r.team_designation is null
+   and p.position ~ '\s/|/\s';
+
+-- 3. Point Print View at the regenerated PDF.
+update rosters
+   set pdf_storage_path = 'documents/rosters/varsity-2026-r2.pdf'
+ where year = '2026-27'
+   and team_level = 'varsity'
+   and team_designation is null;
+
+-- Count, then assert.
+do $$
+declare n int;
+begin
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null
+     and (p.jersey_number ~ '[()]' or p.position ~ '\s');
+  if n <> 0 then
+    raise exception 'still % row(s) with a paren or a space in jersey/position', n;
+  end if;
+
+  -- The five dual numbers must all survive as bare "a/b".
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null
+     and p.jersey_number like '%/%';
+  if n <> 5 then
+    raise exception 'expected 5 dual jersey numbers, found %', n;
+  end if;
+
+  select count(*) into n from rosters
+   where year = '2026-27' and team_level = 'varsity' and team_designation is null
+     and pdf_storage_path = 'documents/rosters/varsity-2026-r2.pdf';
+  if n <> 1 then
+    raise exception 'pdf_storage_path did not update (% rows)', n;
+  end if;
+end $$;
+
+commit;
