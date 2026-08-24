@@ -19,7 +19,19 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-23)
+## Where things stand (read this first — updated 2026-08-24)
+
+**2026-08-24 — Varsity Helmet Decal Night (migration 156). Last migration applied: 156.** Coach's flyer: parents and guardians put the decals on the varsity helmets, **Thu Aug 27, 5:00-6:00 p.m., McNeil football locker room**, the night before the season opener. Published and verified on `/events` and `/events/varsity-helmet-decal-night-2026`.
+
+⚠️ **NO COVER IMAGE, AND THAT IS JEREMY'S CALL, NOT AN OVERSIGHT — `cover_image_url` IS STILL NULL ON EVERY EVENT ROW.** The flyer he sent is portrait (1179x1842, aspect 0.64). Both places the site renders that field — the detail page and the `/events` list card — force `aspect-video` with `object-cover`, so a portrait image is centre-cropped to a horizontal band: the "MCNEIL MAVERICKS" headline off the top and the date, time and locker-room line off the bottom, which is the entire useful content. He was offered a render fix (letterbox the card, natural aspect on the detail page, zero regression risk since nothing uses the field) or a hand-made 16:9 crop, and **chose neither** — the flyer goes in the newsletter, where the layout is ours. So: **if you are ever asked to put an image on an event, the `aspect-video`/`object-cover` pair is the thing to look at first**, and a portrait source needs that decision made before the row is written.
+
+**The description is deliberately plain prose with no markdown and no bare URL,** and migration 156 asserts it. Only the detail page runs `description` through ReactMarkdown; the `/events` list card and the ICS feed render it as plain text, so a markdown link shows up literally as `[text](https://…)` in every subscribed calendar. Same lesson as migration 150.
+
+⚠️ **The `McNeil High School` venue has NO coordinates, on purpose, so this event's ICS entry carries no `GEO` line.** That is the standing rule, not a gap to fill: a coordinate only ever comes from a Maps link a human opened, and NULL is the honest value otherwise. All eight existing campus events behave the same way. **`Maverick Stadium` shares this exact address (5720 McNeil Drive) and DOES have a verified pin — do not "upgrade" campus events onto it.** It is the stadium; the locker room, cafeteria and team room are not, and the venue rows say what they mean.
+
+**Scheduling reality the schema does not model, called out in the newsletter instead:** decal night runs 5:00-6:00 p.m. and the **JV game kicks off 6:00 p.m. at Maverick Stadium on the same campus**, so a varsity family can do both back to back. The **freshman game is 5:00 p.m. at the Burger Annex** in south Austin, so a family with both a varsity and a freshman athlete genuinely cannot do both.
+
+**The flyer image IS uploaded** — `event-images/varsity-helmet-decal-night-2026.jpg`, 520px wide, first use of that bucket. It is referenced only by the newsletter, not by any DB row. Leave it; deleting it breaks the sent email.
 
 **2026-08-23 — Week 4 game times + Burger Annex (migration 155). Last migration applied: 155.** From Coach's "THIS WEEK'S SCHEDULE" graphic for Aug 27-28. Three cells moved, one was deliberately left alone:
 
