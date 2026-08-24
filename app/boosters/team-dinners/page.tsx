@@ -262,9 +262,9 @@ export default async function TeamDinnersPage() {
           </p>
           <p>
             <strong>Times can move.</strong> {TEAM_DINNER_DEFAULT_TIME} is the
-            plan, but the team is coming over from the freshman and JV game and
-            Coach may shift a week. The time on your night above is the one we
-            have, and we will email you if it changes.
+            plan, but it is built around the freshman and JV game and Coach may
+            shift a week. The time on your night above is the one we have, and
+            we will email you if it changes.
           </p>
           <p>
             <strong>Want to split a night with another family?</strong> Sign up

@@ -74,17 +74,22 @@ export const TEAM_DINNER_HEADCOUNT = 50;
 export const TEAM_DINNER_BREAKDOWN = "45 players plus coaches and staff";
 
 /**
- * The default start time. Individual weeks can and will move — Jeremy's read
- * 2026-08-24 is that the team leaves the JV game around halftime and eats, and
- * that is still to be confirmed with Coach. So the PER-SLOT `startsAt` is what
- * the page and the emails actually show; this constant is only for the
- * intro copy, which is hedged to match.
+ * The default start time. CONFIRMED 6:00 p.m. on 2026-08-24 — the form and
+ * page shipped that morning at 7:00 p.m., which was Jeremy's own read (team
+ * leaves the JV game around halftime and eats) and never Coach's. Coach came
+ * back with 6:00, so varsity now eats FIRST and then goes out to the freshman
+ * and JV game, which kicks at 6:00 on those same Thursdays. Do not restore the
+ * "coming over from the JV game" wording anywhere — it describes the old order.
+ *
+ * Individual weeks can still move, so the PER-SLOT `startsAt` is what the page
+ * and the emails actually show; this constant is only for the intro copy,
+ * which is hedged to match.
  *
  * Keep in step with the `time` field on each slot in
  * `MavericksWebsite/scripts/team-dinners-automation.gs` — that is what the
  * confirmation and reminder emails say. The drift checker compares them.
  */
-export const TEAM_DINNER_DEFAULT_TIME = "7:00 p.m.";
+export const TEAM_DINNER_DEFAULT_TIME = "6:00 p.m.";
 
 export const TEAM_DINNER_PLACE = "McNeil High School";
 export const TEAM_DINNER_ADDRESS = "5720 McNeil Drive, Austin, TX 78729";
@@ -113,17 +118,17 @@ export interface TeamDinnerSlot {
 }
 
 export const TEAM_DINNER_SLOTS: readonly TeamDinnerSlot[] = [
-  { date: "2026-08-27", startsAt: "2026-08-27T19:00:00-05:00", endsAt: "2026-08-27T20:30:00-05:00", opponent: "Austin Bowie",  gameDate: "2026-08-28", occasion: null,           optionText: "August 27 - before Austin Bowie" },
-  { date: "2026-09-03", startsAt: "2026-09-03T19:00:00-05:00", endsAt: "2026-09-03T20:30:00-05:00", opponent: "Lake Belton",   gameDate: "2026-09-04", occasion: null,           optionText: "September 3 - before Lake Belton" },
-  { date: "2026-09-10", startsAt: "2026-09-10T19:00:00-05:00", endsAt: "2026-09-10T20:30:00-05:00", opponent: "Rouse",         gameDate: "2026-09-11", occasion: null,           optionText: "September 10 - before Rouse" },
-  { date: "2026-09-17", startsAt: "2026-09-17T19:00:00-05:00", endsAt: "2026-09-17T20:30:00-05:00", opponent: "Vista Ridge",   gameDate: "2026-09-18", occasion: null,           optionText: "September 17 - before Vista Ridge" },
+  { date: "2026-08-27", startsAt: "2026-08-27T18:00:00-05:00", endsAt: "2026-08-27T19:30:00-05:00", opponent: "Austin Bowie",  gameDate: "2026-08-28", occasion: null,           optionText: "August 27 - before Austin Bowie" },
+  { date: "2026-09-03", startsAt: "2026-09-03T18:00:00-05:00", endsAt: "2026-09-03T19:30:00-05:00", opponent: "Lake Belton",   gameDate: "2026-09-04", occasion: null,           optionText: "September 3 - before Lake Belton" },
+  { date: "2026-09-10", startsAt: "2026-09-10T18:00:00-05:00", endsAt: "2026-09-10T19:30:00-05:00", opponent: "Rouse",         gameDate: "2026-09-11", occasion: null,           optionText: "September 10 - before Rouse" },
+  { date: "2026-09-17", startsAt: "2026-09-17T18:00:00-05:00", endsAt: "2026-09-17T19:30:00-05:00", opponent: "Vista Ridge",   gameDate: "2026-09-18", occasion: null,           optionText: "September 17 - before Vista Ridge" },
   // WEDNESDAY. The Lake Travis game is a Thursday. This is not a typo.
-  { date: "2026-09-23", startsAt: "2026-09-23T19:00:00-05:00", endsAt: "2026-09-23T20:30:00-05:00", opponent: "Lake Travis",   gameDate: "2026-09-24", occasion: null,           optionText: "September 23 - before Lake Travis" },
-  { date: "2026-10-01", startsAt: "2026-10-01T19:00:00-05:00", endsAt: "2026-10-01T20:30:00-05:00", opponent: "Cedar Ridge",   gameDate: "2026-10-02", occasion: null,           optionText: "October 1 - before Cedar Ridge" },
-  { date: "2026-10-08", startsAt: "2026-10-08T19:00:00-05:00", endsAt: "2026-10-08T20:30:00-05:00", opponent: "Stony Point",   gameDate: "2026-10-09", occasion: "Senior Night", optionText: "October 8 - before Stony Point" },
-  { date: "2026-10-15", startsAt: "2026-10-15T19:00:00-05:00", endsAt: "2026-10-15T20:30:00-05:00", opponent: "Westlake",      gameDate: "2026-10-16", occasion: null,           optionText: "October 15 - before Westlake" },
-  { date: "2026-10-22", startsAt: "2026-10-22T19:00:00-05:00", endsAt: "2026-10-22T20:30:00-05:00", opponent: "Round Rock",    gameDate: "2026-10-23", occasion: "Homecoming",   optionText: "October 22 - before Round Rock" },
-  { date: "2026-10-29", startsAt: "2026-10-29T19:00:00-05:00", endsAt: "2026-10-29T20:30:00-05:00", opponent: "Westwood",      gameDate: "2026-10-30", occasion: null,           optionText: "October 29 - before Westwood" },
+  { date: "2026-09-23", startsAt: "2026-09-23T18:00:00-05:00", endsAt: "2026-09-23T19:30:00-05:00", opponent: "Lake Travis",   gameDate: "2026-09-24", occasion: null,           optionText: "September 23 - before Lake Travis" },
+  { date: "2026-10-01", startsAt: "2026-10-01T18:00:00-05:00", endsAt: "2026-10-01T19:30:00-05:00", opponent: "Cedar Ridge",   gameDate: "2026-10-02", occasion: null,           optionText: "October 1 - before Cedar Ridge" },
+  { date: "2026-10-08", startsAt: "2026-10-08T18:00:00-05:00", endsAt: "2026-10-08T19:30:00-05:00", opponent: "Stony Point",   gameDate: "2026-10-09", occasion: "Senior Night", optionText: "October 8 - before Stony Point" },
+  { date: "2026-10-15", startsAt: "2026-10-15T18:00:00-05:00", endsAt: "2026-10-15T19:30:00-05:00", opponent: "Westlake",      gameDate: "2026-10-16", occasion: null,           optionText: "October 15 - before Westlake" },
+  { date: "2026-10-22", startsAt: "2026-10-22T18:00:00-05:00", endsAt: "2026-10-22T19:30:00-05:00", opponent: "Round Rock",    gameDate: "2026-10-23", occasion: "Homecoming",   optionText: "October 22 - before Round Rock" },
+  { date: "2026-10-29", startsAt: "2026-10-29T18:00:00-05:00", endsAt: "2026-10-29T19:30:00-05:00", opponent: "Westwood",      gameDate: "2026-10-30", occasion: null,           optionText: "October 29 - before Westwood" },
 ];
 
 /**
