@@ -41,3 +41,24 @@ export const COACH_MEALS_SHEET_ID = "1L8rVexiZAeNUVAAwgRiESQDFmSo5Xvd7xgUtWPu_NA
 // wrong id here produces a link that opens the form with nothing checked and no
 // visible symptom. The generator extracts it via toPrefilledUrl(); do not guess.
 export const COACH_MEALS_DATE_ENTRY_ID = "692485844";
+
+// ── Varsity team dinners ──
+// Created by MavericksWebsite/scripts/create-team-dinners-form.gs. That script
+// logs all three of these values at the end of its run; paste them here.
+//
+// ⚠️ Until these are filled in, /boosters/team-dinners renders its error state
+// rather than an empty table — same rule as the coaches meal page above. An
+// all-open table on a page that cannot read signups would invite people to
+// claim nights that are already covered.
+export const TEAM_DINNERS_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLScNMFfgrUODVwWIrBsX5zNPhcuH03oGnwjZUn_q0kskD8g27g/viewform";
+export const TEAM_DINNERS_SHEET_ID = "126BNVWbm1It-jfux-CzNDC__NsXBvCcsV7kxEm_-znE";
+
+// The `entry.NNNNNNNNN` parameter for the "Which date(s) can you cover?"
+// checkbox on the TEAM DINNER form. This is a DIFFERENT form from the coaches
+// meal one, so it is a different id — do not reuse COACH_MEALS_DATE_ENTRY_ID.
+// Prefill works by repeating this param once per checked option, and Google
+// silently IGNORES a value it cannot match rather than erroring, so a wrong id
+// here produces a link that opens the form with nothing checked and no visible
+// symptom. The generator extracts it via toPrefilledUrl(); do not guess.
+export const TEAM_DINNERS_DATE_ENTRY_ID = "1484791558";

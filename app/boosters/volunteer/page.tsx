@@ -82,7 +82,8 @@ const OPPORTUNITIES: Opportunity[] = [
     icon: Utensils,
     title: "Hosting a Varsity Team Dinner",
     description:
-      "Open your home or organize a meal for the varsity team during the season.",
+      "The varsity squad eats together the night before every game, on campus at McNeil rather than at a family's home. One family brings the meal for about 50, sets it out, and cleans up after. See which nights are still open.",
+    href: "/boosters/team-dinners",
   },
   {
     icon: Coffee,
