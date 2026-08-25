@@ -387,6 +387,28 @@ export default async function BoostersVolunteerPage() {
             makes McNeil Football stronger.
           </p>
         </div>
+        {/* Cross-link to employer matching, added 2026-08-25. This lives on the
+            volunteer page on purpose: someone reading it is already thinking
+            about hours, which is exactly what a volunteer grant pays on. The
+            legal name and EIN are NOT repeated here -- they live in one place on
+            /boosters/donate so there is a single copy to keep correct. */}
+        <div className="mt-8 bg-mavs-navy/5 border-2 border-mavs-navy/10 rounded-lg p-6 md:p-8">
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-mavs-navy">
+            Your Hours May Be Worth Money
+          </h2>
+          <p className="text-base leading-relaxed text-gray-800 mt-3">
+            Some employers make a donation to the nonprofits their people
+            volunteer with, based on the hours you put in. If your company has a
+            program like that, the shifts you are already working can turn into
+            real money for McNeil football.
+          </p>
+          <Link
+            href="/boosters/donate#employer-matching"
+            className="inline-block mt-4 font-bold uppercase text-sm text-mavs-navy underline hover:text-mavs-green"
+          >
+            How employer matching works →
+          </Link>
+        </div>
       </section>
 
       <section className="bg-mavs-navy text-white py-12 md:py-16">

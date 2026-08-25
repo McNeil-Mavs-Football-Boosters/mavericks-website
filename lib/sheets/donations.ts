@@ -21,7 +21,24 @@ import { DONATION_SHEET_ID } from "@/lib/constants";
  */
 
 const SHEET_TAB = "Form Responses 1";
-const READ_RANGE = `'${SHEET_TAB}'!A:L`;
+/**
+ * ⚠️ WIDENED FROM A:L TO A:Z, 2026-08-25. A:L was ONE form question away from
+ * silently emptying the donor wall.
+ *
+ * Form-question columns are inserted BEFORE the manually-added admin columns, so
+ * every new question shoves the admin columns right. As of 2026-08-25 the sheet
+ * is 19 columns and `Payment Received` had landed on **K** with
+ * `Payment Received Date` on **L** — the last cell in range. One more question
+ * would have pushed the date out of range, and two would have pushed
+ * `Payment Received` out. That column is REQUIRED, so losing it makes the reader
+ * return `[]`, and the page renders "Be the first to donate" — identical to the
+ * legitimate empty state, with nothing anywhere saying it failed.
+ *
+ * Reading past the last column is free: every column is resolved BY HEADER NAME
+ * below, so extra columns are ignored rather than misread. Do not narrow this
+ * back to fit the current sheet.
+ */
+const READ_RANGE = `'${SHEET_TAB}'!A:Z`;
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
 /**

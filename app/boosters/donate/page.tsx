@@ -158,6 +158,77 @@ export default async function BoostersDonatePage() {
         </div>
       </section>
 
+      {/* 3b. Employer matching + volunteer grants.
+           Added 2026-08-25 at Kendra's request, after she reclaimed the
+           Benevity account under the booster Gmail.
+
+           ⚠️ THE LEGAL NAME IS SINGULAR "MAVERICK" and that is the whole point
+           of printing it here. Employer giving portals validate against IRS
+           records, so a parent searching the brand name "Mavericks" may find
+           nothing. Name and EIN are set apart to be copied, not buried in prose.
+
+           Benevity is deliberately NOT named. It is the platform the club is
+           registered on, but a parent does not know or care -- they know
+           "does my company match donations". Naming it would send people
+           looking for a Benevity page instead of their own employer portal. */}
+      <section
+        id="employer-matching"
+        className="container mx-auto px-4 py-12 md:py-16 scroll-mt-24"
+      >
+        <div className="max-w-3xl mx-auto bg-mavs-navy/5 border-2 border-mavs-navy/10 rounded-lg p-8 md:p-10">
+          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-mavs-navy text-center">
+            Your Employer May Double It
+          </h2>
+          <div className="h-1 w-20 bg-mavs-green mx-auto mt-3 mb-8"></div>
+          <div className="space-y-4 text-lg leading-relaxed text-gray-800">
+            <p>
+              Many companies match employee donations, often dollar for dollar.
+              Some also make a donation based on the hours you volunteer. Either
+              one means more money for McNeil football at no additional cost to
+              you, and most of it goes unclaimed simply because people do not
+              know to ask.
+            </p>
+            <p>
+              Check whether your employer has a matching gift or volunteer grant
+              program, then look us up in their giving portal using our legal
+              name and EIN:
+            </p>
+          </div>
+          <div className="mt-6 bg-white border-2 border-mavs-navy/20 rounded-md p-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Legal Name
+            </p>
+            <p className="text-xl md:text-2xl font-black text-mavs-navy mt-1">
+              McNeil Maverick Football Booster Club
+            </p>
+            <p className="text-sm text-gray-600 italic mt-2">
+              Maverick is singular in our legal name, even though we go by
+              Mavericks everywhere else. Search it exactly this way.
+            </p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mt-6">
+              EIN
+            </p>
+            <p className="text-xl md:text-2xl font-black text-mavs-navy mt-1">
+              26-4231242
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              501(c)(3) nonprofit organization
+            </p>
+          </div>
+          <p className="mt-6 text-base text-gray-700 text-center">
+            Not sure whether your company participates, or cannot find us in
+            their system? Email{" "}
+            <a
+              href="mailto:fundraising@mcneilmavericks.org"
+              className="text-mavs-navy font-bold underline hover:text-mavs-green"
+            >
+              fundraising@mcneilmavericks.org
+            </a>{" "}
+            and we will help you track it down.
+          </p>
+        </div>
+      </section>
+
       {/* 4. Thank You to Our Donors */}
       <section className="container mx-auto px-4 py-12 md:py-16">
         <div className="text-center mb-8">
