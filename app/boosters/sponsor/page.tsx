@@ -38,6 +38,14 @@ interface SponsorshipTier {
   price_flexible: boolean;
   term_label: string | null;
   price_display: string | null;
+  /**
+   * False = the card still renders, priced and with its perks, but nothing is
+   * purchasable and it is tagged "No longer available" (migration 160).
+   * Distinct from `active` (row retired) and `sellable` (display-only grouping
+   * tier) -- both of those REMOVE the card, which is not what closing a level
+   * for the season means.
+   */
+  available: boolean;
 }
 
 type Sponsor = SponsorStripLogoSponsor & {
@@ -141,20 +149,37 @@ function SponsorshipTierCard({
   const [summarySubtitle, ...summaryRest] = (tier.description ?? "").split(/\n{2,}/);
   const subtitle = isSummary ? summarySubtitle : tier.description;
   const summaryBody = summaryRest.join("\n\n");
+  // A closed level stays ON THE PAGE but is greyed out. Kendra's intent (via
+  // Jeremy 2026-08-25) is only that people can still SEE the tiers -- explicitly
+  // NOT that the card keeps selling them: "no, not selling", "grayed out is
+  // fine", "she just wants them still seen".
+  //
+  // The "No longer available" tag deliberately OVERRIDES badge_label rather than
+  // being stored in it, so `available` stays the single source of truth and
+  // Platinum's 'Recommended' returns by itself when the level reopens.
+  const closed = !tier.available;
   return (
     <div
-      className={`relative bg-white border-2 rounded-lg flex flex-col ${
-        tier.badge_label ? "border-mavs-green" : "border-mavs-navy/20"
+      className={`relative border-2 rounded-lg flex flex-col ${
+        closed
+          ? "bg-gray-50 border-gray-300 text-gray-500"
+          : tier.badge_label
+            ? "bg-white border-mavs-green"
+            : "bg-white border-mavs-navy/20"
       } ${isLarge ? "p-8" : "p-6"}`}
     >
-      {tier.badge_label ? (
+      {closed ? (
+        <div className="absolute -top-3 right-4 bg-gray-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          No longer available
+        </div>
+      ) : tier.badge_label ? (
         <div className="absolute -top-3 right-4 bg-mavs-green text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
           {tier.badge_label}
         </div>
       ) : null}
       <div className="text-center mb-4">
         <p
-          className={`font-black text-mavs-navy ${
+          className={`font-black ${closed ? "text-gray-500" : "text-mavs-navy"} ${
             isLarge ? "text-5xl" : "text-4xl"
           }`}
         >
@@ -166,9 +191,9 @@ function SponsorshipTierCard({
           </p>
         ) : null}
         <h3
-          className={`font-bold uppercase text-mavs-navy mt-1 ${
-            isLarge ? "text-2xl" : "text-xl"
-          }`}
+          className={`font-bold uppercase mt-1 ${
+            closed ? "text-gray-500" : "text-mavs-navy"
+          } ${isLarge ? "text-2xl" : "text-xl"}`}
         >
           {tier.name}
         </h3>
@@ -189,22 +214,40 @@ function SponsorshipTierCard({
               key={i}
               className={`flex gap-2 ${
                 isLarge ? "text-base" : "text-sm"
-              } text-gray-800`}
+              } ${closed ? "text-gray-500" : "text-gray-800"}`}
             >
-              <span className="text-mavs-green font-bold">+</span>
+              <span
+                className={`font-bold ${
+                  closed ? "text-gray-400" : "text-mavs-green"
+                }`}
+              >
+                +
+              </span>
               <span>{perk}</span>
             </li>
           ))}
         </ul>
       )}
-      <a
-        href={sponsorFormHref(tier)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-6 block w-full rounded-md bg-mavs-green text-white text-center px-4 py-3 font-bold uppercase text-sm hover:bg-mavs-green/90 transition-colors"
-      >
-        {tier.is_addon ? "Add This Add-On" : "Select This Level"}
-      </a>
+      {closed ? (
+        // Deliberately NOT an <a> and NOT a <button disabled>. A greyed-out link
+        // still navigates, which would drop someone onto a form for a level the
+        // club is not selling -- worse than no button at all.
+        <p
+          aria-disabled="true"
+          className="mt-6 block w-full rounded-md bg-gray-200 text-gray-500 text-center px-4 py-3 font-bold uppercase text-sm cursor-not-allowed select-none"
+        >
+          Closed for {tier.year}
+        </p>
+      ) : (
+        <a
+          href={sponsorFormHref(tier)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 block w-full rounded-md bg-mavs-green text-white text-center px-4 py-3 font-bold uppercase text-sm hover:bg-mavs-green/90 transition-colors"
+        >
+          {tier.is_addon ? "Add This Add-On" : "Select This Level"}
+        </a>
+      )}
     </div>
   );
 }
@@ -218,7 +261,7 @@ export default async function BoostersSponsorPage() {
     supabase
       .from("sponsorship_tiers")
       .select(
-        "id, name, price_cents, description, perks, sort_order, badge_label, year, is_addon, price_flexible, term_label, price_display",
+        "id, name, price_cents, description, perks, sort_order, badge_label, year, is_addon, price_flexible, term_label, price_display, available",
       )
       .eq("year", current_year)
       .eq("active", true)

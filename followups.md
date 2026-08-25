@@ -186,14 +186,21 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
 ## One freshman team, and the kickoff time nobody has confirmed (2026-08-17)
 
 - [x] ~~**BLOCKING BY THU AUG 27 — which kickoff slot does the single freshman team play?**~~ **ANSWERED 2026-08-23: 5:00 p.m., the Blue slot.** Coach's "THIS WEEK'S SCHEDULE" graphic for Aug 27-28 lists a single **FRESHMEN** game at **5:00 PM**, not 6:30. Blue and Green were the *same 12 fixtures* differing **only** in start time (Blue 5:00 / Green 6:30) and Green is the row that survived migration 148, so the site had been publishing 6:30 for all ten regular-season games on nobody's authority.
-- [ ] 🚨 **NINE FRESHMAN GAMES ARE STILL PUBLISHED 90 MINUTES LATE.** Migration 155 moved **only Aug 27** to 5:00, because one week's graphic is one data point and moving nine future games on inference is exactly the kind of change this project asks about first. **Jeremy's call 2026-08-23: leave all nine at 6:30 — he is confirming the season pattern with Coach directly.** He was offered all-nine and Sep-3-only and took neither, so this is WAITING ON COACH, not waiting on a decision. Do not move them on the Aug 27 graphic, on a later weekly graphic, or on a fresh session reaching the same inference. Still on 6:30 and probably wrong: **Sep 3, Sep 10, Sep 17, Sep 23, Oct 1, Oct 8, Oct 15, Oct 22, Oct 29** — and **Sep 3 is the next one**. This is the failure that sends a family to a game already in progress, and it now has nine chances to happen. The fix is the one-liner below — do not re-derive it.
-  ```sql
-  update games set game_date = game_date - interval '90 minutes'
-   where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
-     and notes is distinct from 'Scrimmage'
-     and game_date >= '2026-09-01 00:00:00 America/Chicago';
-  ```
-  Then patch the freshman TIME column in `scripts/patch-schedule-pdf.py` (`5:00/6:30` → `5:00` on the remaining nine rows) so the Print View doesn't contradict the site, and re-upload. **The scrimmages are 5:30 for both designations and must not move** — hence the `notes` guard.
+- [x] ~~🚨 **NINE FRESHMAN GAMES ARE STILL PUBLISHED 90 MINUTES LATE.**~~ **PREMISE RETIRED
+  2026-08-25 — there is no season-wide freshman slot to find.** Jeremy: the freshman kickoff *"could
+  shift week to week because they don't have a green and blue team. 1 team means they could play
+  early or late depending on the school opponent."* The Blue-5:00 / Green-6:30 split was two
+  alternative slots for two teams that no longer exist, so neither is a default. **Aug 27 at 5:00 is
+  correct and stays.** The other nine are not "wrong by 90 minutes"; they are unverified.
+  🚫 **DO NOT run the bulk UPDATE that used to live here.** It has been deleted on purpose: it moved
+  nine games on an inference Jeremy has now invalidated, and a fresh session reading the old entry
+  would have re-derived it. **Each freshman game's time comes from Coach's weekly graphic for that
+  week**, applied one row at a time, the way Aug 27 was (migration 155). Sep 3 is next; wait for the
+  graphic.
+  Same for the Print View: **do not collapse the freshman TIME column in
+  `scripts/patch-schedule-pdf.py` from `5:00/6:30` to a single time.** That instruction assumed one
+  season slot too. Patch a freshman row only when that week's graphic confirms it, and re-upload
+  under a new filename. **The scrimmages are 5:30 and must not move** in any case.
 - [ ] **The 12 freshman Blue game rows were deliberately NOT deleted, and keeping them paid off.** `freshman_has_blue = false` already makes them unreachable on every surface (both Blue routes 404, and `getGamesAsEvents` filters them out of `/events`, the month view and the ICS feed), so deleting them buys nothing — and they are the on-file record of the 5:00 timing. Aug 27 was fixed by moving Green onto the Blue time, which is only *checkable* because the Blue row is still sitting there at 5:00. Delete them only once all ten regular-season times are settled and have held.
 - [ ] **Nothing in the UI says "Green" any more, by design.** `showDesignation` follows the flag, so labels read plain "Freshmen" everywhere — which is exactly what Coach described. The `/schedule/games/freshman/green` and `/roster/freshman/green` URLs are unchanged; only the wording dropped. Do not "fix" the URLs to match the labels; the route requires a designation and a bare `/roster/freshman` 404s by design.
 
