@@ -16,6 +16,21 @@ export const DONATION_FORM_URL =
 export const SPONSOR_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSe5iIQUJn_-JALXYJtLmWA3CQhEhCMreLY7vIgfllqppNnFJg/viewform";
 
+/**
+ * McNeil's own HomeTown box office page — used for every HOME game.
+ *
+ * Jeremy 2026-08-25 picked this specific page ("the hometown link is what people
+ * have to use apparently"). It is a site-level fact about US, not a property of
+ * any one venue, which is why it lives here and not in `venues.ticket_url`.
+ *
+ * AWAY games resolve to `venues.ticket_url` instead — whoever is hosting. That
+ * split exists because Kelly Reeves and Dragon Stadium host BOTH: home vs Lake
+ * Travis, Stony Point and Round Rock, away vs Cedar Ridge and Westwood. A
+ * venue-level value alone cannot tell those apart (migration 162).
+ */
+export const MCNEIL_TICKETS_URL =
+  "https://events.hometownticketing.com/boxoffice/roundrockisd/entity/schools/26";
+
 export const DONATION_SHEET_ID = "1Dk-qdY0SiK1YlG9hPmEV7V__e1j2UoojJI3H6rYLmOI";
 
 export const VENMO_HANDLE = "@McNeil-Football";

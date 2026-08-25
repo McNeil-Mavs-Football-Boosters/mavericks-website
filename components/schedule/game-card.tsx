@@ -2,6 +2,7 @@ import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { ResultCell } from "./result-cell";
+import { TicketCell } from "./ticket-cell";
 
 const DATE_FMT = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Chicago",
@@ -94,8 +95,9 @@ export function GameCard({ game }: { game: Game }) {
         )}
       </div>
 
-      <div className="mt-2 text-sm">
+      <div className="mt-2 flex items-center gap-4 text-sm">
         <ResultCell game={game} />
+        <TicketCell game={game} />
       </div>
 
       {hasNotes ? (

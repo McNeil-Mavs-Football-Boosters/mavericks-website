@@ -47,6 +47,21 @@ export interface Venue {
   address: string;
   maps_url: string;
   /**
+   * The HOST district's box office page for events at this venue (migration
+   * 161), or null when nobody has supplied one.
+   *
+   * This is a per-venue value rather than a per-game one because per-EVENT
+   * ticket URLs cannot be stored: RRISD publishes varsity tickets at 8:00 AM the
+   * Monday before each game and JV/freshman on game day, so most of the season
+   * has no event id yet. The host follows the VENUE, not home/away -- the Cedar
+   * Ridge, Westwood and Round Rock games are away games at RRISD venues.
+   *
+   * ⚠️ Not all hosts use the same platform. Lake Travis (Cavalier Stadium) sells
+   * through Hudl, everyone else here through HomeTown. Never compute this URL
+   * from a district slug.
+   */
+  ticket_url: string | null;
+  /**
    * Decimal degrees, or null. NULL is the normal state and means "nobody has
    * opened this pin" — the ICS feed then omits GEO and the client geocodes the
    * address, exactly as it did before migration 137. Never populate these by
@@ -87,6 +102,16 @@ export interface Game {
    * sites must fall back to plain text, never to a guessed link.
    */
   venue?: Venue | null;
+  /**
+   * Per-game ticket override (migration 161). Normally null; the link comes from
+   * `venue.ticket_url`. Set this only for a one-off -- a playoff at a neutral
+   * site, or an away-at-RRISD game that is not listed on McNeil's own entity
+   * page (use the district-wide box office there).
+   *
+   * Resolution order is `game.ticket_url ?? venue?.ticket_url ?? null`, and null
+   * renders NOTHING. Never render a guessed or placeholder ticket link.
+   */
+  ticket_url: string | null;
 }
 
 export interface Roster {

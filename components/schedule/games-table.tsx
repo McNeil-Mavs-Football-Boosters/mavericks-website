@@ -4,6 +4,7 @@ import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { ResultCell } from "./result-cell";
+import { TicketCell } from "./ticket-cell";
 
 const DATE_FMT = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Chicago",
@@ -56,6 +57,7 @@ export function GamesTable({ games }: { games: Game[] }) {
               <th scope="col" className="py-2 pr-4 font-medium">Home/Away</th>
               <th scope="col" className="py-2 pr-4 font-medium">Time</th>
               <th scope="col" className="py-2 pr-4 font-medium">Result</th>
+              <th scope="col" className="py-2 pr-4 font-medium print:hidden">Tickets</th>
             </tr>
           </thead>
           <tbody>
@@ -118,11 +120,16 @@ export function GamesTable({ games }: { games: Game[] }) {
                     <td className="py-3 pr-4 align-top whitespace-nowrap">
                       <ResultCell game={game} />
                     </td>
+                    {/* print:hidden -- a printed schedule cannot be clicked, and
+                        the Print View is the artefact handed out on paper. */}
+                    <td className="py-3 pr-4 align-top whitespace-nowrap print:hidden">
+                      <TicketCell game={game} />
+                    </td>
                   </tr>
                   {hasNotes ? (
                     <tr className={cn("border-b border-border", rowTint)}>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="pb-3 pr-4 pl-0 text-xs italic text-muted-foreground print:text-black"
                       >
                         {game.notes}

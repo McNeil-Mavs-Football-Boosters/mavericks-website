@@ -1,5 +1,6 @@
 import { ResourceSection } from "@/components/resources/resource-section";
 import { CLEAR_BAG_POLICY_URL } from "@/lib/constants";
+import { getCurrentMavMail } from "@/lib/mavmail";
 import { getResourceLinks } from "@/lib/queries/resource-links";
 import type { ResourceLink } from "@/lib/types";
 
@@ -43,14 +44,48 @@ function clearBagPolicyLink(): ResourceLink {
   };
 }
 
+/**
+ * "This Week's Mav Mail", pointing at the current issue.
+ *
+ * Synthesised the same way as clearBagPolicyLink above rather than stored as a
+ * resource_links row, because the URL CHANGES EVERY WEEK — a database row would
+ * be stale by the following Sunday and someone would have to remember to edit
+ * it. See lib/mavmail.ts for how the slug is built and why it is verified.
+ *
+ * Returns null when no issue resolves, and the caller then renders nothing. The
+ * durable "Subscribe to Mav Mail" row is a real database row and is always
+ * there, so losing this entry degrades to "subscribe" rather than to nothing.
+ */
+function mavMailLink(issue: { url: string; issueLabel: string }): ResourceLink {
+  return {
+    id: "mavmail-current",
+    section: "communications",
+    label: "This Week's Mav Mail",
+    url: issue.url,
+    description: `RRISD's newsletter for McNeil — issue of ${issue.issueLabel}. Football ticket links are published here first.`,
+    icon_hint: "external",
+    // Above the Subscribe row (-4), so the current issue reads first.
+    sort_order: -6,
+    active: true,
+  };
+}
+
 export default async function ResourcesPage() {
-  const links = await getResourceLinks();
+  // Both are independent reads; the Mav Mail probe must never delay the page it
+  // decorates, and it is fetch-cached for an hour inside getCurrentMavMail.
+  const [links, mavMail] = await Promise.all([
+    getResourceLinks(),
+    getCurrentMavMail(),
+  ]);
 
   const grouped = new Map<SectionKey, ResourceLink[]>();
   // A link whose section is no longer rendered (e.g. a stray 'stadiums' row
   // added after migration 147) falls into "Other" rather than disappearing.
   // Silently dropping a link someone deliberately added is the worse failure.
-  for (const link of [...links, clearBagPolicyLink()]) {
+  const synthesised: ResourceLink[] = [clearBagPolicyLink()];
+  if (mavMail) synthesised.push(mavMailLink(mavMail));
+
+  for (const link of [...links, ...synthesised]) {
     const section = RENDERED_SECTIONS.has(link.section) ? link.section : "other";
     const bucket = grouped.get(section);
     if (bucket) {

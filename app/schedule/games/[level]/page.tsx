@@ -72,6 +72,17 @@ export default async function GameSchedulePage({
               Clear bag policy →
             </a>
           </p>
+          {/* Tickets are digital and each game goes on sale on its own schedule,
+              so a Tickets link clicked early lands on a listing that is not
+              buyable yet. Saying so here is the difference between "not on sale
+              until Monday" and "your link is broken". Same principle as
+              publishing the freshman kickoff caveat: explain what the site
+              cannot control. */}
+          <p className="mt-1 text-xs text-muted-foreground print:hidden">
+            Tickets are digital, no cash at the gate. Varsity goes on sale 8:00
+            a.m. the Monday before each game; JV and freshman on game day. Each
+            listing shows its own on-sale time.
+          </p>
         </div>
         <PrintViewLink
           storagePath={roster?.schedule_pdf_storage_path ?? null}
