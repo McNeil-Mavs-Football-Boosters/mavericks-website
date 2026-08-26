@@ -77,7 +77,12 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
           </span>
         </Link>
 
-        <nav className="hidden xl:flex flex-1 items-center justify-between gap-2 pl-8">
+        {/* justify-START, not justify-between. `justify-between` spread the items
+            edge to edge, which is what produced the very wide gaps Jeremy asked
+            to close on 2026-08-26 -- and it got worse with each item added, since
+            the leftover width was divided between fewer joins. A fixed gap keeps
+            the spacing constant no matter how many items the nav grows to. */}
+        <nav className="hidden xl:flex flex-1 items-center justify-start gap-4 2xl:gap-6 pl-8">
           <HeaderDropdown
             label="Schedule"
             links={buildScheduleLinks(freshmanHasBlue)}
@@ -120,6 +125,19 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Events
+          </Link>
+          {/* Volunteer is ALSO in BOOSTER_LINKS, on purpose (Jeremy 2026-08-26):
+              "we need Volunteer to be it's own ... link in the top header. you can
+              leave under booster club too". Recruiting is the club's constant
+              need, so it gets a top-level slot instead of being two clicks deep.
+              A plain Link rather than a dropdown -- there is exactly one
+              destination, and a dropdown with a single child is worse than a
+              link. Both entries point at the same route, so nothing can drift. */}
+          <Link
+            href="/boosters/volunteer"
+            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+          >
+            Volunteer
           </Link>
           <Link
             href="/sponsors"

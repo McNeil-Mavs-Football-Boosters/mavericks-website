@@ -100,6 +100,14 @@ export function MobileNav({ open, onClose, freshmanHasBlue }: MobileNavProps) {
           <Link href="/events" onClick={onClose} className={TOP_LINK_CLASS}>
             Events
           </Link>
+          {/* Mirrors the desktop header. Also still inside BOOSTER_LINKS above. */}
+          <Link
+            href="/boosters/volunteer"
+            onClick={onClose}
+            className={TOP_LINK_CLASS}
+          >
+            Volunteer
+          </Link>
           <Link href="/sponsors" onClick={onClose} className={TOP_LINK_CLASS}>
             Sponsors
           </Link>

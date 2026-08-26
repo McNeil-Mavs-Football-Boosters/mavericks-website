@@ -27,9 +27,9 @@ export const revalidate = 60;
 
 export const metadata = {
   title:
-    "Freshman & JV Meals | McNeil Mavericks Football Booster Club",
+    "Freshmen & JV Meals | McNeil Mavericks Football Booster Club",
   description:
-    "Sign up to pick up the freshman and JV game night meals from Bush's Chicken and bring them to McNeil. The Booster Club places and pays for the order.",
+    "Sign up to pick up the freshmen and JV game night meals from Bush's Chicken and bring them to McNeil. The Booster Club places and pays for the order.",
 };
 
 const CONTACT_EMAIL = "boosters@mcneilmavericks.org";
@@ -71,7 +71,7 @@ export default async function FreshJvMealsPage() {
             />
             <div className="flex-1 text-center">
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight">
-                Freshman &amp; JV Meals
+                Freshmen &amp; JV Meals
               </h1>
             </div>
             <div className="hidden md:block w-20 shrink-0" aria-hidden="true" />

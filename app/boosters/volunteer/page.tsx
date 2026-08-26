@@ -99,7 +99,11 @@ const OPPORTUNITIES: Opportunity[] = [
     // three get conflated. The "we place and pay" line is in the description on
     // purpose: it is what makes this an easy yes.
     icon: Coffee,
-    title: "Freshman & JV Meals",
+    // "Picking Up ..." not "... Meals" (Jeremy 2026-08-26): "so people don't
+    // think they are buying." The bare noun reads like a purchase on a page full
+    // of ways to give money. The sibling card above is "Picking Up Coaches
+    // Meals" for the same reason.
+    title: "Picking Up Freshmen & JV Meals",
     description:
       "On freshman and JV game nights, collect the food for those players and coaching staffs from Bush's Chicken and bring it to the school. We place and pay for the order, so it is about thirty minutes of driving. See which nights are open.",
     href: "/boosters/fresh-jv-meals",
