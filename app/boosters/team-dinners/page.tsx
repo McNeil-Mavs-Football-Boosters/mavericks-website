@@ -266,10 +266,19 @@ export default async function TeamDinnersPage() {
             shift a week. The time on your night above is the one we have, and
             we will email you if it changes.
           </p>
+          {/* Jeremy 2026-08-26. This deliberately STOPS promising that the board
+              will match families to each other -- the old copy said "we will
+              connect you with anyone else who offers", which created work nobody
+              owned. Parents self-organise and one person signs up as the lead.
+              The board's role shrinks to handing over a list of names on request.
+              Do not restore the matchmaking promise. */}
           <p>
-            <strong>Want to split a night with another family?</strong> Sign up
-            and say so in the notes. One family holds the night and we will
-            connect you with anyone else who offers.
+            <strong>Want to team up?</strong> That is the easiest way to do it,
+            and most nights get covered by a group. Organize it yourselves with
+            other parents, agree who is bringing what, then have one person sign
+            up for the night as the lead. That person is our contact and gets the
+            confirmation and reminders. If you need names to get started, email
+            the board and we will send you a list.
           </p>
           <p>
             <strong>Something come up?</strong> Email{" "}
