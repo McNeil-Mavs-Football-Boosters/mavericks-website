@@ -1,22 +1,34 @@
 /**
- * Freshman and JV coaches meals for the 2026 season.
+ * Freshman and JV game night meals for the 2026 season.
  *
- * On each freshman/JV game night the Booster Club feeds those teams' coaching
- * staffs. **The Booster Club places the order in advance.** A parent volunteer
- * only collects it from Bush's Chicken and brings it to the school, where Coach
- * Hale meets them. No ordering, no headcount, no menu decisions.
+ * On each freshman/JV game night the Booster Club feeds those teams' PLAYERS AND
+ * coaching staffs. **The Booster Club places and pays for the order in advance.**
+ * A parent volunteer only collects it from Bush's Chicken and brings it to the
+ * school, where Coach Hale meets them. No ordering, no menu decisions, no money.
+ * They are a courier.
  *
- * That makes this the SIMPLEST of the three meal programs. Do not copy the
- * coach-meals or team-dinners framing that asks a volunteer to source or provide
- * food -- here they are a courier.
+ * ⚠️ WIDENED 2026-08-26, AND IT CHANGES WHAT THIS IS. Built first as a
+ * coaches-only pickup; Jeremy then included the players. So this **IS** the
+ * freshman/JV slice of game-day meals, out of the booster budget -- not a
+ * separate programme running alongside it. The original copy said "this is NOT
+ * the game-day meals program", which became flatly wrong the moment players were
+ * included, and it sat on the live form for a few hours before being removed.
+ * **Do not reintroduce that line anywhere.**
  *
- * ⚠️ THREE PROGRAMS GET CONFLATED. Keep them straight:
- *   - Game-day meals        = the players, all three levels, parents pay in,
- *                             booster budget carries it. Not this.
+ * ⚠️ NO HEADCOUNT, DELIBERATELY. Jeremy 2026-08-26: "we don't have a headcount.
+ * you don't need to bother with that." No surface states or implies a number of
+ * meals, and none should. Do not infer one from the rosters either -- varsity is
+ * 45 and extrapolating a sub-varsity figure would put an invented number in
+ * front of a volunteer deciding whether their car is big enough.
+ *
+ * ⚠️ THREE MEAL PROGRAMMES GET CONFLATED. Keep them straight:
  *   - Coaches Sunday Lunch  = 12 coaches, Sundays, a restaurant donates,
- *                             /boosters/coach-meals. Not this.
- *   - THIS                  = freshman + JV coaching staffs on their game
- *                             nights, club orders, volunteer collects.
+ *                             /boosters/coach-meals. A different thing.
+ *   - Varsity team dinner   = the night BEFORE a varsity game, host-funded out
+ *                             of a family's own pocket, /boosters/team-dinners.
+ *                             A different thing.
+ *   - THIS                  = freshman + JV players and coaching staffs on their
+ *                             own game nights, club orders and pays.
  *
  * ── THIS FILE IS THE SINGLE SOURCE FOR THE SLOT LIST ──
  * Three things read it and they must not drift:

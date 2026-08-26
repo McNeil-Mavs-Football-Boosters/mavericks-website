@@ -99,9 +99,9 @@ const OPPORTUNITIES: Opportunity[] = [
     // three get conflated. The "we place and pay" line is in the description on
     // purpose: it is what makes this an easy yes.
     icon: Coffee,
-    title: "Freshman & JV Coaches Meals",
+    title: "Freshman & JV Meals",
     description:
-      "On freshman and JV game nights, collect the coaches' food from Bush's Chicken and bring it to the school. We place and pay for the order, so it is about thirty minutes of driving. See which nights are open.",
+      "On freshman and JV game nights, collect the food for those players and coaching staffs from Bush's Chicken and bring it to the school. We place and pay for the order, so it is about thirty minutes of driving. See which nights are open.",
     href: "/boosters/fresh-jv-meals",
   },
   {
