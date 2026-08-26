@@ -77,3 +77,21 @@ export const TEAM_DINNERS_SHEET_ID = "126BNVWbm1It-jfux-CzNDC__NsXBvCcsV7kxEm_-z
 // here produces a link that opens the form with nothing checked and no visible
 // symptom. The generator extracts it via toPrefilledUrl(); do not guess.
 export const TEAM_DINNERS_DATE_ENTRY_ID = "1484791558";
+
+// ── Freshman & JV Coaches Meals (Bush's Chicken pickup) ──
+//
+// A THIRD meal signup, and a third set of ids. Do NOT reuse the coach-meals or
+// team-dinners values: every one of these is form-specific, and Google silently
+// ignores a prefill value it cannot match rather than erroring, so a copied id
+// produces a link that opens the form with nothing checked and no visible
+// symptom.
+//
+// ⚠️ PLACEHOLDERS. `createFreshJvMealsForm` logs all three values at the end of
+// its run; paste them here. Until then the page renders "Email to claim"
+// instead of a claim link, and the sheet reader returns ok:false rather than
+// showing every night as open.
+export const FRESH_JV_MEALS_FORM_URL =
+  "https://docs.google.com/forms/d/e/__REPLACE_WITH_FRESH_JV_MEALS_FORM_ID__/viewform";
+export const FRESH_JV_MEALS_SHEET_ID = "__REPLACE_WITH_FRESH_JV_MEALS_SHEET_ID__";
+export const FRESH_JV_MEALS_DATE_ENTRY_ID =
+  "__REPLACE_WITH_FRESH_JV_MEALS_DATE_ENTRY_ID__";

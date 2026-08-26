@@ -92,6 +92,19 @@ const OPPORTUNITIES: Opportunity[] = [
       "A restaurant donates lunch for the coaching staff the Sunday before each varsity game. Pick it up, drop it off between 12:30 and 1:00. See which Sundays are still open.",
     href: "/boosters/coach-meals",
   },
+  // ⚠️ HOLD: the "Freshman & JV Coaches Meals" card is deliberately NOT here
+  // yet. /boosters/fresh-jv-meals is built but its FRESH_JV_MEALS_* constants in
+  // lib/constants.ts are still placeholders, so the page renders its "we can't
+  // load the current signups" state. Linking it from here would advertise that
+  // to every visitor during game week. Add this card in the SAME commit that
+  // pastes the real constants:
+  //
+  //   { icon: Coffee, title: "Freshman & JV Coaches Meals",
+  //     description: "On freshman and JV game nights, collect the coaches' food
+  //       from Bush's Chicken and bring it to the school. We place and pay for
+  //       the order, so it is about thirty minutes of driving. See which nights
+  //       are open.",
+  //     href: "/boosters/fresh-jv-meals" },
   {
     icon: Pizza,
     title: "Picking Up Game-Day Meals",
