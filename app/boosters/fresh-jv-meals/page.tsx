@@ -288,9 +288,13 @@ export default async function FreshJvMealsPage() {
             there and takes it from you. You are not ordering, paying, or
             serving.
           </p>
+          {/* Deliberately does not name a number. There is no headcount for this
+              program (Jeremy 2026-08-26) and the point of the answer is that the
+              volunteer never needs one. */}
           <p>
-            <strong>Do I need to know how many coaches?</strong> No. The club
-            places the order, so the count is already handled.
+            <strong>How many meals is it?</strong> You do not need to know. The
+            club places the order, so the count is already handled before you get
+            there.
           </p>
           <p>
             <strong>What time?</strong>{" "}
