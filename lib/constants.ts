@@ -91,7 +91,6 @@ export const TEAM_DINNERS_DATE_ENTRY_ID = "1484791558";
 // instead of a claim link, and the sheet reader returns ok:false rather than
 // showing every night as open.
 export const FRESH_JV_MEALS_FORM_URL =
-  "https://docs.google.com/forms/d/e/__REPLACE_WITH_FRESH_JV_MEALS_FORM_ID__/viewform";
-export const FRESH_JV_MEALS_SHEET_ID = "__REPLACE_WITH_FRESH_JV_MEALS_SHEET_ID__";
-export const FRESH_JV_MEALS_DATE_ENTRY_ID =
-  "__REPLACE_WITH_FRESH_JV_MEALS_DATE_ENTRY_ID__";
+  "https://docs.google.com/forms/d/e/1FAIpQLSfUjMvPqXILNWVN1c_ivBbeZgigTlCMlHILFQyu0myWPydISw/viewform";
+export const FRESH_JV_MEALS_SHEET_ID = "1govYnLJTNSJ0NMM8CS40j8iYbDyG9QuE0tk3i3rRAQk";
+export const FRESH_JV_MEALS_DATE_ENTRY_ID = "1795134531";
