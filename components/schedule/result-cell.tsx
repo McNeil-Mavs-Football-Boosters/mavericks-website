@@ -2,24 +2,19 @@ import type { Game } from "@/lib/types";
 
 const EM_DASH = "—";
 
+/**
+ * The Result column, and ONLY the result.
+ *
+ * ⚠️ It used to also render "Watch →" here for a non-final game with a
+ * `watch_url`. That is gone as of migration 165 — broadcast links now live in
+ * `LinksCell`, in the right-hand action column. The stopgap had two limits that
+ * VYPE broke immediately: it could show only ONE link (VYPE supplies two, their
+ * watch page plus the YouTube URL), and it occupied the same cell as the score,
+ * so a replay link had nowhere to go once the game went final. Do not put a link
+ * back in here.
+ */
 export function ResultCell({ game }: { game: Game }) {
-  const { result_status, our_score, their_score, watch_url } = game;
-
-  // Non-final game with a watch_url: render "Watch →" in place of the
-  // em-dash. Used for games that haven't been played yet (or that we're
-  // intentionally not scoring) but have a broadcast/stream URL.
-  if (result_status !== "final" && watch_url) {
-    return (
-      <a
-        href={watch_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-semibold text-mavs-navy hover:underline print:text-black print:no-underline"
-      >
-        Watch →
-      </a>
-    );
-  }
+  const { result_status, our_score, their_score } = game;
 
   if (result_status === "final") {
     if (our_score == null || their_score == null) {

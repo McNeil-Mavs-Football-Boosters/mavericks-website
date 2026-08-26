@@ -2,7 +2,7 @@ import type { Game } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { ResultCell } from "./result-cell";
-import { TicketCell } from "./ticket-cell";
+import { LinksCell } from "./links-cell";
 
 const DATE_FMT = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Chicago",
@@ -95,9 +95,12 @@ export function GameCard({ game }: { game: Game }) {
         )}
       </div>
 
-      <div className="mt-2 flex items-center gap-4 text-sm">
+      {/* flex-wrap, not a fixed row: a varsity game in season carries a
+          result/status, a Tickets link and up to two broadcast links, which
+          overflows 390px on one line. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <ResultCell game={game} />
-        <TicketCell game={game} />
+        <LinksCell game={game} stacked={false} />
       </div>
 
       {hasNotes ? (

@@ -78,6 +78,27 @@ export interface Venue {
  */
 export type TeamLevel = "varsity" | "jv" | "freshman";
 
+/**
+ * One broadcast / stream link on a game (migration 165). Zero or more per game
+ * — VYPE typically supplies two, their watch page plus the YouTube live URL it
+ * embeds, and some weeks supplies none.
+ *
+ * Supersedes `Game.watch_url`, which is inert. Do not add new readers of that.
+ */
+export interface GameBroadcast {
+  label: string;
+  url: string;
+  sort_order: number;
+  /**
+   * Whether the link stays visible once the game is final. True for a YouTube
+   * live URL, which persists as a replay and is exactly what a parent who
+   * missed the game wants on Saturday. False for a per-game vendor page that is
+   * likely to rot.
+   */
+  keep_after_final: boolean;
+  active: boolean;
+}
+
 export interface Game {
   id: string;
   year: string;
@@ -92,6 +113,12 @@ export interface Game {
   our_score: number | null;
   their_score: number | null;
   result_status: "scheduled" | "final" | "cancelled" | "postponed" | "tbd";
+  /**
+   * DEPRECATED and emptied by migration 165. Broadcast links live in
+   * `broadcasts` now, because VYPE supplies two per game and a single column
+   * cannot hold them. Nothing reads this; the column is dropped in a later
+   * migration. Do not set it.
+   */
   watch_url: string | null;
   maxpreps_game_url: string | null;
   notes: string | null;
@@ -112,6 +139,13 @@ export interface Game {
    * renders NOTHING. Never render a guessed or placeholder ticket link.
    */
   ticket_url: string | null;
+  /**
+   * Joined from `game_broadcasts` (migration 165). Absent on any query that did
+   * not ask for it, which is why it is optional — `LinksCell` treats undefined
+   * and [] the same, so a caller that forgets the join shows no links rather
+   * than crashing. Includes inactive rows; filter before rendering.
+   */
+  broadcasts?: GameBroadcast[] | null;
 }
 
 export interface Roster {

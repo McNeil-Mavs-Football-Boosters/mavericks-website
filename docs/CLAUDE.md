@@ -21,7 +21,41 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-26)
 
-**2026-08-26 — three new Gold sponsors (migration 164). Last migration applied: 164.** Raising Cane's Chicken Fingers (I-35 @ Parmer), Pok-E-Jo's Smokehouse (Parmer Lane) and Whataburger, $1,000 each. **Gold 7 → 10, paid sponsors 14 → 17**, community partners unchanged at 6. Verified live: `/sponsors` and `/boosters/sponsor` (force-dynamic, instant) and the homepage strip after its ISR minute. Names in the DB are the full trade names — `Raising Cane's Chicken Fingers`, `Pok-E-Jo's Smokehouse`, `Whataburger`.
+**2026-08-26 — VYPE broadcast links on the schedule (migration 165 + a deploy). Last migration applied: 165.** VYPE is streaming McNeil varsity this season. Merle Bertrand (VYPE) mailed president@ / the boosters gmail / Coach Gardner on 2026-08-24 with the arrangement and week 4's links. Week 4 (Fri Aug 28 varsity at Bowie, 7:30) now carries **YouTube** and **VYPE**, both verified 200 and titled for that game.
+
+⚠️ **THIS IS A STANDING WEEKLY ITEM, NOT A ONE-OFF.** Merle: *"I'll try to send out the direct links each week but I'm making no promises in case I can't keep up."* So expect two links some weeks, one some weeks, and **none** other weeks — when nothing arrives, the answer is VYPE's "Broadcast Lineup" article, posted on `vype.com` each game day, and **the right move is to add no row at all** rather than link something guessed. See the weekly procedure block below.
+
+**Structure: a child table `game_broadcasts`, NOT a second column.** One row per link: `label`, `url`, `sort_order`, `keep_after_final`, `active`. A `vype_url` beside `watch_url` would have baked one vendor into the schema and still not survived a cadence that produces 0, 1 or 2 links a week. The label is data, so next season's provider needs no code change.
+
+**`keep_after_final` is per-row because the two links age differently.** A YouTube live URL normally survives as a replay, and a parent who missed the game is exactly who wants it on Saturday; a per-game VYPE page is far more likely to rot. Jeremy 2026-08-26: keep it up after. So YouTube is `true`, VYPE is `false`. Deciding this in code would mean hardcoding vendor names.
+
+⚠️ **THE DEDICATED "WATCH" COLUMN IS NOT COMING BACK — DO NOT RE-ADD IT.** It was spec'd (`commit_b_spec.md:168`), built, and **removed by Jeremy's own review on 2026-05-26** (commit `b4590af`) because it was empty on all 11 rows and read as dead weight. **VYPE broadcasts VARSITY ONLY**, so a dedicated column would be empty on every JV and freshman page and on most varsity rows too — the identical dead weight. The links render in the existing right-hand action column, whose header is now **"Links"** instead of "Tickets". Verified at 1280px and at 390px: the Aug 28 row stacks Tickets / YouTube / VYPE, every other row keeps its single Tickets link, the two scrimmage rows show an em-dash, and nothing overflows.
+
+**`content_map_v2.md:156` predicted this exactly** — "final games with `watch_url` are an open question (do we want to surface a post-game replay link separately?). **Defer until a real use case arises.**" It arose. That line can be treated as closed.
+
+⚠️ **The "Watch →"-inside-the-Result-cell stopgap is GONE. Do not put a link back in `ResultCell`.** It could only ever render ONE link, and it shared a cell with the score, so a replay had nowhere to go once a game went final. `ResultCell` is now the result and only the result.
+
+⚠️ **`games.watch_url` WAS NOT NULL EVERYWHERE, AND ASSUMING IT WAS WOULD HAVE SILENTLY DROPPED A LINK.** All 48 rows of **2026-27** are null — which is what a year-scoped check shows, and what this work first assumed. But migration **052** set `watch_url = 'https://www.youtube.com/@iHSFan'` on the **2025-26** Hutto game (2025-11-07), the backfilled season's last game, deliberately left at `result_status = 'scheduled'` so the Result cell would render "Watch →" instead of an em-dash. `current_schedule_year` is 2026-27 so that row is invisible today, but its renderer is the branch this commit deleted. **165 carries it into `game_broadcasts` (label "Watch" — the destination is the iHSFan channel, not a specific broadcast, so "YouTube" would overpromise) and then blanks the column.** The lesson generalises: year-scope a check on `games` and you are looking at 48 of 96 rows.
+
+**The column is emptied but NOT dropped, deliberately** — 161, 162, 163 and 164 all shipped into this same code in the last two days, and dropping a column in the same change is how a surprise happens. **Phase 2 is a later migration that drops it.** Nothing reads it; do not add a writer. `165_rollback.sql` restores the legacy value from the table **before** dropping it — a bare `drop table` would destroy the only remaining copy.
+
+⚠️ **`getGamesForTeam`'s select must stay ONE string literal.** Building it by concatenation defeats supabase-js's type-level parse of the select, which falls back to `GenericStringError[]` and breaks the cast. Cost a `tsc` cycle.
+
+⚠️ **`broadcasts.active` is filtered in the component, not in the query.** A PostgREST filter on an embedded resource can turn the embed into an inner join, which would drop every game with no broadcast rows — i.e. almost the whole schedule.
+
+**Deliberately NOT done, both Jeremy's call 2026-08-26:** the **newsletter** (a link in a sent email is not revocable and a per-game VYPE URL is exactly the kind that rots; the durable thing to print is the "Broadcast Lineup" pointer, not the per-game URL), and the **ICS feed** (event descriptions are plain prose with no URLs by convention — see migration 156 — and broadcast links do not belong in subscribed calendars).
+
+**Not yet observed rendering: the post-final state.** No 2026-27 game is `final` yet, and marking a real game final on prod to look at it is not worth it. When Friday's score goes in, VYPE should drop off the row and YouTube should remain. Check it then.
+
+### Weekly procedure — VYPE links
+
+1. Merle's email lands (or doesn't). If it doesn't, **add nothing**; do not construct a VYPE URL from the pattern.
+2. Verify each URL returns 200 **and that its page title names this week's opponent** — the week 4 pair titled "Bowie vs. McNeil" / "McNeil vs. Bowie", which is what proves it is not last week's link.
+3. One migration, one INSERT per link, selecting the game by `year + team_level + team_designation + date range + opponent` — **never a pasted uuid**, so it fails loudly if the row moved.
+4. `label` short ("YouTube", "VYPE") so the action column does not widen. YouTube `keep_after_final = true`, the vendor page `false`.
+5. DB-only, no deploy. `/schedule/games/varsity` is server-rendered per request.
+
+**2026-08-26 — three new Gold sponsors (migration 164). Last migration applied at the time: 164.** Raising Cane's Chicken Fingers (I-35 @ Parmer), Pok-E-Jo's Smokehouse (Parmer Lane) and Whataburger, $1,000 each. **Gold 7 → 10, paid sponsors 14 → 17**, community partners unchanged at 6. Verified live: `/sponsors` and `/boosters/sponsor` (force-dynamic, instant) and the homepage strip after its ISR minute. Names in the DB are the full trade names — `Raising Cane's Chicken Fingers`, `Pok-E-Jo's Smokehouse`, `Whataburger`.
 
 ⚠️ **GOLD IS `available = false` AND THAT IS NOT A CONTRADICTION — DO NOT "FIX" IT BY REOPENING THE LEVEL.** Kendra closed Gold on 8/25 (migration 160). `available` gates only whether `/boosters/sponsor` will *sell* a level; the roster surfaces filter tier **`active`**, not `available` (`app/sponsors/page.tsx`). So sponsors who committed at Gold publish normally while the level stays closed to new buyers. Migration 164 ends with an assertion that Gold is *still* closed, precisely so a future session cannot bundle "add a Gold sponsor" with "reopen Gold" by accident.
 
