@@ -10322,3 +10322,492 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/160_sponsorship_levels_closed.sql
+-- ===
+
+-- 160_sponsorship_levels_closed.sql
+--
+-- Kendra closed the named sponsorship levels for the season (Jeremy, 2026-08-25):
+-- "platinum, gold, blue, diamond, mvp sponsorship levels shut down... she just
+-- wants flexible and add-ons at this point." The Google Form has already been
+-- updated on her side.
+--
+-- ⚠️ THE CARDS MUST KEEP RENDERING. Jeremy: "don't remove the cards though.
+-- likely re-enable next summer." That is why this adds a THIRD state instead of
+-- reusing the two that already exist:
+--     active   = false  -> row is retired, disappears everywhere
+--     sellable = false  -> display-only grouping tier (migration 122), gone
+--                          from the sign-up ladder entirely
+--     available = false -> NEW. Card still renders, priced and with its perks,
+--                          but the call to action is dead and it is labelled
+--                          "No longer available".
+-- Using active/sellable here would have deleted the cards off the page, which
+-- is the opposite of the ask.
+--
+-- Left AVAILABLE on purpose: Custom (price_flexible, the "flexible" Kendra
+-- wants), Tunnel and Scoreboard (add-ons). Program Ad is already active=false
+-- and is not touched here -- it went off on its own July 31 deadline.
+--
+-- The badge is NOT written into badge_label. The page derives the "No longer
+-- available" tag from this column, so the column is the single source of truth
+-- and re-opening a level is one UPDATE with no label cleanup. Platinum KEEPS
+-- its 'Recommended' badge_label in the data; the page suppresses it while the
+-- tier is unavailable and it comes back on its own when the tier reopens.
+--
+-- Default is TRUE so next season's tier rows are purchasable without anyone
+-- remembering this migration existed.
+
+begin;
+
+alter table sponsorship_tiers
+  add column if not exists available boolean not null default true;
+
+comment on column sponsorship_tiers.available is
+  'False = card still renders but cannot be purchased and shows "No longer available". Distinct from active (retired) and sellable (display-only grouping tier).';
+
+update sponsorship_tiers
+set available = false
+where year = '2026-27'
+  and name in ('Blue', 'Gold', 'Platinum', 'Diamond', 'MVP');
+
+-- Guard: exactly the five named levels closed, and the three Kendra wants left
+-- open must still be open. Fails the transaction rather than half-applying.
+do $$
+declare
+  closed int;
+  open_wanted int;
+begin
+  select count(*) into closed
+  from sponsorship_tiers
+  where year = '2026-27' and available = false;
+
+  select count(*) into open_wanted
+  from sponsorship_tiers
+  where year = '2026-27'
+    and name in ('Custom', 'Tunnel', 'Scoreboard')
+    and available = true;
+
+  if closed <> 5 then
+    raise exception 'expected 5 closed levels, found %', closed;
+  end if;
+  if open_wanted <> 3 then
+    raise exception 'expected Custom/Tunnel/Scoreboard open, found %', open_wanted;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/161_ticket_urls_and_mavmail.sql
+-- ===
+
+-- 161_ticket_urls_and_mavmail.sql
+--
+-- Ticket links on the schedule, plus fixing the Mav Mail rows on /resources.
+-- Jeremy + Kendra, 2026-08-25: ticket info is currently only published in Mav
+-- Mail (RRISD's newsletter, not ours) and belongs on the booster site.
+--
+-- ── WHY THE LINK LIVES ON THE VENUE ──
+-- RRISD sells through HomeTown Ticketing and every game LEVEL is its own event
+-- ("McNeil HS Varsity Football vs Lake Belton", "JV Football McNeil HS vs
+-- Bowie"). But those per-event URLs cannot be stored: varsity tickets are only
+-- published at 8:00 AM the Monday before each game and JV/freshman on game day,
+-- so on 2026-08-25 only NINE event links existed for the whole season. Storing
+-- /embed/event/<id> would leave most of the season null and rot as ids appear.
+--
+-- What IS durable is the HOST's box office page, and the host follows the VENUE,
+-- not home/away -- the Cedar Ridge, Westwood and Round Rock games are *away*
+-- games played at RRISD venues. Jeremy: "i think we can find general links for
+-- every game even if the game tix are not available yet." So: one link per
+-- venue, and every level gets a link.
+--
+-- `games.ticket_url` is a per-game OVERRIDE for one-offs (a playoff at a neutral
+-- site, or a district posting a special link). Resolution is
+-- `game.ticket_url ?? venue.ticket_url`, and null renders NOTHING -- no
+-- placeholder, no dead link.
+--
+-- ⚠️ Lake Travis is NOT on HomeTown, it is on Hudl. That is the reason this is a
+-- stored per-venue value and not a URL computed from a district slug.
+--
+-- ⚠️ Kelly Reeves hosts both McNeil home AND away games, so a venue-level value
+-- cannot distinguish them. All RRISD venues get McNeil's own entity page (the
+-- link Jeremy confirmed people use). If an away-at-RRISD game turns out not to be
+-- listed there, set that game's `ticket_url` override to the district-wide box
+-- office `https://events.hometownticketing.com/boxoffice/roundrockisd`.
+--
+-- Lake Belton High School is deliberately left NULL -- Belton ISD's box office
+-- was not supplied. It renders no link, which is the honest state.
+
+begin;
+
+alter table venues add column if not exists ticket_url text;
+alter table games  add column if not exists ticket_url text;
+
+comment on column venues.ticket_url is
+  'Host district box office page for events at this venue. The durable link; per-event ticket URLs only exist the week of the game.';
+comment on column games.ticket_url is
+  'Per-game override. Wins over venues.ticket_url. For one-offs only; normally null.';
+
+-- Round Rock ISD -- McNeil's own entity page
+update venues set ticket_url = 'https://events.hometownticketing.com/boxoffice/roundrockisd/entity/schools/26'
+where name in (
+  'Maverick Stadium',
+  'Kelly Reeves Athletic Complex',
+  'Round Rock High School Dragon Stadium',
+  'Cedar Ridge High School Football Stadium',
+  'Westwood Warrior Bowl',
+  'Stony Point Tiger Stadium'
+);
+
+-- Austin ISD -- from the Mav Mail issue of Sunday Aug 23 2026
+update venues set ticket_url = 'https://events.hometownticketing.com/boxoffice/austinisd/L2VtYmVkL2FsbA%3D%3D'
+where name in ('Toney Burger Stadium', 'Toney Burger Annex');
+
+-- Leander ISD (Rouse, Vista Ridge)
+update venues set ticket_url = 'https://events.hometownticketing.com/boxoffice/leanderisd'
+where name in ('Gupton Stadium', 'Charles Rouse Stadium', 'Vista Ridge Football Field');
+
+-- Eanes ISD (Westlake)
+update venues set ticket_url = 'https://events.hometownticketing.com/boxoffice/eanesisd/entity/schools/4'
+where name = 'Chaparral Stadium';
+
+-- Lake Travis ISD -- Hudl, not HomeTown. Needed for the JV away game on 9/23.
+update venues set ticket_url = 'https://fan.hudl.com/usa/tx/austin/organization/863/lake-travis-high-school/tickets'
+where name = 'Cavalier Stadium';
+
+-- ── /resources: the row labelled "MavMail" is actually the LIVE FEED ──
+-- It points at mcneil.roundrockisd.org/o/mcneil/live-feed, which is the school's
+-- post stream. Mav Mail is published on a different platform entirely
+-- (roundrockisd.edurooms.com) and is never posted to the feed, which is why
+-- Jeremy could not find this week's issue there. Relabel, then add the real
+-- subscribe link and the ticket link.
+update resource_links
+set label = 'McNeil Live Feed',
+    description = 'School announcements and posts from McNeil. Note: Mav Mail is not posted here.'
+where section = 'communications'
+  and label = 'MavMail'
+  and url = 'https://mcneil.roundrockisd.org/o/mcneil/live-feed';
+
+insert into resource_links (section, label, url, description, sort_order, active)
+values
+  ('communications', 'Subscribe to Mav Mail',
+   'https://www.roundrockisd.org/o/rrisd/page/connect-with-rrisd',
+   'RRISD''s weekly school newsletter. Football ticket links and campus news land here first.',
+   -4, true),
+  ('communications', 'Buy Football Tickets',
+   'https://events.hometownticketing.com/boxoffice/roundrockisd/entity/schools/26',
+   'McNeil''s HomeTown box office. Varsity tickets post at 8:00 AM the Monday before each game; JV and freshman on game day.',
+   -5, true);
+
+-- Guards. Fail the transaction rather than half-applying.
+do $$
+declare
+  rrisd int; aisd int; leander int; eanes int; lt int; belton_null int;
+  live_feed int; subscribe int; tix int;
+begin
+  select count(*) into rrisd from venues where ticket_url like '%roundrockisd/entity/schools/26';
+  select count(*) into aisd from venues where ticket_url like '%austinisd%';
+  select count(*) into leander from venues where ticket_url like '%leanderisd%';
+  select count(*) into eanes from venues where ticket_url like '%eanesisd%';
+  select count(*) into lt from venues where ticket_url like '%hudl.com%';
+  select count(*) into belton_null from venues where name = 'Lake Belton High School' and ticket_url is null;
+  select count(*) into live_feed from resource_links where label = 'McNeil Live Feed';
+  select count(*) into subscribe from resource_links where label = 'Subscribe to Mav Mail';
+  select count(*) into tix from resource_links where label = 'Buy Football Tickets';
+
+  if rrisd <> 6 then raise exception 'expected 6 RRISD venues, got %', rrisd; end if;
+  if aisd <> 2 then raise exception 'expected 2 Austin ISD venues, got %', aisd; end if;
+  if leander <> 3 then raise exception 'expected 3 Leander ISD venues, got %', leander; end if;
+  if eanes <> 1 then raise exception 'expected 1 Eanes ISD venue, got %', eanes; end if;
+  if lt <> 1 then raise exception 'expected 1 Hudl venue, got %', lt; end if;
+  if belton_null <> 1 then raise exception 'Lake Belton should still be null'; end if;
+  if live_feed <> 1 then raise exception 'live feed relabel did not apply'; end if;
+  if subscribe <> 1 then raise exception 'subscribe row missing'; end if;
+  if tix <> 1 then raise exception 'ticket row missing'; end if;
+  -- Nothing should still claim to be MavMail while pointing at the live feed.
+  if exists (select 1 from resource_links where label = 'MavMail') then
+    raise exception 'a row still labelled MavMail';
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/162_rrisd_away_tickets.sql
+-- ===
+
+-- 162_rrisd_away_tickets.sql
+--
+-- Jeremy 2026-08-25: "maybe just use this general link
+-- https://events.hometownticketing.com/boxoffice/roundrockisd/entity/schools/26
+-- ... for homegames".
+--
+-- That splits the rule 161 assumed. 161 put McNeil's own entity page on every
+-- RRISD venue, but a venue-level value cannot tell home from away and **Kelly
+-- Reeves hosts both** -- home vs Lake Travis, Stony Point and Round Rock, away
+-- vs Cedar Ridge and Westwood. Same for Dragon Stadium.
+--
+-- New split, and it is now explicit in code rather than inferred from the venue:
+--   HOME game  -> MCNEIL_TICKETS_URL in lib/constants.ts (the schools/26 page)
+--   AWAY game  -> venues.ticket_url, i.e. whoever is HOSTING
+--
+-- So the RRISD venue rows change from McNeil's entity page to the DISTRICT-wide
+-- box office. That page lists every RRISD school's events, so an away game at
+-- Cedar Ridge, Westwood or Stony Point resolves to a page the game is actually
+-- on -- which McNeil's own entity page might not list.
+--
+-- Maverick Stadium is only ever a home venue, so its value is unused under the
+-- new rule. Left populated anyway: it costs nothing and is correct if McNeil
+-- ever appears as the visitor at its own stadium.
+
+begin;
+
+update venues
+set ticket_url = 'https://events.hometownticketing.com/boxoffice/roundrockisd'
+where ticket_url = 'https://events.hometownticketing.com/boxoffice/roundrockisd/entity/schools/26';
+
+do $$
+declare district int; stale int;
+begin
+  select count(*) into district from venues
+   where ticket_url = 'https://events.hometownticketing.com/boxoffice/roundrockisd';
+  select count(*) into stale from venues where ticket_url like '%entity/schools/26';
+  if district <> 6 then raise exception 'expected 6 RRISD venues on the district link, got %', district; end if;
+  if stale <> 0 then raise exception '% venue(s) still on the McNeil entity page', stale; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/163_reopen_blue_tier.sql
+-- ===
+
+-- 163_reopen_blue_tier.sql
+--
+-- Kendra wants the Blue level ($500) selling again (Jeremy, 2026-08-25). This is
+-- a partial reversal of 160, which closed Blue, Gold, Platinum, Diamond and MVP
+-- the same day.
+--
+-- This is exactly the flip 160 was designed for: `available` is a normal data
+-- column, so reopening a level is one UPDATE with no cleanup. Nothing has to be
+-- un-said in `badge_label` because the "No longer available" tag was never
+-- written there -- the page derives it from this column.
+--
+-- Gold, Platinum, Diamond and MVP stay closed and keep their greyed-out cards.
+-- Platinum still holds its 'Recommended' badge_label in the data; it stays
+-- suppressed while Platinum is closed and returns by itself if it reopens.
+--
+-- ⚠️ No deploy needed. /boosters/sponsor is `dynamic = "force-dynamic"`, so this
+-- is live on commit. That is NOT true of a `lib/constants.ts` change.
+
+begin;
+
+update sponsorship_tiers
+set available = true
+where year = '2026-27' and name = 'Blue';
+
+do $$
+declare open_names text; closed_count int;
+begin
+  select string_agg(name, ', ' order by sort_order) into open_names
+  from sponsorship_tiers
+  where year = '2026-27' and active and sellable and available;
+
+  select count(*) into closed_count
+  from sponsorship_tiers
+  where year = '2026-27' and active and sellable and not available;
+
+  -- Blue joins Custom, Tunnel and Scoreboard; four named levels stay closed.
+  if open_names is distinct from 'Blue, Custom, Tunnel, Scoreboard' then
+    raise exception 'unexpected open set: %', open_names;
+  end if;
+  if closed_count <> 4 then
+    raise exception 'expected 4 closed levels, got %', closed_count;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/164_three_gold_sponsors.sql
+-- ===
+
+-- 164_three_gold_sponsors.sql
+--
+-- Three new Gold sponsors, $1,000 each. Jeremy 2026-08-26:
+--   Raising Cane's Chicken Fingers  (I-35 @ Parmer, Austin)
+--   Pok-E-Jo's Smokehouse           (Parmer Lane)
+--   Whataburger
+--
+-- Gold is price_cents = 100000, verified against sponsorship_tiers rather than
+-- assumed, same as 154. Gold goes 7 -> 10; paid sponsors 14 -> 17. Community
+-- partners stay at 6 and are untouched.
+--
+-- ── GOLD IS CURRENTLY `available = false` AND THAT IS NOT A CONTRADICTION ──
+-- Kendra closed Gold on 2026-08-25 (migration 160); Blue was reopened the same
+-- day (163). `available` gates only whether /boosters/sponsor will SELL the
+-- level — the card renders greyed out with a dead CTA. It has nothing to do
+-- with the roster: /sponsors, /boosters/sponsor and the homepage strip all
+-- read `sponsors` joined to `sponsorship_tiers` filtered on tier `active`, not
+-- `available` (app/sponsors/page.tsx). So these three publish normally while
+-- Gold stays closed to new buyers, which is exactly right for sponsors who
+-- committed at that level. **Do NOT flip Gold's `available` as part of adding
+-- them** — that would reopen the level for sale, which nobody asked for.
+--
+-- ── SORT_ORDER IS RENUMBERED, NOT APPENDED (copied verbatim from 154) ──
+-- `sort_order` is a single global sequence encoding tier-then-alphabetical:
+-- Platinum 1-2, Gold 3-9, Blue 10-14 before this migration. Both /sponsors and
+-- /boosters/sponsor `.order("sort_order")`, so appending at max+1 would print
+-- all three last in Gold and break the alphabetical run. The sequence is
+-- RECOMPUTED from the data instead: tier price_cents DESC, then name.
+-- Idempotent, and it repairs any drift that already existed.
+--
+-- Under this database's collation that lands the new rows at Gold 6 (Pok-E-Jo's,
+-- between Mighty Fine and Rudy's), Gold 7 (Raising Cane's) and Gold 12
+-- (Whataburger, AFTER W Homes Collective — the space in "W Homes" sorts before
+-- "Wh", it is not ignored). The assertion block below pins all three, so a
+-- collation change surfaces here instead of silently reshuffling the page.
+--
+-- Community partners (kind = 'community_partner') are excluded and stay at 0.
+--
+-- ── LOGOS ──
+-- All three are VECTOR-sourced, 1200px wide, transparent, prepared by
+-- `MavericksWebsite/partner_logos/prep_gold_2026_08.py` from sources pinned in
+-- that folder. Uploaded to the `sponsor-logos` bucket; `logo_url` is the bare
+-- filename and publicStorageUrl() builds the URL.
+--
+-- ⚠️ WHATABURGER'S SUPPLIED FILE WAS UNUSABLE AND WAS NOT SHIPPED. What came in
+-- was whataburger.com's nav asset: 77x75 and entirely WHITE, the reversed
+-- variant meant for use on Whataburger orange. The sponsor cards are white, so
+-- shipping it would have rendered a paid Gold sponsor as a blank rectangle.
+-- That is NOT the Batrice "publish the best available asset anyway" case
+-- (Jeremy 2026-08-22) — that rule exists because a null logo_url renders as
+-- NOTHING, and a white logo on a white card renders as nothing too. Shipping it
+-- would have honoured the letter of the rule and defeated its whole point. The
+-- mark used is Whataburger's own current lockup in vector and in their orange
+-- (Wikimedia Commons `Whataburger logo.svg`, public domain), cross-checked
+-- against their own site's white wordmark SVG and their orange app icon. If
+-- Whataburger sends real artwork, swap the file.
+--
+-- ⚠️ RAISING CANE'S SENT A STYLE GUIDE ALONG WITH THE LOGO, and two of its rules
+-- bind on the PHYSICAL Gold deliverables, not the web card:
+--   * "never reduce the logo below one inch wide" — fine at ~266px on the card.
+--   * clear space of 1/4x on every side — the stored PNG is cropped tight to
+--     the ink on purpose, because the card supplies its own padding.
+-- Gold includes a field sign at every varsity game and a business sign on
+-- McNeil Drive. Whoever lays those out has to add the clear space back and
+-- should use the vector PDF in partner_logos/sources/gold-2026-08/, not this
+-- PNG. Their improper-usage list also forbids recolouring, rotating, uneven
+-- scaling, recreating the logo, and removing the registration mark.
+--
+-- DB-ONLY, NO DEPLOY. /sponsors and /boosters/sponsor are force-dynamic; the
+-- homepage strip is ISR revalidate=60 and lags about a minute. That lag is not
+-- a failed migration.
+
+begin;
+
+insert into sponsors (name, logo_url, website_url, tier_id, year, kind, active, provides_in_kind, sort_order)
+select v.name, v.logo_url, v.website_url,
+       t.id, '2026-27', 'sponsor', true, false,
+       0                      -- placeholder; the renumber below assigns the real value
+from (values
+        ('Raising Cane''s Chicken Fingers', 'raising-canes.png',
+         'https://locations.raisingcanes.com/tx/austin/12901-n-interstate-hwy-35'),
+        ('Pok-E-Jo''s Smokehouse', 'pok-e-jos-smokehouse.png',
+         'https://www.pokejos.com/palmer-lane'),
+        ('Whataburger', 'whataburger.png',
+         'https://whataburger.com/home')
+     ) as v(name, logo_url, website_url)
+join sponsorship_tiers t
+  on t.year = '2026-27' and t.name = 'Gold'
+where not exists (
+  select 1 from sponsors s where s.year = '2026-27' and s.name = v.name
+);
+
+-- Recompute the whole paid-sponsor sequence: tier value desc, then name.
+with ranked as (
+  select s.id, row_number() over (order by t.price_cents desc, s.name) as rn
+  from sponsors s
+  join sponsorship_tiers t on t.id = s.tier_id
+  where s.year = '2026-27' and s.kind = 'sponsor'
+)
+update sponsors s
+set sort_order = ranked.rn
+from ranked
+where s.id = ranked.id
+  and s.sort_order is distinct from ranked.rn;
+
+do $$
+declare n int; got int; want int; nm text;
+begin
+  -- Each row exists exactly once, in Gold, with the right link and logo, and
+  -- lands at the sort_order the tier-then-alphabetical recompute should give it.
+  for nm, want in
+    select * from (values
+      ('Pok-E-Jo''s Smokehouse', 6),
+      ('Raising Cane''s Chicken Fingers', 7),
+      ('Whataburger', 12)
+    ) as x(name, expected)
+  loop
+    select count(*) into n from sponsors s
+     join sponsorship_tiers t on t.id = s.tier_id
+     where s.year = '2026-27' and s.name = nm
+       and t.name = 'Gold' and t.price_cents = 100000
+       and s.kind = 'sponsor' and s.active and not s.provides_in_kind
+       and s.website_url is not null and s.logo_url is not null;
+    if n <> 1 then
+      raise exception '% not inserted as expected (matched % rows)', nm, n;
+    end if;
+
+    select s.sort_order into got from sponsors s
+     where s.year = '2026-27' and s.name = nm;
+    if got <> want then
+      raise exception '% landed at sort_order %, expected % (collation change?)', nm, got, want;
+    end if;
+  end loop;
+
+  -- Gold goes from 7 to 10.
+  select count(*) into n from sponsors s
+   join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.kind = 'sponsor' and t.name = 'Gold';
+  if n <> 10 then
+    raise exception 'expected 10 Gold sponsors, found %', n;
+  end if;
+
+  -- 17 paid sponsors total.
+  select count(*) into n from sponsors
+   where year = '2026-27' and kind = 'sponsor' and active;
+  if n <> 17 then
+    raise exception 'expected 17 active paid sponsors, found %', n;
+  end if;
+
+  -- The sequence must be 1..N with no gaps and no duplicates.
+  select count(*) into n from sponsors
+   where year = '2026-27' and kind = 'sponsor';
+  if (select count(distinct sort_order) from sponsors where year='2026-27' and kind='sponsor') <> n then
+    raise exception 'duplicate sort_order values among the % paid sponsors', n;
+  end if;
+  if (select max(sort_order) from sponsors where year='2026-27' and kind='sponsor') <> n
+     or (select min(sort_order) from sponsors where year='2026-27' and kind='sponsor') <> 1 then
+    raise exception 'sort_order is not a contiguous 1..% sequence', n;
+  end if;
+
+  -- Partners untouched.
+  select count(*) into n from sponsors
+   where year = '2026-27' and kind = 'community_partner' and sort_order <> 0;
+  if n <> 0 then
+    raise exception '% community partners had their sort_order disturbed', n;
+  end if;
+
+  -- Gold must still be CLOSED for sale. Adding sponsors at a level is not the
+  -- same act as reopening it, and conflating the two is a one-word mistake.
+  select count(*) into n from sponsorship_tiers
+   where year = '2026-27' and name = 'Gold' and available;
+  if n <> 0 then
+    raise exception 'Gold was reopened for sale; this migration must not do that';
+  end if;
+end $$;
+
+commit;
