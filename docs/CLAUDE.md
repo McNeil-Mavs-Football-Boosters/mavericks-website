@@ -19,7 +19,17 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-26)
+## Where things stand (read this first — updated 2026-08-27)
+
+**2026-08-27 — Whataburger sent real artwork (migration 169). Last migration applied: 169.** Their supplied file replaces the Commons-sourced stand-in 164 shipped: `whataburger.png` → **`whataburger-r2.png`**. Better on three counts, each checked: it is theirs; the orange is **#F58220**, their actual brand colour, where the Commons rendering was a brighter, redder #FF770F; and it carries **both** registration marks rather than only the W's. Shipped byte-identical to what they sent — it arrived already tightly cropped, transparent and a single flat colour, all three asserted before upload, so no transformation was applied.
+
+⚠️ **It is 360x346 where the old file was 1200x1133, and that is fine.** Gold renders it at ~133x128, so 360px is ~2.7x for retina. **Do not upscale it to match the 1200px convention** — `crop_and_scale` aborts rather than upscale for exactly this reason. A vector would be the next real upgrade; more pixels would not.
+
+🚨 **THIS IS WHY THE FILENAME CHANGED, AND THE RULE GENERALISES: NEVER OVERWRITE A LIVE SPONSOR LOGO IN PLACE.** Every Supabase Storage object serves `cache-control: no-cache` (a platform override we cannot change), so Next's optimiser falls back to its own TTL and **a replaced object can serve the OLD bytes for up to 31 days with no way to invalidate**. Overwriting would have looked correct locally and shown the old logo on the live site for a month. Upload a new path and update the row — same reason the varsity roster PDF is `varsity-2026-r2.pdf`. 🚫 The retired `whataburger.png` stays in the bucket; `169_rollback` points back at it.
+
+**The 164 entry below is superseded on this one point only** — its reasoning about why the supplied white file was unusable still stands, and is still why a supplied logo gets composited over white before it is accepted.
+
+## Earlier entries (updated 2026-08-26)
 
 **2026-08-26 (late) — all three 2026-27 rosters seeded, a Platinum sponsor, and the meals programs corrected. Last migration applied: 168.** Six migrations landed today (163→168) plus four deploys. Newest first below; the VYPE entry that follows is from earlier the same day.
 
