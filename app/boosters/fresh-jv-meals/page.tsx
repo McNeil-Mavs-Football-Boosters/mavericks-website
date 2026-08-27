@@ -108,13 +108,19 @@ export default async function FreshJvMealsPage() {
             <p>
               Pickup is at <strong>{FRESH_JV_MEAL_PICKUP_TIME}</strong> on the
               night you take
+              {/* ⚠️ NO TRAILING PERIOD after a time. FRESH_JV_MEAL_*_TIME are
+                  written "2:00 p.m." and already end in a full stop, so adding
+                  one renders "2:30 p.m..". Latent until the constants stopped
+                  being null on 2026-08-26. Same fix as timeSentence() in
+                  fresh-jv-meals-automation.gs. */}
               {FRESH_JV_MEAL_DROPOFF_TIME ? (
                 <>
                   , and drop-off is right after, by{" "}
                   <strong>{FRESH_JV_MEAL_DROPOFF_TIME}</strong>
                 </>
-              ) : null}
-              .
+              ) : (
+                <>.</>
+              )}
             </p>
           ) : (
             /* ⚠️ Do NOT replace this with a guessed time. A volunteer plans
@@ -316,7 +322,7 @@ export default async function FreshJvMealsPage() {
             <strong>What time?</strong>{" "}
             {FRESH_JV_MEAL_PICKUP_TIME ? (
               <>
-                {FRESH_JV_MEAL_PICKUP_TIME}. We will email you if that ever
+                {FRESH_JV_MEAL_PICKUP_TIME} We will email you if that ever
                 changes for a particular night.
               </>
             ) : (
