@@ -12,6 +12,7 @@ import {
   FRESH_JV_MEAL_DROPOFF_PLACE,
   FRESH_JV_MEAL_PICKUP_ADDRESS,
   FRESH_JV_MEAL_PICKUP_PLACE,
+  FRESH_JV_MEAL_DROPOFF_TIME,
   FRESH_JV_MEAL_PICKUP_TIME,
   FRESH_JV_MEAL_SLOTS,
   freshJvMealMapsUrl,
@@ -106,7 +107,14 @@ export default async function FreshJvMealsPage() {
           {FRESH_JV_MEAL_PICKUP_TIME ? (
             <p>
               Pickup is at <strong>{FRESH_JV_MEAL_PICKUP_TIME}</strong> on the
-              night you take.
+              night you take
+              {FRESH_JV_MEAL_DROPOFF_TIME ? (
+                <>
+                  , and drop-off is right after, by{" "}
+                  <strong>{FRESH_JV_MEAL_DROPOFF_TIME}</strong>
+                </>
+              ) : null}
+              .
             </p>
           ) : (
             /* ⚠️ Do NOT replace this with a guessed time. A volunteer plans
