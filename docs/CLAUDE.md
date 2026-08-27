@@ -21,6 +21,56 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-26)
 
+**2026-08-26 (late) — all three 2026-27 rosters seeded, a Platinum sponsor, and the meals programs corrected. Last migration applied: 168.** Six migrations landed today (163→168) plus four deploys. Newest first below; the VYPE entry that follows is from earlier the same day.
+
+### Rosters — varsity 45, JV 32, freshman 49. All three are now live.
+
+**JV (166)** and **freshman (168)** seeded from the coaching staff's own files. This closes the long-open "seed the 2026-27 rosters" item and the specific blocker 157 raised — it declined to seed JV because the spreadsheet it had carried no jersey numbers; the later finalised PDF has one for every player.
+
+⚠️ **PARSE THESE BY COLUMN POSITION AND BY VALUE, NEVER BY READING ORDER OR ROW INDEX.** Three separate traps, each of which fails SILENTLY and each of which was hit today:
+- **JV PDF:** the two blocks are not vertically aligned (#0 at y=90.3, #23 at y=94.5, drift growing down the page), so plain text extraction interleaves them and in three places emits a name *after* the position of the row below it.
+- **Freshman PDF:** it is **two pages and page 2 has no repeated header**, so its rows start at the very top. A y-threshold tuned to page 1 silently dropped 13 of 49.
+- **Freshman workbook:** a **blank row 3** puts the header on row 4 and data on row 5. A hardcoded `min_row` swallowed the header as a player named "#".
+
+**The freshman roster had TWO sources — the workbook and its PDF export — parsed independently and cross-checked to agree on all 49 pairs.** Do that whenever two sources exist; it is what let 168 skip the "verbatim vs typo" hedging the other rosters carry.
+
+**`sort_order` is jersey-ascending on both**, which is 159's correction applied up front. 🚫 Do not "restore" the print order: the PDFs keep their two-block layout because that is what gets taped to a wall, and 159 already explains why the web page must not match it.
+
+⚠️ **CURLY APOSTROPHES ARE NORMALISED TO STRAIGHT, and that IS an exception to the verbatim rule.** The freshman workbook has `Ja'Qualieon` / `A'Manuel` with U+2019 — Excel autocorrect, not a coaches' spelling choice — and **all six apostrophes already in `players` are straight, none curly** (checked, not assumed). Same category as the trailing space 166 trimmed: character normalisation, not spelling. Real spellings stand: `Patrick Hernadez` (JV), `Sclok Patel` and `Authur Edison` (freshman) are in the sources that way.
+
+⚠️ **NAME SPLIT: first token = first_name, the rest = last_name, WITH NO EXCEPTIONS on JV — a change of posture from 157**, which carved out `Amery A.`. Four JV rows are genuinely ambiguous (`Omar Josiah V Aviles`, `Bryan Neal II Harris`, `Ricardo JR Gonzalez`, `Ka'Darious ONeal Lee Montgomery`) and nobody here knows the real surnames. `PlayerTable` renders `{first} {last}`, so **all of them display exactly as written either way** — the split only affects what the columns mean. 157's own warning against a middle-initial detector applies.
+
+🚫 **THE EMPTY ROSTER COLUMNS ARE DELIBERATE. DO NOT HIDE THEM.** The freshman source is two columns, `#` and `PLAYER`, so Position/Grade/Height/Weight render as four columns of em-dashes across 49 rows; JV has three, varsity two. It looks like a bug. Jeremy was asked directly and declined: *"let's leave them...maybe it will make the coaches want to step up their game on getting me data!"* The dashes are the only standing public evidence that the staff stopped supplying positions, and tidying the page removes the pressure to fix the actual problem. See `followups.md`. **Last season's freshman roster HAD positions**, so this is a regression in what is supplied, not in what the site can do.
+
+**Print View uses the staff's own PDFs**, uploaded as-is (`documents/rosters/jv-2026.pdf`, `freshman-2026.pdf`), both sha256-verified after the round trip. Varsity still uses the generated `varsity-2026-r2.pdf` because its source was a spreadsheet. Nothing is re-typeset, so a printed roster cannot disagree with the coaches'. **Freshman Blue stays empty and inactive** (148) — one freshman team this season.
+
+### Sponsors — 18 paying, 6 community partners
+
+**Airborne Balloons & Events, Platinum (167).** ⚠️ **It landed at `sort_order` 1, ahead of Capstone** — the first addition to displace the TOP of the sequence rather than slot into the middle, so every paid row shifted. That cost nothing only because 154's recompute-from-data pattern is still being copied; appending at max+1 would have been visibly wrong.
+
+⚠️ **Its "Balloons & Events" line is BLACK SCRIPT and needs a light background.** Verified before shipping that all three sponsor surfaces are light — including the homepage carousel, which sits in a plain `container` section with no background class and *inherits* page white rather than declaring it. **Move a sponsor block onto `bg-mavs-navy` and this logo loses its entire second line.** That is the inverse of the white Whataburger file 164 rejected, and the pair of them is why a supplied logo now gets composited over white before it is accepted.
+
+Its site is a "Coming Soon" placeholder, but a branded one with a working inquiry form on their own domain (matching `ashley@airborneatx.com`), so the link is useful. **Not** the Capstone case that 106 left NULL — that was a guessed domain serving an empty 114-byte page.
+
+**A sponsor DL lives OUTSIDE the repo at `~/Projects/BoosterClub/sponsor_dl/`** (`sponsor_dl.py` + README). ⚠️ **The address list is NOT the sponsor roster** — Whataburger, Mama Betty's and all six community partners have no address in it, and five addresses match no current sponsor. Reconcile before any send, and use **Bcc**.
+
+### The two meal programs — a silent bug, and a time that must change
+
+🚨 **EVERY freshman/JV confirmation was broken for two days and nobody could see it.** The form asks *"Which **night**(s) can you cover?"*; the automation read *"Which **date**(s)..."*, copied from the coaches-meal and team-dinner scripts whose forms really do say "date". Name, email and phone parsed fine, so four volunteers were emailed the subject line **"those nights were taken"**. **The sheet was never wrong** — ownership resolves from the sheet CELL, not the submit event, so the roster of who-has-which-night, the open-nights list and every reminder stayed correct. Fixed, the title now lives in one constant, and an unparseable submission pages Jeremy instead of lying to the volunteer. `check-fresh-jv-meal-options.py` passed the whole time — it compares option strings and never looked at the question title.
+
+🚨 **`PICKUP_TIME` IS `2:00 p.m.` AND MUST BECOME `2:30` AFTER 27 AUG.** Week one is 2:00; every other night is 2:30. One global, pointed at the imminent night by Jeremy's call rather than special-cased per slot. **Two files, both required:** `PICKUP_TIME`/`DROPOFF_TIME` in the Apps Script (paste), and `FRESH_JV_MEAL_PICKUP_TIME`/`_DROPOFF_TIME` in `lib/fresh-jv-meals.ts` (**code — needs a redeploy**). The daily job nags Jeremy from 28 Aug until the Apps Script values match, **but that nag cannot see this repo**, so it stopping is not proof the site was updated. Real deadline is **Wed 2 Sep**, the day before the next pickup.
+
+**Drop-off is the Player Drop-off Doors on the east side, INSIDE — not the horseshoe.** Debbie Reeves ran the first real delivery and found nobody waiting; she unloaded at a horseshoe table because that is what we told her, then had to carry it "to a door around the corner and inside". Changed in four places that must agree: `lib/coach-meals.ts`, `lib/fresh-jv-meals.ts`, and both Apps Scripts.
+
+⚠️ **A latent formatting bug surfaced the moment a real time existed:** the times are written `2:00 p.m.` and already end in a full stop, so appending one rendered `"drop off by 2:30 p.m.."`. It was in the emails and in two places on the page. Watch for it anywhere a time ends a sentence.
+
+⚠️ **`DRY_RUN` said `true` in the repo while the live project said `false`.** Pasting the stale copy would have silently stopped every freshman/JV email with no error anywhere. **Check that line before any paste.** The Apps Script projects are the source of truth for what is RUNNING; the repo copies drift because Jeremy edits in the browser. The live code was diffed against the repo on 2026-08-26 and matched.
+
+### Nav
+
+**The header wrapped on every laptop and now does not.** Measured before: "Coaches & Trainers", "Booster Club" and "Forms & Links" each broke onto a second line at 1280, 1366, 1440, 1512 and 1600, coming right only at 1728 — while the desktop nav switches on at `xl` (1280), so there was a 448px band where it was shown and broken. Cause was `lg:max-w-[80vw]` on the header leaving the nav ~790px at 1440 for content needing ~1030, and that cap aligned the header with nothing (`80vw` appears nowhere else). Dropped at `xl`, indent narrowed, every label `whitespace-nowrap`. **Then re-centred**: removing the cap made the nav `flex-1` absorb all the slack onto the right, so the nav no longer grows and the row centres its content. Verified at 1280–1920: single line, left and right gaps identical to the pixel.
+
+
 **2026-08-26 — VYPE broadcast links on the schedule (migration 165 + a deploy). Last migration applied: 165.** VYPE is streaming McNeil varsity this season. Merle Bertrand (VYPE) mailed president@ / the boosters gmail / Coach Gardner on 2026-08-24 with the arrangement and week 4's links. Week 4 (Fri Aug 28 varsity at Bowie, 7:30) now carries **YouTube** and **VYPE**, both verified 200 and titled for that game.
 
 ⚠️ **THIS IS A STANDING WEEKLY ITEM, NOT A ONE-OFF.** Merle: *"I'll try to send out the direct links each week but I'm making no promises in case I can't keep up."* So expect two links some weeks, one some weeks, and **none** other weeks — when nothing arrives, the answer is VYPE's "Broadcast Lineup" article, posted on `vype.com` each game day, and **the right move is to add no row at all** rather than link something guessed. See the weekly procedure block below.
