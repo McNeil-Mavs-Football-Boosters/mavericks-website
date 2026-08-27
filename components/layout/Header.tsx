@@ -65,7 +65,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
           cap was not aligning the header with anything: 80vw appears nowhere
           else in the app. Below xl the nav is a hamburger and the cap is free,
           so it stays there. */}
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto xl:max-w-none xl:mx-0">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto xl:max-w-none xl:mx-0 xl:justify-center">
         <Link
           href="/"
           aria-label="McNeil Mavericks Football home"
@@ -90,7 +90,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             to close on 2026-08-26 -- and it got worse with each item added, since
             the leftover width was divided between fewer joins. A fixed gap keeps
             the spacing constant no matter how many items the nav grows to. */}
-        <nav className="hidden xl:flex flex-1 items-center justify-start gap-4 2xl:gap-6 pl-4 2xl:pl-8">
+        <nav className="hidden xl:flex items-center justify-start gap-4 2xl:gap-6 pl-4 2xl:pl-8">
           <HeaderDropdown
             label="Schedule"
             links={buildScheduleLinks(freshmanHasBlue)}
