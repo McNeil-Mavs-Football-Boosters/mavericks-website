@@ -3,7 +3,7 @@
  *
  * Twelve coaches meet for lunch the Sunday before each varsity game (no
  * scrimmages). A restaurant donates the food; a parent volunteer picks it up at
- * 12:30 and drops it at the school's Horseshoe lot at 1:00. Ten Sundays, four
+ * 12:30 and drops it INSIDE the school's Player Drop-off Doors at 1:00. Ten Sundays, four
  * pickup locations.
  *
  * ── THIS FILE IS THE SINGLE SOURCE FOR THE SLOT LIST ──
@@ -50,7 +50,20 @@ export const COACH_MEAL_HEADCOUNT = 12;
  */
 export const COACH_MEAL_PICKUP_TIME = "12:30 p.m.";
 export const COACH_MEAL_DROPOFF_TIME = "1:00 p.m.";
-export const COACH_MEAL_DROPOFF_PLACE = "the Horseshoe lot at McNeil";
+/**
+ * ⚠️ CHANGED 2026-08-26, AND THE OLD VALUE ("the Horseshoe lot at McNeil") WAS
+ * ACTIVELY WRONG. Debbie Reeves made the first real delivery on Sunday 23
+ * August, unloaded twelve lunches at a horseshoe outdoor table because that is
+ * what we told her, found nobody waiting, and had to carry them "to a door
+ * around the corner and inside". Her words: "delivery is made inside the doors
+ * where we drop players, not the horseshoe." Jeremy: remove the horseshoe from
+ * all of them.
+ *
+ * The delivery goes INSIDE these doors. Keep the wording in step with
+ * DROPOFF_PLACE in `MavericksWebsite/scripts/coach-meals-automation.gs`.
+ */
+export const COACH_MEAL_DROPOFF_PLACE =
+  "the Player Drop-off Doors on the east side of the building";
 
 export interface CoachMealLocation {
   /** Must match `sponsors.name` exactly so the logo lookup resolves. */

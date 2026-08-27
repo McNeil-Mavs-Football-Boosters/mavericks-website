@@ -95,8 +95,8 @@ export default async function CoachMealsPage() {
             Our coaching staff meets for lunch the Sunday before each varsity
             game. A local restaurant donates the meal for {COACH_MEAL_HEADCOUNT}{" "}
             coaches, and we just need a parent to pick it up at{" "}
-            {COACH_MEAL_PICKUP_TIME} and drop it off at {COACH_MEAL_DROPOFF_TIME} in{" "}
-            {COACH_MEAL_DROPOFF_PLACE}.
+            {COACH_MEAL_PICKUP_TIME} and drop it off at {COACH_MEAL_DROPOFF_TIME},{" "}
+            <strong>inside {COACH_MEAL_DROPOFF_PLACE}</strong>.
           </p>
           <p className="font-semibold text-mavs-navy">
             You are not buying the food. It is donated and already paid for. The

@@ -98,8 +98,8 @@ export default async function FreshJvMealsPage() {
             counter and it will be waiting.
           </p>
           <p>
-            Pick up from <strong>{FRESH_JV_MEAL_PICKUP_PLACE}</strong> and bring
-            it to {FRESH_JV_MEAL_DROPOFF_PLACE}, where{" "}
+            Pick up from <strong>{FRESH_JV_MEAL_PICKUP_PLACE}</strong> and take
+            it <strong>inside {FRESH_JV_MEAL_DROPOFF_PLACE}</strong>, where{" "}
             <strong>{FRESH_JV_MEAL_CONTACT}</strong> will meet you. About thirty
             minutes of your time.
           </p>
@@ -122,10 +122,18 @@ export default async function FreshJvMealsPage() {
           {!FRESH_JV_MEAL_DROPOFF_CONFIRMED ? (
             <p className="text-base text-gray-700">
               We will confirm the exact drop-off spot with you the week of your
-              night. {FRESH_JV_MEAL_CONTACT}&apos;s number goes out in your
-              confirmation email.
+              night.
             </p>
           ) : null}
+          {/* ⚠️ Lives OUTSIDE the DROPOFF_CONFIRMED block on purpose. It used to
+              be the second sentence inside it, and flipping that flag to true on
+              2026-08-26 would have silently taken this with it -- leaving a
+              volunteer with no idea they get a phone number at all. Coach Hale's
+              actual number stays out of the page; see lib/fresh-jv-meals.ts. */}
+          <p className="text-base text-gray-700">
+            {FRESH_JV_MEAL_CONTACT}&apos;s number goes out in your confirmation
+            email, so you can text him when you arrive.
+          </p>
           <p>
             Nights below are first come, first served. Note that{" "}
             <strong>September 23 is a Wednesday</strong> — that week plays a day
@@ -283,10 +291,10 @@ export default async function FreshJvMealsPage() {
         <div className="space-y-4 text-lg leading-relaxed text-gray-800">
           <p>
             <strong>What do I actually do?</strong> Drive to{" "}
-            {FRESH_JV_MEAL_PICKUP_PLACE}, give your name, and take the order to{" "}
-            {FRESH_JV_MEAL_DROPOFF_PLACE}. {FRESH_JV_MEAL_CONTACT} meets you
-            there and takes it from you. You are not ordering, paying, or
-            serving.
+            {FRESH_JV_MEAL_PICKUP_PLACE}, give your name, and take the order{" "}
+            <strong>inside {FRESH_JV_MEAL_DROPOFF_PLACE}</strong>.{" "}
+            {FRESH_JV_MEAL_CONTACT} meets you there and takes it from you. You
+            are not ordering, paying, or serving.
           </p>
           {/* Deliberately does not name a number. There is no headcount for this
               program (Jeremy 2026-08-26) and the point of the answer is that the

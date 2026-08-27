@@ -57,7 +57,15 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-mavs-navy print:hidden">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto">
+      {/* ⚠️ `lg:max-w-[80vw]` IS DROPPED AT xl, WHICH IS WHERE THE DESKTOP NAV
+          APPEARS. Measured 2026-08-26: the nav needs ~1030px on one line, and
+          the 80vw cap left it ~790px at 1440 -- so "Coaches & Trainers",
+          "Booster Club" and "Forms & Links" each broke onto a second line at
+          EVERY width from 1280 to 1600, i.e. on essentially every laptop. The
+          cap was not aligning the header with anything: 80vw appears nowhere
+          else in the app. Below xl the nav is a hamburger and the cap is free,
+          so it stays there. */}
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 lg:max-w-[80vw] lg:mx-auto xl:max-w-none xl:mx-0">
         <Link
           href="/"
           aria-label="McNeil Mavericks Football home"
@@ -82,7 +90,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
             to close on 2026-08-26 -- and it got worse with each item added, since
             the leftover width was divided between fewer joins. A fixed gap keeps
             the spacing constant no matter how many items the nav grows to. */}
-        <nav className="hidden xl:flex flex-1 items-center justify-start gap-4 2xl:gap-6 pl-8">
+        <nav className="hidden xl:flex flex-1 items-center justify-start gap-4 2xl:gap-6 pl-4 2xl:pl-8">
           <HeaderDropdown
             label="Schedule"
             links={buildScheduleLinks(freshmanHasBlue)}
@@ -105,7 +113,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/coaches"
-            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+            className="whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Coaches &amp; Trainers
           </Link>
@@ -122,7 +130,7 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
 
           <Link
             href="/events"
-            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+            className="whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Events
           </Link>
@@ -135,19 +143,19 @@ export function Header({ freshmanHasBlue }: { freshmanHasBlue: boolean }) {
               link. Both entries point at the same route, so nothing can drift. */}
           <Link
             href="/boosters/volunteer"
-            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+            className="whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Volunteer
           </Link>
           <Link
             href="/sponsors"
-            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+            className="whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Sponsors
           </Link>
           <Link
             href="/resources"
-            className="text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+            className="whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
           >
             Forms &amp; Links
           </Link>
@@ -197,7 +205,7 @@ function HeaderDropdown({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
+        className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold uppercase tracking-wide text-white hover:text-white/80 transition-colors"
       >
         {label}
         <ChevronDown

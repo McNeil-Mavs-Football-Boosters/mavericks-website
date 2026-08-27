@@ -76,12 +76,20 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
 export const FRESH_JV_MEAL_PICKUP_TIME: string | null = null;
 
 /**
- * ⚠️ UNCONFIRMED. Jeremy: "i don't know where they drop the food off but
- * probably in the horseshoe parking lot and coach hale will meet them there."
- * Stated as the likely spot and confirmed by email, never as fact.
+ * ⚠️ CONFIRMED 2026-08-26, AND IT IS NOT THE HORSESHOE. This used to hedge on
+ * Jeremy's guess: "probably in the horseshoe parking lot and coach hale will
+ * meet them there." Debbie Reeves then ran the first real delivery on Sunday 23
+ * August, unloaded at a horseshoe outdoor table because that is what we told
+ * her, found nobody waiting, and had to carry the order "to a door around the
+ * corner and inside". Her recommendation, adopted verbatim by Jeremy: delivery
+ * is made inside the doors where players are dropped off, not the horseshoe.
+ *
+ * Keep in step with DROPOFF_PLACE in
+ * `MavericksWebsite/scripts/fresh-jv-meals-automation.gs`.
  */
-export const FRESH_JV_MEAL_DROPOFF_PLACE = "the Horseshoe lot at McNeil";
-export const FRESH_JV_MEAL_DROPOFF_CONFIRMED = false;
+export const FRESH_JV_MEAL_DROPOFF_PLACE =
+  "the Player Drop-off Doors on the east side of the building";
+export const FRESH_JV_MEAL_DROPOFF_CONFIRMED = true;
 
 /** Who meets the volunteer at the school. */
 export const FRESH_JV_MEAL_CONTACT = "Coach Hale";
