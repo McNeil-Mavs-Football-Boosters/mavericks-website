@@ -19,7 +19,19 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-08-27)
+## Where things stand (read this first — updated 2026-08-28)
+
+**2026-08-28 — Week 4 results (migration 170). Last migration applied: 170.** Thu 27 Aug: **JV lost 6-34** to Austin Bowie; the **freshman game was cancelled for lightning**. Verified live on `/schedule/games/jv` ("L 6-34") and `/schedule/games/freshman/green` ("Cancelled").
+
+⚠️ **SCORE ORDER IS OURS-FIRST, ALWAYS.** Jeremy reported it as "lost 34-6", the conventional winner-first phrasing, but the columns are explicitly `our_score` / `their_score`, so it is stored 6 / 34 and `ResultCell` renders **L 6-34**. It looks inverted next to how anyone says it out loud. Do not "fix" it — flipping one row would make it disagree with the whole season.
+
+⚠️ **BOTH FRESHMAN ROWS WERE CANCELLED, INCLUDING THE HIDDEN BLUE ONE.** Blue is invisible everywhere since 148 but the row still exists, and 155 set the rule when it moved both Aug 27 rows to the Burger Annex: touch only the visible row and you leave a row in `games` asserting a game that never happened, so a raw query disagrees with the site. **Every future result migration has to do this too** while Blue rows exist.
+
+**Nothing else was needed, and that is the design working.** `CALENDAR_STATUSES` is `["scheduled","final"]`, so a cancelled game leaves `/events`, the month view and the ICS on its own; `TicketCell` and the broadcast links hide once a game concludes. Verified in the ICS: the only Aug 27 entries left are the Varsity Helmet Decal Night (an `events` row) and the JV game, which stays because `final` is a calendar status.
+
+**Still unobserved: the post-final broadcast behaviour.** The varsity Aug 28 game is the first with `game_broadcasts` rows. When its result goes in, **VYPE should drop off the row and YouTube should remain** as the replay. That is on `followups.md` and is the last untested piece of 165.
+
+## Earlier entries (updated 2026-08-27)
 
 **2026-08-27 — Whataburger sent real artwork (migration 169). Last migration applied: 169.** Their supplied file replaces the Commons-sourced stand-in 164 shipped: `whataburger.png` → **`whataburger-r2.png`**. Better on three counts, each checked: it is theirs; the orange is **#F58220**, their actual brand colour, where the Commons rendering was a brighter, redder #FF770F; and it carries **both** registration marks rather than only the W's. Shipped byte-identical to what they sent — it arrived already tightly cropped, transparent and a single flat colour, all three asserted before upload, so no transformation was applied.
 
