@@ -21,6 +21,18 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-28)
 
+**2026-08-29 — two varsity jerseys corrected, and what the slash actually means (migration 171). Last migration applied: 171.** Jeremy watched the Aug 28 game: **Aymane El Anssari wore 10** and **Ford Askins wore 9**. Ford's cell said `9/10`, Aymane's said `29`.
+
+🚨 **THE SLASH IS NOT UNCERTAINTY — IT MEANS DIFFERENT HOME AND AWAY JERSEYS**, and both numbers genuinely belong to that player. Jeremy established this 2026-08-28. So `5/2` (Zylen Hall), `8/18` (Kaden Kearney), `64/65` (Jace Hicks) and `84/80` (Amery Schoepflin) are **correct data that must survive**, and the migration asserts there are still exactly four of them afterwards. Ford was simply not one of those cases: the 10 in his row was Aymane's number in the wrong player's cell. **If you are ever tempted to normalise the slashes away as a data-quality problem, this is the entry that says don't.**
+
+**`sort_order` was recomputed, not hand-patched.** Aymane moving 29 → 10 shifts sixteen other players by one, so the migration re-derives the whole varsity order from the **leading number** of `jersey_number` (`8/18` sorts as 8, `84/80` as 84), dense from 1 — 159's convention, applied by computation. 17 rows changed: Aymane plus exactly those sixteen.
+
+⚠️ **THE PRINT-VIEW PDF IS GENERATED FROM THE COACHES' WORKBOOK, SO A ROSTER FIX IS TWO ARTEFACTS, NOT ONE.** `roster_pdf/source/Varsity McNeil Roster 2026.xlsx` (gitignored, lives only on Jeremy's disk) is the input to `scripts/make-varsity-roster-pdf.py`. Editing the DB alone leaves the wall-poster wrong. The workbook was corrected, the PDF regenerated, and it went to a **new filename `varsity-2026-r3.pdf`** per 158's rule — `minimumCacheTTL` is 31 days and replacing an object at a live path has served stale bytes before. r2 is left in the bucket, unreferenced. **The workbook's two-block layout is preserved**; Aymane crossing from the right block to the left rebalanced it 22/23 → 23/22, which is expected and is not a reason to reflow it into one column (159 and 166 both say so).
+
+⚠️ **Supabase Storage now uses the new-style API keys** (`sb_secret_…` / `sb_publishable_…`), not JWTs. A plain `Authorization: Bearer` upload fails with `{"statusCode":"403","message":"Invalid Compact JWS"}`, which reads like a permissions problem and is not. **Send the key in the `apikey` header** (alongside `Authorization`) and it works.
+
+Verified on prod: `/roster/varsity` reads `9 Ford Askins` and `10 Aymane El Anssari`, no `9/10` anywhere on the page, Print View points at r3, and the served PDF is byte-identical to the local one and reads the same. DB-only, no deploy — roster pages render on demand.
+
 **2026-08-28 — Week 4 results (migration 170). Last migration applied: 170.** Thu 27 Aug: **JV lost 6-34** to Austin Bowie; the **freshman game was cancelled for lightning**. Verified live on `/schedule/games/jv` ("L 6-34") and `/schedule/games/freshman/green` ("Cancelled").
 
 ⚠️ **SCORE ORDER IS OURS-FIRST, ALWAYS.** Jeremy reported it as "lost 34-6", the conventional winner-first phrasing, but the columns are explicitly `our_score` / `their_score`, so it is stored 6 / 34 and `ResultCell` renders **L 6-34**. It looks inverted next to how anyone says it out loud. Do not "fix" it — flipping one row would make it disagree with the whole season.
