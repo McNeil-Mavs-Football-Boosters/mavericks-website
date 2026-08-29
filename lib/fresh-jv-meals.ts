@@ -63,10 +63,12 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
 /**
  * ✅ CONFIRMED 2026-08-26 (Coach Hale, relayed by Jeremy). No longer null.
  *
- * 🚨🚨 THIS IS **WEEK ONE's** TIME AND MUST BECOME 2:30 p.m. / 3:00 p.m. AFTER
- * THU 27 AUG 2026. Week one is 2:00; every other night this season is 2:30.
- * A single value cannot say both, and Jeremy chose to point it at the imminent
- * night rather than special-case one slot.
+ * ✅ FLIPPED TO THE SEASON TIMES 2026-08-29, week one (Thu 27 Aug) being past.
+ * Week one was 2:00 p.m. / 2:30 p.m.; **every remaining night this season is
+ * 2:30 p.m. / 3:00 p.m.** and these constants are now that. Do not put 2:00
+ * back - it belongs to one night that has already happened. A single value
+ * cannot say both, and Jeremy chose to point it at the imminent night rather
+ * than special-case one slot.
  *
  * ⚠️ MIRRORED IN `MavericksWebsite/scripts/fresh-jv-meals-automation.gs` as
  * PICKUP_TIME / DROPOFF_TIME. The site and the confirmation emails must never
@@ -74,18 +76,18 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
  * 12:30/1:00 split. **Change both, and redeploy**: this is a code constant, so
  * unlike a DB edit it does not go live on its own.
  *
- * The Apps Script side nags Jeremy every morning from 28 Aug until the flip is
- * done, but that nag cannot see this file. Do not treat the email as proof the
- * website was updated too.
+ * The Apps Script side nagged Jeremy every morning from 28 Aug until the flip
+ * was done, but that nag cannot see this file, so the email stopping was never
+ * proof the website was updated too. Both sides were changed together.
  *
  * The live Google Form's description and help text must ALSO be hand-edited --
  * the generator only runs at form creation.
  */
-export const FRESH_JV_MEAL_PICKUP_TIME: string | null = "2:00 p.m.";
+export const FRESH_JV_MEAL_PICKUP_TIME: string | null = "2:30 p.m.";
 
 /** Drop-off is immediately after pickup; stated so a volunteer can plan the
- *  end of the window, not just the start. Moves to 3:00 p.m. with the flip. */
-export const FRESH_JV_MEAL_DROPOFF_TIME: string | null = "2:30 p.m.";
+ *  end of the window, not just the start. Moved to 3:00 p.m. with the flip. */
+export const FRESH_JV_MEAL_DROPOFF_TIME: string | null = "3:00 p.m.";
 
 /**
  * ⚠️ CONFIRMED 2026-08-26, AND IT IS NOT THE HORSESHOE. This used to hedge on
