@@ -21,6 +21,16 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-28)
 
+**2026-08-31 (later) — Labor Day practice times (migration 175). Last migration applied: 175.** Coach, relayed by Jeremy: varsity/JV begin **7:00 a.m.**, be there no later than **6:30**; freshmen begin **9:00 a.m.**, no later than **8:30**. 172 had deliberately left "times will be posted" in two places per body so there would be somewhere to put these; both are filled.
+
+⚠️ **Transcribed in Coach's terms, not translated into the body's usual vocabulary.** Every other day reads "Arrival" then "On the field". Coach wrote "practice will begin" and "players need to be here no later than", which are not obviously the same pair (on-the-field-at-7:00 and practice-begins-at-7:00 could differ by a warmup), so the page says "Arrival, no later than 6:30" / "Practice begins 7:00". Do not normalise it to match the other days unless a later doc gives Labor Day in the standard form.
+
+⚠️ **NO END TIME, BECAUSE COACH DID NOT GIVE ONE**, and the page says so explicitly. Every other day carries a "Practice ends" line, so the absence will look like an omission. Do not infer one from a normal Monday (8:10 / 9:45): Labor Day is not a school day, so there is no P2/P6 block to end before and the whole morning is shaped differently.
+
+Sept 7 falls outside Week 5 (Aug 31 to Sep 6), so it lives in the "After Week 5" block and gets replaced when the Week 6 body lands. Targeted `replace()` rather than 172's whole-body rewrite, since two strings change per body; guarded before and asserted after, including a check that the freshman body did NOT pick up the varsity pair.
+
+**The newsletter was NOT touched** — Jeremy had already added the Labor Day times to the draft himself.
+
 **2026-08-31 — Week 5 schedule, the varsity opener result, and this week's newsletter (migrations 172, 173, 174). Last migration applied: 174.** Coach's MAV FOOTBALL WEEKLY SCHEDULE for Aug 31 to Sep 6, sent by Jeremy the same morning.
 
 **172 — practice bodies.** Only real change for varsity/JV is Wednesday fifteen minutes earlier (arrival 6:30 → 6:15, field 6:45 → 6:30). Freshmen unchanged all week. Games stay OUT of the practice body per the standing convention; the "After Week 5" block points at the Games schedule instead. 🚨 **Coach put "REMINDER: LABOR DAY PRACTICE MONDAY, SEPT. 7" on a week that ends Sept 6** — the one line concerning a day the schedule does not cover, and the one a family is most likely to get wrong, because the default assumption for a school holiday is that there is nothing. Stated twice in each body on purpose and asserted by the migration's own guard. **It must survive into the Week 6 body.**
