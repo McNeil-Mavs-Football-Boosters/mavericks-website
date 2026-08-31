@@ -21,6 +21,20 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-08-28)
 
+**2026-08-31 — Senior Night was wrong on the downloadable schedule PDF for twelve days (migration 176). Last migration applied: 176.** The legend reads "^Senior Night" and the caret sat on the **Sep. 4 Lake Belton** row, where the school put it in its April export. Jeremy moved Senior Night to **Oct. 9 vs Stony Point** on 2026-08-19 in migration 151. **Found by Jeremy, not by us.**
+
+🚨 **"DB-ONLY, NO DEPLOY" MEANS NO CODE DEPLOY. IT HAS NEVER MEANT NO OTHER WORK.** 151 carried that label and it was true for every surface that READS the database. This PDF is a static artefact generated once and uploaded, so the site said Oct 9 while the schedule parents download and print said Sep 4. **This is the third instance of the same class of bug in two weeks:** the freshman/JV Google Form kept the horseshoe drop-off and "still confirming the time" after all four code surfaces were fixed (8/29); the varsity roster PDF kept Askins at 9/10 until the workbook behind it was edited (171); and now this. Before writing that phrase again, enumerate the artefacts that carry the same fact and are reachable from no migration: **`schedule_pdf/`, `roster_pdf/`, the Google Forms, and the Apps Scripts.**
+
+**Fix:** `scripts/patch-schedule-pdf.py` gained two edits (Sep. 4 drops the caret, Oct. 9 gains it) and was re-run **from the school's original**, so the output is the April export plus eighteen audited cells rather than an edit of an edit. Uploaded to `documents/schedules/2026-27-r2.pdf` (new filename per 158's cache rule); 176 repoints **all four** roster rows, including the hidden freshman Blue one, since the Print View link reads from each level's own row.
+
+⚠️ **The opponent column is CENTRED on 270.58** like the others; the varying left edges are just different string widths. Adding or removing the caret re-centres the cell, so both edits go through the same centred-replacement path as everything else.
+
+⚠️ **Two of the script's own guards fired and both were right.** Its post-save read-back rejected a replacement containing U+00A0 (redrawn text always extracts as U+0020, so the file can never match); and its whole-document bag-diff rejected the run because `want_gone`/`want_new` were built from raw EDITS while `_bag` normalises nbsp on both documents. The expected side is now normalised too. **Do not "fix" either guard by loosening it.**
+
+⚠️ **Senior Night lives in `games.notes` on the varsity row, NOT in `events` and NOT in an `occasion` column** (there isn't one). `notes` carries exactly three values in 2026-27: `Senior Night`, `Homecoming`, `Scrimmage`. A first draft of 176's guard looked in `events`, found nothing and failed the migration, which is the correct behaviour for a guard that cannot locate the fact it guards. 176 now asserts Senior Night is Oct 9, Homecoming is Oct 23 and that exactly two occasion rows exist. Homecoming's `**` marker was verified correct and left alone.
+
+**Useful side finding:** the eight still-`scheduled` scrimmages are all `notes = 'Scrimmage'`, so the open question about what a played scrimmage should read has a clean selector when someone decides it.
+
 **2026-08-31 (later) — Labor Day practice times (migration 175). Last migration applied: 175.** Coach, relayed by Jeremy: varsity/JV begin **7:00 a.m.**, be there no later than **6:30**; freshmen begin **9:00 a.m.**, no later than **8:30**. 172 had deliberately left "times will be posted" in two places per body so there would be somewhere to put these; both are filled.
 
 ⚠️ **Transcribed in Coach's terms, not translated into the body's usual vocabulary.** Every other day reads "Arrival" then "On the field". Coach wrote "practice will begin" and "players need to be here no later than", which are not obviously the same pair (on-the-field-at-7:00 and practice-begins-at-7:00 could differ by a warmup), so the page says "Arrival, no later than 6:30" / "Practice begins 7:00". Do not normalise it to match the other days unless a later doc gives Labor Day in the standard form.
