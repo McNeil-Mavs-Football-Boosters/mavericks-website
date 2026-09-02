@@ -71,8 +71,14 @@
  * bakes it into the form description) and `scripts/team-dinners-automation.gs`
  * (which puts it in every confirmation and reminder). check-team-dinner-
  * options.py compares all three.
+ *
+ * ⚠️ 55, NOT 50, SINCE 2026-09-01. Jeremy: "there are more coaches than I
+ * accounted for. best to be safe." The 45 players are firm; the staff number was
+ * the guess and it was low. Deliberately rounded UP: a host who cooks for 55 and
+ * feeds 50 has leftovers, a host who cooks for 50 and feeds 55 has a problem in
+ * front of the whole team. Do not trim it back toward the exact count.
  */
-export const TEAM_DINNER_HEADCOUNT = 50;
+export const TEAM_DINNER_HEADCOUNT = 55;
 export const TEAM_DINNER_BREAKDOWN = "45 players plus coaches and staff";
 
 /**
