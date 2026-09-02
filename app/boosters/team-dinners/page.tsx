@@ -11,9 +11,11 @@ import {
   TEAM_DINNER_BREAKDOWN,
   TEAM_DINNER_DEFAULT_TIME,
   TEAM_DINNER_HEADCOUNT,
+  TEAM_DINNER_HOST_PROVIDES,
   TEAM_DINNER_PLACE,
   TEAM_DINNER_ROOM_NOTE,
   TEAM_DINNER_SLOTS,
+  TEAM_DINNER_TEAM_UP_EMAIL,
   teamDinnerMapsUrl,
 } from "@/lib/team-dinners";
 import { CHICAGO_TZ } from "@/lib/events-format";
@@ -28,7 +30,7 @@ export const revalidate = 60;
 export const metadata = {
   title: "Varsity Team Dinners | McNeil Mavericks Football Booster Club",
   description:
-    "Sign up to provide and clean up after a varsity team dinner at McNeil High School the night before a game.",
+    "Sign up to host a varsity team dinner at McNeil High School the night before a game. The host family brings everything: food, drinks, plates, utensils, and cleanup.",
 };
 
 const CONTACT_EMAIL = "boosters@mcneilmavericks.org";
@@ -88,11 +90,36 @@ export default async function TeamDinnersPage() {
             ride somewhere else and back.
           </p>
           <p>
-            One family takes each night. You bring the meal, set it out, and
-            clean up after. Plan on{" "}
+            One family takes each night, for{" "}
             <strong>about {TEAM_DINNER_HEADCOUNT} people</strong> —{" "}
             {TEAM_DINNER_BREAKDOWN}.
           </p>
+          {/* 🚨 Jeremy 2026-09-01: THE HOST BRINGS EVERYTHING, NOT JUST THE
+              FOOD. The old copy said "you bring the meal, set it out, and clean
+              up after", which reads as food only — and someone turns up with six
+              foil trays and nothing to eat off. Spelled out as a list, above the
+              night list, so it is unmissable BEFORE anyone claims a night. Do
+              not collapse it back into a sentence. */}
+          <div className="rounded-lg border-2 border-mavs-navy/25 bg-white p-5">
+            <p className="font-bold text-mavs-navy">
+              The host family provides everything for the meal, not just the
+              food:
+            </p>
+            <ul className="mt-3 space-y-1.5 text-base">
+              {TEAM_DINNER_HOST_PROVIDES.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span aria-hidden="true" className="text-mavs-green font-bold">
+                    +
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-base text-gray-700">
+              Nothing is stocked at the school, so plan to bring the whole setup
+              with you.
+            </p>
+          </div>
           {/* ⚠️ Say this before they click, not in the confirmation email. The
               game-day meal program IS parent-funded through the club and these
               two get conflated constantly; someone who assumes reimbursement
@@ -201,7 +228,8 @@ export default async function TeamDinnersPage() {
                         </p>
                         <p className="text-sm text-gray-700 mt-1 flex items-start gap-1.5">
                           <Utensils size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
-                          Food and cleanup for about {TEAM_DINNER_HEADCOUNT}.
+                          Food, drinks, plates, utensils and cleanup for about{" "}
+                          {TEAM_DINNER_HEADCOUNT}.
                         </p>
                       </div>
 
@@ -266,19 +294,35 @@ export default async function TeamDinnersPage() {
             shift a week. The time on your night above is the one we have, and
             we will email you if it changes.
           </p>
-          {/* Jeremy 2026-08-26. This deliberately STOPS promising that the board
-              will match families to each other -- the old copy said "we will
-              connect you with anyone else who offers", which created work nobody
-              owned. Parents self-organise and one person signs up as the lead.
-              The board's role shrinks to handing over a list of names on request.
-              Do not restore the matchmaking promise. */}
+          {/* 🔁 REVERSAL, AND IT IS DELIBERATE. Jeremy 2026-08-26 had this copy
+              STOP promising matchmaking -- the older line ("we will connect you
+              with anyone else who offers") created work nobody owned. Jeremy
+              2026-09-01 reinstates it WITH AN OWNER: teammeals@ is a real
+              address that does the connecting, so the promise now lands
+              somewhere. The self-organise guidance stays and is still the
+              primary path; the address is the fallback for a family with nobody
+              to organise with.
+              ⚠️ It is teammeals@, NOT teamdinners@ -- the obvious guess from the
+              page title bounces. */}
           <p>
             <strong>Want to team up?</strong> That is the easiest way to do it,
-            and most nights get covered by a group. Organize it yourselves with
-            other parents, agree who is bringing what, then have one person sign
-            up for the night as the lead. That person is our contact and gets the
-            confirmation and reminders. If you need names to get started, email
-            the board and we will send you a list.
+            and most nights get covered by a group — splitting the food, the
+            drinks and the supplies across a few families is how it usually
+            works. Organize it yourselves with other parents, agree who is
+            bringing what, then have one person sign up for the night as the
+            lead. That person is our contact and gets the confirmation and
+            reminders.
+          </p>
+          <p>
+            <strong>Need someone to team up with?</strong> If you want to share a
+            night and do not have anyone lined up — for any week — email{" "}
+            <a
+              href={`mailto:${TEAM_DINNER_TEAM_UP_EMAIL}?subject=Varsity%20team%20dinner%20-%20looking%20to%20team%20up`}
+              className="font-bold text-mavs-navy underline underline-offset-2"
+            >
+              {TEAM_DINNER_TEAM_UP_EMAIL}
+            </a>{" "}
+            and we will help connect you with others.
           </p>
           <p>
             <strong>Something come up?</strong> Email{" "}

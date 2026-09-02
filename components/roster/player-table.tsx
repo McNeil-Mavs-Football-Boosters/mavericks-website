@@ -1,3 +1,25 @@
+/**
+ * ⚠️ TWO DIFFERENT COLUMN RULES LIVE HERE AND THEY POINT OPPOSITE WAYS. Do not
+ * collapse them into one "hide what is empty" rule.
+ *
+ *  - POSITION and GRADE render even when every player is missing them, and show
+ *    an em-dash. Jeremy, 2026-08-26, asked and declined: "let's leave
+ *    them...maybe it will make the coaches want to step up their game on
+ *    getting me data!" The dashes are the only public evidence that the staff
+ *    stopped supplying positions. Tidying them away hides the ask. KEEP THEM.
+ *
+ *  - HEIGHT and WEIGHT are NOT RENDERED AT ALL, on any roster surface, and this
+ *    has nothing to do with whether they are populated. Coach, relayed by
+ *    Jeremy 2026-09-01: "this coach doesn't like to announce that info to other
+ *    teams." It is a competitive call, not a data-quality one. The `height` and
+ *    `weight` columns are still in the database and still on the `Player` type,
+ *    deliberately — this is display-only so Coach can reverse it without any
+ *    data loss.
+ *
+ * So: an empty Position is a prompt to the coaches; a missing Height is the
+ * point. If a future task says "restore the suppressed roster columns", check
+ * which of these two it actually means.
+ */
 import type { Player } from "@/lib/types";
 
 function jerseyKey(value: string | null): {
@@ -25,10 +47,6 @@ function sortPlayers(players: Player[]): Player[] {
 
 function dash(value: string | null | undefined): string {
   return value && value.trim() !== "" ? value : "—";
-}
-
-function weightCell(weight: number | null): string {
-  return weight == null ? "—" : `${weight} lbs`;
 }
 
 function mobileSep(parts: Array<string | null | undefined>): string {
@@ -67,12 +85,6 @@ export function PlayerTable({
                 <th scope="col" className="py-2 pr-4 font-medium">
                   Grade
                 </th>
-                <th scope="col" className="py-2 pr-4 font-medium">
-                  Height
-                </th>
-                <th scope="col" className="py-2 pr-4 font-medium">
-                  Weight
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -90,12 +102,6 @@ export function PlayerTable({
                   <td className="py-3 pr-4 align-top whitespace-nowrap">
                     {dash(player.grade)}
                   </td>
-                  <td className="py-3 pr-4 align-top whitespace-nowrap">
-                    {dash(player.height)}
-                  </td>
-                  <td className="py-3 pr-4 align-top whitespace-nowrap">
-                    {weightCell(player.weight)}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -105,10 +111,10 @@ export function PlayerTable({
 
       <div className="space-y-3 md:hidden print:hidden">
         {sorted.map((player) => {
+          // Height and weight are suppressed here too — the card variant is a
+          // separate render, so hiding the desktop columns alone would have
+          // left them published on every phone. See the note at the top.
           const line2 = mobileSep([player.position, player.grade]);
-          const weightText =
-            player.weight == null ? null : `${player.weight} lbs`;
-          const line3 = mobileSep([player.height, weightText]);
           return (
             <div
               key={player.id}
@@ -125,11 +131,6 @@ export function PlayerTable({
               {line2 ? (
                 <div className="mt-1 text-sm text-muted-foreground">
                   {line2}
-                </div>
-              ) : null}
-              {line3 ? (
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {line3}
                 </div>
               ) : null}
             </div>

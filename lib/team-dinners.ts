@@ -5,7 +5,9 @@
  * moved these ON CAMPUS for 2026 (booster meeting 2026-08-17): the boys are
  * already at school, they stay to support the freshman/JV game, and some do not
  * have rides. Historically senior parents hosted at their homes on a rotation.
- * A volunteer signs up to PROVIDE THE FOOD, serve it, and clean up after.
+ * A volunteer signs up to PROVIDE THE WHOLE MEAL SETUP -- food, drinks, plates,
+ * bowls and plasticware -- serve it, and clean up after. See
+ * TEAM_DINNER_HOST_PROVIDES below for why the list is spelled out.
  *
  * ⚠️ THIS IS NOT A BOOSTER-CLUB-FUNDED MEAL. Two different things get conflated
  * constantly and the page says so out loud:
@@ -90,6 +92,50 @@ export const TEAM_DINNER_BREAKDOWN = "45 players plus coaches and staff";
  * confirmation and reminder emails say. The drift checker compares them.
  */
 export const TEAM_DINNER_DEFAULT_TIME = "6:00 p.m.";
+
+/**
+ * What the host is actually on the hook for, spelled out item by item.
+ *
+ * 🚨 THE HOST PROVIDES EVERYTHING, NOT JUST THE FOOD. Jeremy, 2026-09-01. The
+ * page used to say the family "provides the meal, serves it, and cleans up",
+ * which a reasonable person reads as FOOD ONLY -- and then arrives with six
+ * foil trays and nothing to eat off. Plates, bowls, plasticware and drinks for
+ * fifty are a real second shop and a real second cost, and this is a family
+ * paying out of pocket (see the funding warning at the top of this file). It
+ * belongs BEFORE they commit, next to the cost disclosure, not in a
+ * confirmation email they read afterwards.
+ *
+ * Rendered as a list rather than folded into prose on purpose: a comma-spliced
+ * sentence is exactly what someone skims past.
+ *
+ * ⚠️ The same wording is owed to two surfaces this file cannot reach -- the
+ * Apps Script confirmation/reminder emails (`dinnerBlock()` in
+ * `MavericksWebsite/scripts/team-dinners-automation.gs`) and the LIVE Google
+ * Form's description. The generator only runs at form creation, so the live
+ * form has to be hand-edited. Neither is done by editing this constant.
+ */
+export const TEAM_DINNER_HOST_PROVIDES = [
+  "The meal itself, hot and ready to serve",
+  "Drinks",
+  "Plates and bowls",
+  "Plasticware, napkins and serving utensils",
+  "Setting it out, and cleaning up after",
+] as const;
+
+/**
+ * Where someone who wants to split a night gets matched with other families.
+ *
+ * ⚠️ `teammeals@`, NOT `teamdinners@`. Jeremy, 2026-09-01. The obvious guess
+ * from the page title is wrong and would bounce, taking the family with it.
+ *
+ * 🔁 THIS REVERSES THE 2026-08-26 DECISION TO STOP OFFERING MATCHMAKING. That
+ * call was made because "we will connect you with anyone else who offers"
+ * promised a service nobody owned. This is different: there is now a real
+ * address that does the matching, so the promise has somewhere to land. The
+ * self-organise guidance stays -- one person still signs up as the lead -- and
+ * this is the fallback for a family with nobody to organise with.
+ */
+export const TEAM_DINNER_TEAM_UP_EMAIL = "teammeals@mcneilmavericks.org";
 
 export const TEAM_DINNER_PLACE = "McNeil High School";
 export const TEAM_DINNER_ADDRESS = "5720 McNeil Drive, Austin, TX 78729";
