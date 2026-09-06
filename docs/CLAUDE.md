@@ -21,6 +21,33 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-09-06)
 
+**2026-09-06 (later) — the hero carousel gets four new photos and a per-image crop anchor (migrations 187, 188, 189 + a deploy). Last migration applied: 189.**
+
+🚨 **THE HERO'S ASPECT RATIO IS THE VIEWPORT'S, NEVER THE IMAGE'S, WHICH IS WHY FRAMING CANNOT BE A FILE PROBLEM.** The section is `min-h-[55vh] md:min-h-[77vh]` at full width. On a ~1728×1000 desktop that box is about **2.24:1** against a 3:2 photo, so `object-cover` throws away **a third of the height**; on a phone the box is *taller* than 3:2 and it crops the sides instead, showing the full height. "How much is cut off the top" is a different number on every device. **Do not try to fix framing by re-cropping the source** — `prep-hero-image.py` deliberately refuses to own this.
+
+**187 — `hero_background_images.object_position`**, CHECK-constrained to `'top' | 'center' | 'bottom'`, defaulted to `'top'` and backfilled to `'top'` on all six rows. ⚠️ **The default is not neutral, it preserves the status quo**: `HeroCarousel` had hardcoded `object-cover object-top` on every background since the carousel was built, so 187 changes nothing on screen and is safe to apply before the code ships. **Apply the column, then deploy, then the content** — 056/057/058's ordering rule; `loadHeroCarouselData` does `select("*")`, so code deployed against a DB without the column hands `undefined` to the class lookup.
+
+🚨 **THE CLASS LOOKUP IS A LITERAL MAP AND MUST STAY ONE.** Tailwind v4 emits only classes it can SEE as strings in the source, so `` `object-${bg.object_position}` `` compiles to **no CSS at all** and the photo silently falls back to the browser default with no error anywhere — on the homepage. `HERO_OBJECT_POSITION` in `components/home/HeroCarousel.tsx` spells all three out. Verified after building that `.object-center{object-position:center}` and `.object-bottom{object-position:bottom}` are really in the production bundle; that check is the point of the whole approach and should be repeated if a fourth anchor is ever added (component AND the DB constraint).
+
+**188 — four of six backgrounds replaced.** Mascot and marching band stay.
+
+| file replaced | slide | new object | anchor after 189 |
+|---|---|---|---|
+| `hero-03.jpg` | 3 | `hero-dance.jpg` | center |
+| `hero-04.jpg` | 4 | `hero-cheer.jpg` | center |
+| `hero-05.jpg` | 5 | `hero-team2.jpg` | center |
+| `hero-06.jpg` | 1 | `hero-team.jpg` | center |
+
+⚠️ **"hero 6" WAS AMBIGUOUS AND WAS CONFIRMED, NOT ASSUMED.** The **file** `hero-06.jpg` is **slide 1**, and slide 6 is the file `hero-01.jpg` — the numbers have never lined up. Slides 3, 4 and 5 mean the same photo under either reading; only 6 differs. Jeremy meant the file. **If a future request says "hero N", ask which N before writing.**
+
+**189 — two anchors moved to center after Jeremy saw it live**: `hero-team2.jpg` `bottom → center` (*"bottom looks odd"*) and the mascot `hero-02.jpg` `top → center`. 🚫 **189 reverses 188's explicit "no top, all of the bottom" request and that is fine — do not restore `'bottom'` on the strength of 188's comment.** ⚠️ `hero-01.jpg` (marching band, slide 6) is **the last row still on `'top'`, and that value is inherited rather than chosen** — it is what the hardcoded class gave everything before 187. Worth a look sometime; not worth assuming it was a decision.
+
+🚫 **NEW FILENAMES, NEVER OVERWRITES — THIS IS THE SAME 31-DAY TRAP AS SPONSOR LOGOS AND THE ROSTER PDFs.** Storage serves `cache-control: no-cache`, so Next falls back to `minimumCacheTTL` (31 days, set deliberately in `next.config.ts` after a Vercel cache-write warning) and **a replaced object can serve the OLD photo for a month with no way to invalidate**. The four retired objects stay in the bucket, unreferenced. A future replacement for `hero-dance.jpg` is `hero-dance-r2.jpg`. ⚠️ Worth knowing `hero-01.jpg` was already replaced in place once, on 2026-08-08.
+
+**`scripts/prep-hero-image.py` (ops repo) is new and is the answer to "how did I shrink these last time?"** EXIF-rotate → sRGB → centre-crop to 3:2 → 1920×1280 → quality ladder down from 92 until the file fits the bucket's 650–950 KB band. Sources were 20–31 MB at up to 9504 px; output was 581–744 KB. ⚠️ **It strips ALL metadata, and that is not just hygiene — these are photographs of minors and camera EXIF routinely carries GPS coordinates.** It also converts colour profiles rather than dropping them: a stripped Display P3 file gets read as sRGB and renders visibly duller.
+
+## Earlier today (2026-09-06)
+
 **2026-09-06 — Week 6, the Lake Belton result, Aiden Ross joins varsity, and the Game Photos link moves to this season (migrations 181–186 + a new roster PDF). Last migration applied: 186.** Six migrations, no deploy — every surface touched reads the DB at request time.
 
 **181 — Week 6 practice bodies (Sep 7–13).** 🚨 **COACH'S GRAPHIC SUPERSEDED 175'S LABOR DAY TIMES AND THEY DID NOT MATCH.** 175 published Coach's relayed text — varsity/JV "no later than 6:30, begins 7:00", freshmen "no later than 8:30, begins 9:00". The Week 6 graphic gives it in the standard form: **varsity/JV 6:40 arrival / 7:00–7:20 meetings / 7:25 on the field / 10:20 ends**, **freshmen 9:00 / 9:25 / 11:20 ends**. 175's own closing note said a later doc in the usual form supersedes it, so it does. ⚠️ **The freshman arrival moved thirty minutes LATER (8:30 → 9:00) and varsity ten (6:30 → 6:40)** — the page said one thing for six days and now says another, the day before the practice. Nobody is stranded (families working from the old page arrive early, not late), but if it goes anywhere it is SportsYou, not a correction email.
