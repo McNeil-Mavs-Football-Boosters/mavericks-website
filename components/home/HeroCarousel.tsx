@@ -23,6 +23,26 @@ type ActivePool = "cta" | "sponsor";
 const BG_INTERVAL_MS = 6000;
 const FG_INTERVAL_MS = 4000;
 
+// Anchor for each background's `object-cover` crop, per row (migration 187).
+//
+// ⚠️ THESE MUST STAY WRITTEN OUT AS LITERAL STRINGS. Tailwind v4 emits only the
+// classes it can SEE in the source, so `object-${bg.object_position}` compiles
+// to nothing and the photo silently falls back to the browser default (50% 50%)
+// with no error anywhere. A lookup table is the fix, not a template string.
+//
+// Keys match the DB CHECK constraint on hero_background_images.object_position.
+// Adding a fourth anchor means adding it in BOTH places.
+const HERO_OBJECT_POSITION = {
+  top: "object-top",
+  center: "object-center",
+  bottom: "object-bottom",
+} as const;
+
+// Fallback matches the class that was hardcoded here before 187, so a row
+// written by something that does not know about the column renders as it always
+// did rather than jumping to centre.
+const HERO_OBJECT_POSITION_FALLBACK = "object-top";
+
 export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
   const { ctaTiles, sponsorTiles } = useMemo(() => {
     const cta: HeroForegroundTile[] = [];
@@ -146,7 +166,10 @@ export function HeroCarousel({ backgrounds, tiles }: HeroCarouselProps) {
                 fill
                 sizes="100vw"
                 priority={idx === 0}
-                className="object-cover object-top"
+                className={`object-cover ${
+                  HERO_OBJECT_POSITION[bg.object_position] ??
+                  HERO_OBJECT_POSITION_FALLBACK
+                }`}
               />
             </div>
           ))

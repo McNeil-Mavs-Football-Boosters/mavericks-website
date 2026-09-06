@@ -272,6 +272,12 @@ export interface HeroBackgroundImage {
   alt_text: string;
   sort_order: number;
   active: boolean;
+  // Where the photo anchors when the browser crops it (migration 187). The hero
+  // box takes its aspect ratio from the VIEWPORT, so how much gets cut differs
+  // on every device and this cannot be baked into the file. DB CHECK constrains
+  // it to these three; `HERO_OBJECT_POSITION` in HeroCarousel maps them to
+  // literal Tailwind classes.
+  object_position: "top" | "center" | "bottom";
 }
 
 export interface HeroForegroundTile {
