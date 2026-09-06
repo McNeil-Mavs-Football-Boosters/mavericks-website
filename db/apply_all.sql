@@ -11708,3 +11708,1998 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/171_varsity_jersey_askins_el_anssari.sql
+-- ===
+
+-- 171_varsity_jersey_askins_el_anssari.sql
+--
+-- Two varsity jersey corrections, from Jeremy watching the Aug 28 game:
+-- Aymane El Anssari wore 10 and Ford Askins wore 9.
+--
+--   Ford Askins        '9/10' -> '9'
+--   Aymane El Anssari  '29'   -> '10'
+--
+-- ── WHY '9/10' WAS WRONG, WHICH IS THE POINT OF THIS MIGRATION ──
+--
+-- The slash is NOT a "we aren't sure which number he wears". Jeremy established
+-- 2026-08-28 that it means a player has DIFFERENT HOME AND AWAY JERSEYS, and
+-- both numbers are really his. Ford is not one of those: he wears 9, and the
+-- 10 in his cell was Aymane's number sitting in the wrong player's row.
+--
+-- ⚠️ SO DO NOT "TIDY UP" THE FOUR REMAINING SLASHES. '5/2' (Zylen Hall),
+-- '8/18' (Kaden Kearney), '64/65' (Jace Hicks) and '84/80' (Amery Schoepflin)
+-- are correct data and must stay. A future reader who finds this migration
+-- collapsing one slashed number could easily assume slashes are a data-quality
+-- problem to be swept. They are a real thing about real jerseys.
+--
+-- ── SORT ORDER IS RECOMPUTED, NOT HAND-PATCHED ──
+--
+-- 159 established that varsity sort_order is jersey ascending, dense from 1.
+-- Aymane moving 29 -> 10 moves him sixteen places up the page, so sixteen other
+-- players shift by one. Rather than write seventeen literal UPDATEs, the order
+-- is recomputed from the data by the LEADING NUMBER of jersey_number, which is
+-- the same key the printed roster sorts on ('8/18' sorts as 8, '84/80' as 84).
+-- Ford at 9 keeps his slot; only Aymane actually moves.
+--
+-- ── THE PDF IS PART OF THIS CHANGE, NOT A FOLLOW-UP ──
+--
+-- The Print View PDF is generated from the coaches' workbook, so the workbook
+-- was corrected and the PDF regenerated. It goes to a NEW FILENAME,
+-- varsity-2026-r3.pdf, per the house rule 158 set: Storage serves no-cache but
+-- next.config.ts sets minimumCacheTTL to 31 days, and replacing an object at a
+-- live path has served stale bytes before. r2 is left in the bucket, unreferenced.
+--
+-- ⚠️ The PDF keeps the coaches' TWO-BLOCK layout -- it is the artefact people
+-- tape to a wall. Aymane crossing from the right block to the left rebalanced
+-- it from 22/23 to 23/22, which is expected. Do NOT regenerate it as one flat
+-- column to match the web page; 159 and 166 both say so.
+--
+-- Uploaded and verified public before this migration was written:
+-- documents/rosters/varsity-2026-r3.pdf, 120015 bytes, reads 9 Ford Askins and
+-- 10 Aymane El Anssari, and no longer contains '29' or '9/10'.
+--
+-- DB-ONLY, NO DEPLOY. /roster/varsity renders on demand.
+--
+-- Rollback: 171_rollback.sql
+
+begin;
+
+-- Guard: the roster must still look the way 157/158 left it, and both players
+-- must still hold the numbers we think we are changing. Stop rather than
+-- silently no-op if someone got here first.
+do $$
+declare n int;
+begin
+  select count(*) into n
+    from players p join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null and p.active;
+  if n <> 45 then
+    raise exception 'expected 45 active varsity players, found %', n;
+  end if;
+
+  select count(*) into n
+    from players p join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and ((p.first_name = 'Ford'   and p.last_name = 'Askins'     and p.jersey_number = '9/10')
+       or (p.first_name = 'Aymane' and p.last_name = 'El Anssari' and p.jersey_number = '29'));
+  if n <> 2 then
+    raise exception 'Askins 9/10 + El Anssari 29 not both present (found %)', n;
+  end if;
+end $$;
+
+update players p
+   set jersey_number = '9', updated_at = now()
+  from rosters r
+ where r.id = p.roster_id
+   and r.year = '2026-27' and r.team_level = 'varsity'
+   and p.first_name = 'Ford' and p.last_name = 'Askins';
+
+update players p
+   set jersey_number = '10', updated_at = now()
+  from rosters r
+ where r.id = p.roster_id
+   and r.year = '2026-27' and r.team_level = 'varsity'
+   and p.first_name = 'Aymane' and p.last_name = 'El Anssari';
+
+-- Recompute sort_order: jersey ascending by leading number, dense from 1.
+with ranked as (
+  select p.id,
+         row_number() over (
+           order by (regexp_match(p.jersey_number, '^\d+'))[1]::int, p.last_name
+         ) as rn
+    from players p join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity'
+     and r.team_designation is null and p.active
+)
+update players p
+   set sort_order = ranked.rn, updated_at = now()
+  from ranked
+ where p.id = ranked.id and p.sort_order is distinct from ranked.rn;
+
+update rosters
+   set pdf_storage_path = 'documents/rosters/varsity-2026-r3.pdf', updated_at = now()
+ where year = '2026-27' and team_level = 'varsity' and team_designation is null;
+
+-- Verify: the two numbers landed, the four real dual numbers survived, nobody
+-- shares a number, and sort_order is still a dense 1..45 in jersey order.
+do $$
+declare n int; bad int;
+begin
+  select count(*) into n from players p join rosters r on r.id = p.roster_id
+   where r.year='2026-27' and r.team_level='varsity'
+     and ((p.first_name='Ford' and p.jersey_number='9')
+       or (p.first_name='Aymane' and p.jersey_number='10'));
+  if n <> 2 then raise exception 'jersey update did not take (%)', n; end if;
+
+  select count(*) into n from players p join rosters r on r.id = p.roster_id
+   where r.year='2026-27' and r.team_level='varsity' and p.jersey_number like '%/%';
+  if n <> 4 then raise exception 'expected 4 dual numbers to remain, found %', n; end if;
+
+  select count(*) into bad from (
+    select (regexp_match(p.jersey_number,'^\d+'))[1]::int k
+      from players p join rosters r on r.id=p.roster_id
+     where r.year='2026-27' and r.team_level='varsity' and p.active
+     group by 1 having count(*) > 1) d;
+  if bad <> 0 then raise exception '% duplicate jersey numbers', bad; end if;
+
+  select count(*) into bad from (
+    select p.sort_order,
+           row_number() over (order by (regexp_match(p.jersey_number,'^\d+'))[1]::int) rn
+      from players p join rosters r on r.id=p.roster_id
+     where r.year='2026-27' and r.team_level='varsity'
+       and r.team_designation is null and p.active) d
+   where d.sort_order <> d.rn;
+  if bad <> 0 then raise exception 'sort_order not dense jersey order (% rows off)', bad; end if;
+
+  select count(*) into n from rosters
+   where year='2026-27' and team_level='varsity' and team_designation is null
+     and pdf_storage_path = 'documents/rosters/varsity-2026-r3.pdf';
+  if n <> 1 then raise exception 'pdf_storage_path not updated'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/172_week5_practice_schedule.sql
+-- ===
+
+-- 172_week5_practice_schedule.sql
+--
+-- Week 5 (Aug 31 - Sep 6) practice times, from Coach's published MAV FOOTBALL
+-- WEEKLY SCHEDULE for August 31-September 6 2026. Jeremy sent the doc 2026-08-31.
+-- Replaces the Week 4 (Aug 24-30) block in all three bodies.
+--
+-- Same shape as 153, and its conventions are kept without restating them:
+-- P2/P6 stays Coach's notation and is glossed once at the top; two sessions a
+-- day Mon-Wed for varsity/JV; freshmen get explicit "no scheduled activities"
+-- weekend rows rather than blanks so the page cannot read as missing data.
+--
+-- ── WHAT ACTUALLY CHANGED FROM WEEK 4, so a reader can trust the diff ──
+-- 1. WEDNESDAY MOVED FIFTEEN MINUTES EARLIER for varsity/JV: arrival 6:30 ->
+--    6:15, on the field 6:45 -> 6:30. Practice still ends 8:15. Mon/Tue are
+--    unchanged (5:45 / 6:00-6:20 meetings / 6:25, and 5:45 / 6:00).
+-- 2. Thursday gains a JV game and Friday a varsity game, but per the standing
+--    convention THE PRACTICE BODY DOES NOT LIST GAMES -- they live in `games`
+--    and are reached from the Games schedule. Week 4 did the same with the Bowie
+--    games. The "After Week 5" block points at them instead.
+-- 3. Freshmen are UNCHANGED from Week 4, every day. Transcribed in full anyway
+--    rather than left alone: the body is replaced whole (see below), and a
+--    reader comparing the page to Coach's doc should find every day present.
+--
+-- ── 🚨 LABOR DAY: THERE IS PRACTICE MONDAY SEPT 7 ──
+-- Coach put "REMINDER: LABOR DAY PRACTICE MONDAY, SEPT. 7" in the Monday cell of
+-- a week that ENDS Sept 6, so it is the one line on this doc that concerns a day
+-- the schedule does not cover. It is also the single most likely thing for a
+-- family to get wrong, because the default assumption for a school holiday is
+-- that there is nothing. It is therefore stated TWICE on purpose -- once up top
+-- where it cannot be missed and once in "After Week 5" -- and it must survive
+-- into the Week 6 body when that lands. Times for it are not published yet, and
+-- none are invented here.
+--
+-- Whole-body replacement, guarded on the body still being Week 4, so a re-run is
+-- a no-op rather than clobbering a later week. Same reasoning as 153.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/practice/* reads at request time.
+--
+-- Rollback: 172_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 4 — August 24–30%';
+  if n <> 3 then
+    raise exception 'expected 3 bodies still on Week 4, found % (already updated?)', n;
+  end if;
+end $$;
+
+-- Varsity and JV practice together and share one set of times.
+update practice_schedules
+set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. Varsity and JV practice together. **Be on time to class.**
+
+🚨 **Labor Day: there IS practice Monday, Sept 7.** Coach flagged it a week ahead. Times will be posted with next week's schedule.
+
+## Week 5 — August 31–September 6
+
+Times below are Coach's published MAV Football Weekly Schedule for August 31–September 6.
+
+**P2/P6** is the daily athletics period. McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next — same time slot either way.
+
+### Monday, Aug 31
+- **5:45 a.m.** — Arrival
+- **6:00–6:20 a.m.** — Meetings
+- **6:25 a.m.** — On the field
+- **8:10 a.m.** — Practice ends
+- Shower / breakfast — do not be late to class
+- **11:15 a.m.–12:10 p.m.** — P2/P6, on the field
+- Lunch after — all C lunch
+
+### Tuesday, Sep 1
+- **5:45 a.m.** — Arrival
+- **6:00 a.m.** — On the field
+- **8:10 a.m.** — Practice ends
+- Shower / breakfast — do not be late to class
+- **11:15 a.m.–12:10 p.m.** — P2/P6, on the field
+- Lunch after — all C lunch
+
+### Wednesday, Sep 2
+- **6:15 a.m.** — Arrival
+- **6:30 a.m.** — On the field
+- **8:15 a.m.** — Practice ends
+- Shower / get ready — do not be late to 1st period
+- **11:15 a.m.–12:10 p.m.** — P2/P6, on the field
+- Lunch after — all C lunch
+
+### Thursday, Sep 3
+**No early practice.**
+- **11:15 a.m.–12:15 p.m.** — P2/P6, on the field
+- **Team dinner** — time to be announced
+
+### Friday, Sep 4
+**No early practice.**
+- **11:15 a.m.–12:00 p.m.** — P2/P6 — game day walkthrough / JV film
+
+### Saturday, Sep 5
+**Athletes: no scheduled activities.**
+- **11:00 a.m.** — Coaches: scout input complete
+- **4:00 p.m.** — Varsity grades sent to athletes
+
+### Sunday, Sep 6
+**Coaches workday.** Athletes: no scheduled activities.
+- **11:30 a.m.** — Coordinators meeting
+- **12:00 p.m.** — Special teams meeting
+- Game preparation until completion
+
+## After Week 5
+
+**Labor Day, Monday Sept 7 — there is practice.** Times will be posted when Coach publishes the Week 6 schedule.
+
+See the Games schedule for Game 2 vs Lake Belton — freshmen and JV Thursday Sep 3, varsity Friday Sep 4.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level in ('varsity','jv');
+
+update practice_schedules
+set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. **Be on time to class.**
+
+🚨 **Labor Day: there IS practice Monday, Sept 7.** Coach flagged it a week ahead. Times will be posted with next week's schedule.
+
+## Week 5 — August 31–September 6
+
+Times below are Coach's published MAV Football Weekly Schedule for August 31–September 6.
+
+After practice and breakfast, get to your **2nd/6th period** — McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next.
+
+### Monday, Aug 31
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:45 a.m.** — Practice ends
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Tuesday, Sep 1
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:45 a.m.** — Practice ends
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Wednesday, Sep 2
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:45 a.m.** — Practice ends
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Thursday, Sep 3
+- **8:30 a.m.** — Arrival
+- **8:45 a.m.** — On the field
+- **9:30 a.m.** — Practice ends
+- **9:45–10:05 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Friday, Sep 4
+- **8:45 a.m.** — Arrival
+- **9:00–10:00 a.m.** — Game film
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Saturday, Sep 5
+**Athletes: no scheduled activities.**
+
+### Sunday, Sep 6
+**Athletes: no scheduled activities.** Coaches workday.
+
+## After Week 5
+
+**Labor Day, Monday Sept 7 — there is practice.** Times will be posted when Coach publishes the Week 6 schedule.
+
+See the Games schedule for Game 2 vs Lake Belton — freshmen and JV Thursday Sep 3, varsity Friday Sep 4.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 5 — August 31–September 6%';
+  if n <> 3 then raise exception 'expected 3 Week 5 bodies, found %', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%Week 4%';
+  if n <> 0 then raise exception '% bodies still mention Week 4', n; end if;
+
+  -- The Labor Day line is the one that must not be lost in a paste.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%Labor Day%Sept 7%';
+  if n <> 3 then raise exception 'Labor Day reminder missing from % bodies', 3 - n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/173_week5_game_times.sql
+-- ===
+
+-- 173_week5_game_times.sql
+--
+-- Week 5 kickoff times, from Coach's MAV FOOTBALL WEEKLY SCHEDULE for
+-- August 31-September 6 2026 (Jeremy sent the doc 2026-08-31). Coach lists:
+--
+--     JV GAME       - 7:00 p.m. - Lake Belton High School
+--     FRESHMAN GAME - 5:00 p.m. - McNeil High School
+--     VARSITY GAME  - 7:00 p.m. - Dragon Stadium
+--
+-- Split from 172 (the practice bodies) on purpose: same source doc, but a
+-- kickoff time is what a family plans a Thursday evening around, and it should
+-- roll back on its own. 153/155 split the same way for the same reason.
+--
+-- ── WHAT CHANGES, AND WHY IT IS NOT A GUESS ──
+--
+-- 1. JV Thu Sep 3: 6:00 p.m. -> 7:00 p.m. The 6:00 came from the school's
+--    season PDF, which lists 6:00 for every JV game. 155 already established
+--    that when Coach's weekly doc and the school's PDF disagree about THIS
+--    week, the weekly doc wins (it did varsity 7:00 -> 7:30 for Aug 28 on
+--    exactly that basis). Venue and home/away already match Coach's doc -- away
+--    at Lake Belton High School -- so only the time moves.
+--
+-- 2. Freshman Thu Sep 3, GREEN row: 6:30 p.m. -> 5:00 p.m. This is 155's Aug 27
+--    change repeated for the next date, and 155 said in as many words that it
+--    would need repeating: "Later weeks keep 6:30 until Coach publishes
+--    otherwise - this is a WEEK-SPECIFIC change, not a season rule." Coach has
+--    now published otherwise. The school's footnote is "Blue @ 5:00 / Green @
+--    6:30", which is a TWO-TEAM stagger; McNeil fields ONE freshman team
+--    (migration 148), so the surviving team plays the 5:00 slot and the 6:30 on
+--    the Green row is the stale half of a pair.
+--    The hidden Blue row is ALREADY 5:00 and is deliberately left alone, so both
+--    freshman rows read 5:00 for this date -- same end state 155 produced for
+--    Aug 27, and correct for a single team.
+--
+-- 3. Varsity Fri Sep 4 is 7:00 p.m. in both the DB and Coach's doc, and the
+--    venue already reads Round Rock High School Dragon Stadium. NOT TOUCHED.
+--    Stated here because its absence from this migration is a finding, not an
+--    oversight: last week needed a varsity time fix and this week does not.
+--
+-- ⚠️ THE REMAINING EIGHT GREEN ROWS (Sep 10 -> Oct 29) STILL SAY 6:30, and the
+-- remaining eight JV rows still say 6:00. Two consecutive weeks have now come in
+-- at freshman 5:00, so this looks like the season shape rather than a per-week
+-- accident -- but "looks like" is not Coach saying so, and 155's rule stands
+-- until it does. Flagged for Jeremy 2026-08-31; do not bulk-flip them on the
+-- strength of this migration alone. Whoever gets Coach's confirmation should do
+-- it in one migration and delete this paragraph.
+--
+-- Times are America/Chicago literals; Sep 2026 is CDT (UTC-5).
+--
+-- DB-ONLY, NO DEPLOY. /schedule/games/*, /events, the month view and the ICS
+-- feed all read at request time.
+--
+-- Rollback: 173_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv'
+     and game_date = timestamptz '2026-09-03 18:00 America/Chicago';
+  if n <> 1 then raise exception 'JV Sep 3 not at 6:00 p.m. as expected (found %)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
+     and game_date = timestamptz '2026-09-03 18:30 America/Chicago';
+  if n <> 1 then raise exception 'freshman Green Sep 3 not at 6:30 p.m. (found %)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-04 19:00 America/Chicago';
+  if n <> 1 then raise exception 'varsity Sep 4 no longer 7:00 p.m. (found %)', n; end if;
+end $$;
+
+update games
+   set game_date = timestamptz '2026-09-03 19:00 America/Chicago', updated_at = now()
+ where year = '2026-27' and team_level = 'jv'
+   and game_date = timestamptz '2026-09-03 18:00 America/Chicago';
+
+update games
+   set game_date = timestamptz '2026-09-03 17:00 America/Chicago', updated_at = now()
+ where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
+   and game_date = timestamptz '2026-09-03 18:30 America/Chicago';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv'
+     and game_date = timestamptz '2026-09-03 19:00 America/Chicago';
+  if n <> 1 then raise exception 'JV Sep 3 did not move to 7:00 p.m.'; end if;
+
+  -- Both freshman rows on this date must now read 5:00.
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'freshman'
+     and game_date = timestamptz '2026-09-03 17:00 America/Chicago';
+  if n <> 2 then raise exception 'expected 2 freshman rows at 5:00 p.m. Sep 3, found %', n; end if;
+
+  -- Nothing outside Sep 3 may have moved. ⚠️ The date must be taken in
+  -- America/Chicago: `game_date::date` resolves in the SESSION timezone, and
+  -- under UTC a 7:00 p.m. CDT kickoff falls on the NEXT calendar day, so this
+  -- guard counted the row it had just correctly updated. Cost one failed run.
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv'
+     and (game_date AT TIME ZONE 'America/Chicago')::date <> date '2026-09-03'
+     and (game_date AT TIME ZONE 'America/Chicago')::time = time '19:00';
+  if n <> 0 then raise exception '% other JV rows now read 7:00 p.m.', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/174_varsity_week4_result.sql
+-- ===
+
+-- 174_varsity_week4_result.sql
+--
+-- Varsity season opener, Fri 28 Aug 2026 at Austin Bowie (Burger Stadium):
+--
+--   Varsity at Austin Bowie ....... LOST 14-62 (final)
+--
+-- Jeremy 2026-08-31: "62 (bowie) to 14 (mcneil)... it was uglier than the score
+-- even."
+--
+-- ⚠️ SCORE ORDER: our_score FIRST, same as 170. Reported winner-first as 62-14;
+-- the columns here are explicitly ours/theirs, so our_score = 14,
+-- their_score = 62. `ResultCell` renders "L 14-62". Do not "fix" it to 62-14.
+--
+-- ── THIS FINALLY EXERCISES THE POST-FINAL BROADCAST RENDER ──
+-- followups.md has carried an open item since migration 165: nothing had ever
+-- been observed transitioning to `final` WITH broadcast rows attached. The only
+-- prior final was JV Aug 27, which has none (VYPE covers varsity only). This
+-- game has both rows, and they are designed to behave DIFFERENTLY:
+--
+--   YouTube  keep_after_final = true   -> persists, it becomes the replay
+--   VYPE     keep_after_final = false  -> disappears, the per-game vendor page rots
+--
+-- No data change is needed for either; the flip to `final` is what drives it.
+-- Verify on /schedule/games/varsity after applying, and close that followup.
+--
+-- This was three days late. The game was Friday and the site still said
+-- "scheduled" on Monday morning, which is the one state that actively misleads:
+-- a scheduled past game reads as a game still to come, and it kept the row in
+-- /events, the month view and the ICS feed. Nothing prompts a result to be
+-- entered -- 170 recorded Thursday's JV loss the next day and simply did not
+-- cover Friday's varsity game. **If a weekly newsletter is being written, that
+-- is the moment to check every past game has a result**, because the newsletter
+-- needs the score anyway.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/games/* reads at request time.
+--
+-- Rollback: 174_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-08-28 19:30 America/Chicago'
+     and opponent = 'Austin Bowie High School'
+     and result_status = 'scheduled';
+  if n <> 1 then
+    raise exception 'varsity Aug 28 vs Bowie not found as scheduled (found %)', n;
+  end if;
+end $$;
+
+update games
+   set result_status = 'final', our_score = 14, their_score = 62, updated_at = now()
+ where year = '2026-27' and team_level = 'varsity'
+   and game_date = timestamptz '2026-08-28 19:30 America/Chicago'
+   and opponent = 'Austin Bowie High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-08-28 19:30 America/Chicago'
+     and result_status = 'final' and our_score = 14 and their_score = 62;
+  if n <> 1 then raise exception 'varsity result did not take'; end if;
+
+  -- No REGULAR-SEASON game in the past may still read 'scheduled'. This is the
+  -- check whose absence let Friday sit wrong for three days.
+  --
+  -- ⚠️ SCOPED TO AUG 24 ONWARD ON PURPOSE, AND THE REASON IS A REAL FINDING.
+  -- An unscoped version of this guard failed on 8 rows: the Aug 13 Hendrickson
+  -- and Aug 20 Eastview SCRIMMAGES (varsity, JV and both freshman rows each),
+  -- every one still 'scheduled' weeks after being played. That is pre-existing
+  -- and NOT fixed here, because 'final' with no score is a claim about a
+  -- scrimmage nobody kept an official score for, and this migration is not the
+  -- place to invent a convention for them. They still sit in `CALENDAR_STATUSES`
+  -- and so still appear in /events, the month view and the ICS feed as though
+  -- they were upcoming. Flagged for Jeremy 2026-08-31; needs a decision on what
+  -- a played scrimmage should read, then one migration for all eight.
+  select count(*) into n from games
+   where year = '2026-27' and result_status = 'scheduled'
+     and game_date < now()
+     and game_date >= timestamptz '2026-08-24 00:00 America/Chicago';
+  if n <> 0 then
+    raise exception '% past regular-season game(s) still marked scheduled', n;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/175_labor_day_practice_times.sql
+-- ===
+
+-- 175_labor_day_practice_times.sql
+--
+-- Labor Day, Monday 9/7 now has real times. Coach, relayed by Jeremy 2026-08-31:
+--
+--   "Varsity/JV practice will begin at 7am. Players need to be here no later
+--    than 6:30am. Freshman practice will begin at 9am. Players need to be here
+--    no later than 8:30am."
+--
+-- 172 put the Labor Day reminder in all three bodies twice (top callout and the
+-- "After Week 5" block) with "times will be posted" in both places, precisely so
+-- there would be somewhere to put them. This fills both.
+--
+-- ── TRANSCRIBED IN COACH'S OWN TERMS, NOT TRANSLATED ──
+-- The weekly-schedule bodies use "Arrival" then "On the field". Coach did not
+-- write it that way here: he wrote "practice will begin" and "players need to be
+-- here no later than". Those are NOT obviously the same pair -- "on the field at
+-- 7:00" and "practice begins at 7:00" could differ by a warmup -- so the wording
+-- follows him: "Arrival, no later than 6:30" and "Practice begins 7:00".
+-- ⚠️ Do not normalise these into "On the field" to match the other days. If a
+-- later doc gives Labor Day in the usual two-line form, that supersedes this.
+--
+-- ⚠️ NO END TIME IS STATED BECAUSE COACH DID NOT GIVE ONE. Every other day in
+-- these bodies carries a "Practice ends" line, so its absence here will look
+-- like an omission. It is not. Do not infer one from a normal Monday (8:10
+-- varsity / 9:45 freshman) -- Labor Day is not a school day, so the whole shape
+-- of the morning is different and there is no P2/P6 block to end before.
+--
+-- SEPT 7 IS OUTSIDE WEEK 5 (Aug 31 - Sep 6), which is why this lives in the
+-- "After Week 5" block rather than as a day heading. When the Week 6 body lands
+-- it will cover Sept 7 properly and this block gets replaced by the real week.
+--
+-- Targeted replaces rather than 172's whole-body rewrite: two strings change in
+-- each body, and restating 100 lines to move two is its own risk. Guarded before
+-- and asserted after, so a partial application cannot pass silently.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/practice/* reads at request time.
+--
+-- Rollback: 175_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and body like '%## Week 5 — August 31–September 6%'
+     and body like '%Times will be posted%';
+  if n <> 3 then
+    raise exception 'expected 3 Week 5 bodies still awaiting Labor Day times, found %', n;
+  end if;
+end $$;
+
+-- Varsity + JV: 6:30 arrival, 7:00 start.
+update practice_schedules
+   set body = replace(
+         replace(body,
+           '🚨 **Labor Day: there IS practice Monday, Sept 7.** Coach flagged it a week ahead. Times will be posted with next week''s schedule.',
+           '🚨 **Labor Day: there IS practice Monday, Sept 7.** Be at the school no later than **6:30 a.m.**; practice begins at **7:00 a.m.**'),
+         '**Labor Day, Monday Sept 7 — there is practice.** Times will be posted when Coach publishes the Week 6 schedule.',
+         '**Labor Day, Monday Sept 7 — there is practice.**
+- **6:30 a.m.** — Arrival, no later than
+- **7:00 a.m.** — Practice begins
+
+Coach has not published an end time for Labor Day. Week 6 times will be posted when he publishes that schedule.'),
+       updated_at = now()
+ where year = '2026-27' and team_level in ('varsity','jv');
+
+-- Freshmen: 8:30 arrival, 9:00 start.
+update practice_schedules
+   set body = replace(
+         replace(body,
+           '🚨 **Labor Day: there IS practice Monday, Sept 7.** Coach flagged it a week ahead. Times will be posted with next week''s schedule.',
+           '🚨 **Labor Day: there IS practice Monday, Sept 7.** Be at the school no later than **8:30 a.m.**; practice begins at **9:00 a.m.**'),
+         '**Labor Day, Monday Sept 7 — there is practice.** Times will be posted when Coach publishes the Week 6 schedule.',
+         '**Labor Day, Monday Sept 7 — there is practice.**
+- **8:30 a.m.** — Arrival, no later than
+- **9:00 a.m.** — Practice begins
+
+Coach has not published an end time for Labor Day. Week 6 times will be posted when he publishes that schedule.'),
+       updated_at = now()
+ where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  -- Every "times will be posted" placeholder must be gone from all three bodies.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%Times will be posted%';
+  if n <> 0 then raise exception '% bodies still say "Times will be posted"', n; end if;
+
+  -- Varsity and JV carry the 6:30/7:00 pair in BOTH places.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level in ('varsity','jv')
+     and body like '%6:30 a.m.%7:00 a.m.%'
+     and body like '%no later than **6:30 a.m.**%';
+  if n <> 2 then raise exception 'varsity/jv Labor Day times not set on both rows (%)', n; end if;
+
+  -- Freshmen carry 8:30/9:00, and must NOT have picked up the varsity pair.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%no later than **8:30 a.m.**%'
+     and body like '%**9:00 a.m.** — Practice begins%';
+  if n <> 1 then raise exception 'freshman Labor Day times not set (%)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%no later than **6:30 a.m.**%';
+  if n <> 0 then raise exception 'freshman body picked up the varsity Labor Day times'; end if;
+
+  -- The Week 5 block itself must be untouched.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 5 — August 31–September 6%';
+  if n <> 3 then raise exception 'Week 5 block damaged (%)', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/176_schedule_pdf_senior_night.sql
+-- ===
+
+-- 176_schedule_pdf_senior_night.sql
+--
+-- Point the Print View at a schedule PDF that has Senior Night on the RIGHT DATE.
+--
+--   documents/schedules/2026-27.pdf  ->  documents/schedules/2026-27-r2.pdf
+--
+-- ── WHAT WAS WRONG, AND FOR HOW LONG ──
+-- The legend at the foot of the school's schedule reads "^Senior Night", and the
+-- caret sat on the **Sep. 4 Lake Belton** row, because that is where the school
+-- put Senior Night in its April 2026 export. Jeremy moved Senior Night to
+-- **Oct. 9 vs Stony Point** on 2026-08-19 in migration 151.
+--
+-- 151 was correct and it was labelled "DB-only, no deploy" -- which was true for
+-- every surface that READS the database. It was not true for this PDF, which is a
+-- static artefact generated once and uploaded. **So from 2026-08-19 to 2026-08-31
+-- the site said Oct 9 and the schedule parents actually download and print said
+-- Sep 4.** Found by Jeremy, not by us. Twelve days.
+--
+-- 🚨 THIS IS THE THIRD TIME THE SAME CLASS OF BUG HAS BITTEN IN TWO WEEKS:
+--   * the freshman/JV Google Form kept the horseshoe drop-off and "still
+--     confirming the time" after all four code surfaces were corrected (8/29),
+--   * the varsity roster PDF kept Askins at 9/10 until the workbook behind it was
+--     edited too (migration 171, 8/29),
+--   * and now the schedule PDF kept Senior Night on Sep 4 (this migration).
+-- **"DB-only, no deploy" means no CODE deploy. It never meant no other work.**
+-- Before writing that phrase again, ask which non-reading artefacts carry the same
+-- fact: the two PDFs in `MavericksWebsite/schedule_pdf/` and `roster_pdf/`, the
+-- Google Forms, and the Apps Scripts. None of them are reachable from a migration.
+--
+-- ── HOW THE PDF WAS FIXED ──
+-- `scripts/patch-schedule-pdf.py` gained two edits (Sep. 4 drops the caret, Oct. 9
+-- gains it) and was re-run from the school's original, so this file is the April
+-- export plus eighteen audited cells rather than an edit of an edit. The opponent
+-- column is CENTRED on 270.58 like the others, so both cells re-centre.
+-- The `**` Homecoming marker on Oct. 23 Round Rock was checked at the same time
+-- and is correct: 151 moved only Senior Night.
+--
+-- New filename per 158's rule -- Storage serves no-cache but next.config.ts sets
+-- minimumCacheTTL to 31 days, and replacing an object at a live path has served
+-- stale bytes before. The old object stays in the bucket, unreferenced.
+--
+-- ⚠️ ALL FOUR ROSTER ROWS CARRY schedule_pdf_storage_path (varsity, jv, and BOTH
+-- freshman rows including the hidden Blue one). The Print View link on every
+-- /schedule/games/* page reads it from that level's row, so updating three of four
+-- leaves one page serving the wrong PDF. Blue is invisible today but the row still
+-- exists; same reasoning as 155 and 170.
+--
+-- DB-ONLY, NO CODE DEPLOY. The PDF itself was uploaded before this ran.
+--
+-- Rollback: 176_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27.pdf';
+  if n <> 4 then
+    raise exception 'expected 4 roster rows on the old schedule PDF, found %', n;
+  end if;
+end $$;
+
+update rosters
+   set schedule_pdf_storage_path = 'documents/schedules/2026-27-r2.pdf', updated_at = now()
+ where year = '2026-27';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27-r2.pdf';
+  if n <> 4 then raise exception 'expected 4 rows on the new PDF, found %', n; end if;
+
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27.pdf';
+  if n <> 0 then raise exception '% rows still point at the old PDF', n; end if;
+
+  -- Senior Night must still be Oct 9 in the data this PDF now agrees with.
+  -- ⚠️ IT LIVES IN games.notes ON THE VARSITY ROW, not in `events`. A first draft
+  -- of this guard looked in `events` and failed the whole migration -- correctly,
+  -- since a guard that cannot find the fact it is guarding must not pass. There is
+  -- no `occasion` column; `notes` carries 'Senior Night', 'Homecoming' and
+  -- 'Scrimmage', and that is the whole vocabulary.
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity' and notes = 'Senior Night'
+     and (game_date at time zone 'America/Chicago')::date = date '2026-10-09';
+  if n <> 1 then
+    raise exception 'Senior Night is not the Oct 9 varsity note; do not ship a PDF that says it is';
+  end if;
+
+  -- And Homecoming must still be Oct 23, since the ** marker was left untouched.
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity' and notes = 'Homecoming'
+     and (game_date at time zone 'America/Chicago')::date = date '2026-10-23';
+  if n <> 1 then
+    raise exception 'Homecoming is not the Oct 23 varsity note, but the PDF still marks Oct 23';
+  end if;
+
+  -- Nothing else may claim either occasion, or the PDF's single marker is a lie.
+  select count(*) into n from games
+   where year = '2026-27' and notes in ('Senior Night', 'Homecoming');
+  if n <> 2 then
+    raise exception 'expected exactly 2 occasion rows in 2026-27, found %', n;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/177_varsity_home_opener_krac.sql
+-- ===
+
+-- 177_varsity_home_opener_krac.sql
+--
+-- The varsity home opener moves stadiums, three days out.
+--
+--   Fri Sep 4, varsity vs Lake Belton
+--     Round Rock High School Dragon Stadium  ->  Kelly Reeves Athletic Complex
+--     location 'Dragon Stadium'              ->  'KRAC'
+--
+-- Jeremy 2026-09-01. **The 7:00 p.m. kickoff does NOT change** -- he restated it,
+-- and the row already held 19:00, so this migration deliberately does not touch
+-- game_date. Confirmed before writing rather than assumed.
+--
+-- ── WHY 'KRAC' AND NOT THE FULL NAME ──
+-- Every other Kelly Reeves game in `games` writes `location = 'KRAC'` (checked:
+-- it is the only distinct value across all of them), and the school's PDF uses
+-- KRAC in its SITE column too. Matching the surrounding rows wins, the same call
+-- 155 made when it used 'Maverick Stadium' because that is what the PDF already
+-- said. The `venues` row carries the full name and the verified map pin.
+--
+-- The KRAC venue row already exists with coordinates, so this is a repoint, not a
+-- new venue: no risk of a second Kelly Reeves row with a guessed address.
+--
+-- ⚠️ THE PRINTED SCHEDULE SAYS DRAGON STADIUM AND IS PATCHED IN THE SAME SITTING
+-- (`documents/schedules/2026-27-r3.pdf`, migration 178). Yesterday's Senior Night
+-- fix is the whole reason that is stated here: a game-data change that stops at
+-- the database leaves the downloadable schedule lying, and that one went twelve
+-- days before Jeremy caught it. Do not split these two across sessions.
+--
+-- ⚠️ THE 8/31 NEWSLETTER NAMES DRAGON STADIUM AND ITS STREET ADDRESS, TWICE, in
+-- a paragraph whose whole point is "put the address in your phone now". If it has
+-- already gone out, that correction is a follow-up email, not a quiet edit.
+--
+-- DB-ONLY, NO CODE DEPLOY. /schedule/games/*, /events, the month view and the ICS
+-- feed all read at request time, so the new venue and pin go live on commit.
+--
+-- Rollback: 177_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.id = '929405f5-70be-449f-80a2-8abd9e586ee4'
+     and g.year = '2026-27' and g.team_level = 'varsity'
+     and g.opponent = 'Lake Belton High School'
+     and g.game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and g.location = 'Dragon Stadium'
+     and v.name = 'Round Rock High School Dragon Stadium';
+  if n <> 1 then
+    raise exception 'Sep 4 varsity is not the Dragon Stadium 7:00 row this expects (found %)', n;
+  end if;
+
+  if not exists (select 1 from venues
+                  where name = 'Kelly Reeves Athletic Complex' and latitude is not null) then
+    raise exception 'Kelly Reeves venue row missing or has no pin; do not create one by guess';
+  end if;
+end $$;
+
+update games
+   set location = 'KRAC',
+       venue_id = (select id from venues where name = 'Kelly Reeves Athletic Complex'),
+       updated_at = now()
+ where id = '929405f5-70be-449f-80a2-8abd9e586ee4';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.id = '929405f5-70be-449f-80a2-8abd9e586ee4'
+     and g.location = 'KRAC' and v.name = 'Kelly Reeves Athletic Complex'
+     and g.game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and g.home_or_away = 'home';
+  if n <> 1 then raise exception 'Sep 4 varsity did not move to KRAC at 7:00 home'; end if;
+
+  -- Nothing else may have moved, and no other game may still sit at Dragon.
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and v.name = 'Round Rock High School Dragon Stadium';
+  if n <> 1 then
+    raise exception 'expected exactly 1 remaining Dragon Stadium game (the Oct 22 JV away), found %', n;
+  end if;
+
+  -- location and venue must not disagree anywhere in the season.
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and v.name = 'Kelly Reeves Athletic Complex' and g.location <> 'KRAC';
+  if n <> 0 then raise exception '% Kelly Reeves games do not say KRAC', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/178_schedule_pdf_krac.sql
+-- ===
+
+-- 178_schedule_pdf_krac.sql
+--
+-- Point the Print View at the schedule PDF that has the Sep. 4 home opener at KRAC.
+--
+--   documents/schedules/2026-27-r2.pdf  ->  documents/schedules/2026-27-r3.pdf
+--
+-- Pairs with migration 177, which moved the game in `games`. **Applied in the same
+-- sitting on purpose.** Yesterday's Senior Night miss (migration 176) was twelve
+-- days of the database and this PDF disagreeing, because 151 changed the data and
+-- nothing changed the artefact. Splitting 177 from 178 would reproduce it exactly,
+-- three days before the game.
+--
+-- The PDF was regenerated from the school's ORIGINAL with 19 audited edits, not
+-- edited from r2, so it stays one generation deep. New filename per 158's rule
+-- (minimumCacheTTL is 31 days). r2 and the original 2026-27.pdf both stay in the
+-- bucket, unreferenced.
+--
+-- ⚠️ ALL FOUR roster rows carry schedule_pdf_storage_path, including the hidden
+-- freshman Blue one. Same reasoning as 176.
+--
+-- DB-ONLY, NO CODE DEPLOY. The PDF was uploaded and verified byte-identical before
+-- this ran.
+--
+-- Rollback: 178_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27-r2.pdf';
+  if n <> 4 then raise exception 'expected 4 roster rows on r2, found %', n; end if;
+
+  -- Do not ship a PDF that says KRAC unless the data says KRAC.
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'varsity'
+     and g.game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and v.name = 'Kelly Reeves Athletic Complex';
+  if n <> 1 then
+    raise exception 'Sep 4 varsity is not at Kelly Reeves in games; run 177 first';
+  end if;
+end $$;
+
+update rosters
+   set schedule_pdf_storage_path = 'documents/schedules/2026-27-r3.pdf', updated_at = now()
+ where year = '2026-27';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27-r3.pdf';
+  if n <> 4 then raise exception 'expected 4 rows on r3, found %', n; end if;
+
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path like '%2026-27.pdf'
+      or (year = '2026-27' and schedule_pdf_storage_path like '%-r2.pdf');
+  if n <> 0 then raise exception '% rows still point at an older PDF', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/179_whataburger_platinum.sql
+-- ===
+
+-- 179_whataburger_platinum.sql
+--
+-- Whataburger moves GOLD -> PLATINUM. Jeremy 2026-09-01.
+--
+-- ⚠️ PLATINUM IS CLOSED FOR THE SEASON (`available = false`, migration 160) AND
+-- THIS MUST NOT REOPEN IT. Adding or promoting a sponsor at a closed level is
+-- normal and already established by 164, which added three Gold sponsors while
+-- Gold was closed: the roster surfaces filter tier `active`, not `available`, so
+-- the card publishes fine while the level stays unsellable. That is the correct
+-- state for a sponsor who has committed at that level. This migration asserts
+-- Platinum is STILL closed when it finishes.
+--
+-- ── SORT ORDER IS RECOMPUTED, NOT HAND-SHIFTED ──
+-- `sponsors.sort_order` is ONE GLOBAL SEQUENCE encoding tier-then-alphabetical.
+-- Promoting Whataburger moves it from the end of Gold (13) to the end of
+-- Platinum, which shifts every Gold row down one. 154, 164 and 167 all recompute
+-- the whole sequence from `tier price_cents DESC, name` rather than nudging rows;
+-- this does the same. Expected result: Platinum 1-4 (Airborne, Capstone, North
+-- Austin Oral Surgery, Whataburger), Gold 5-12, Blue 13-17.
+--
+-- Community partners stay at sort_order 0 and are sorted by name at query time,
+-- so the recompute is scoped to kind = 'sponsor'.
+--
+-- ⚠️ Whataburger's logo is the full-colour lockup uploaded by 169
+-- (`whataburger-r2.png`), NOT the white nav asset they originally sent, which
+-- rendered as a blank rectangle on the white cards. Platinum draws logos LARGER
+-- (200x72 box vs Gold's 150x58), so this promotion makes that earlier fix more
+-- visible, not less. Nothing to do, but do not swap the asset back.
+--
+-- DB-ONLY, NO DEPLOY. /sponsors and /boosters/sponsor are force-dynamic; the
+-- homepage strip picks it up after its ISR minute.
+--
+-- Rollback: 179_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from sponsors s join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.name = 'Whataburger' and t.name = 'Gold';
+  if n <> 1 then raise exception 'Whataburger is not currently a Gold sponsor (found %)', n; end if;
+
+  select count(*) into n from sponsors where year = '2026-27' and kind = 'sponsor';
+  if n <> 18 then raise exception 'expected 18 paying sponsors, found %', n; end if;
+end $$;
+
+update sponsors
+   set tier_id = (select id from sponsorship_tiers where year = '2026-27' and name = 'Platinum'),
+       updated_at = now()
+ where year = '2026-27' and name = 'Whataburger';
+
+-- Recompute the whole paid sequence: tier price descending, then name.
+with ranked as (
+  select s.id,
+         row_number() over (order by t.price_cents desc, s.name) as rn
+    from sponsors s join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.kind = 'sponsor'
+)
+update sponsors s
+   set sort_order = ranked.rn, updated_at = now()
+  from ranked
+ where s.id = ranked.id and s.sort_order is distinct from ranked.rn;
+
+do $$
+declare n int; v text;
+begin
+  select count(*) into n from sponsors s join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.name = 'Whataburger' and t.name = 'Platinum';
+  if n <> 1 then raise exception 'Whataburger did not move to Platinum'; end if;
+
+  select count(*) into n from sponsors s join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.kind = 'sponsor' and t.name = 'Platinum';
+  if n <> 4 then raise exception 'expected 4 Platinum sponsors, found %', n; end if;
+
+  -- 🚨 The promotion must NOT have reopened the level for sale.
+  select count(*) into n from sponsorship_tiers
+   where year = '2026-27' and name = 'Platinum' and available = false;
+  if n <> 1 then raise exception 'Platinum is no longer closed; 179 must not reopen a tier'; end if;
+
+  -- Dense 1..18 with no gaps or duplicates.
+  select count(*) into n from (
+    select sort_order from sponsors where year='2026-27' and kind='sponsor'
+     group by sort_order having count(*) > 1) d;
+  if n <> 0 then raise exception '% duplicate sort_order values', n; end if;
+
+  select string_agg(s.name, ', ' order by s.sort_order) into v
+    from sponsors s join sponsorship_tiers t on t.id = s.tier_id
+   where s.year = '2026-27' and s.kind = 'sponsor' and t.name = 'Platinum';
+  raise notice 'Platinum now: %', v;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/180_week5_broadcasts.sql
+-- ===
+
+-- 180_week5_broadcasts.sql
+--
+-- Two things, both about how long a broadcast link should live.
+--
+--   1. PULL DOWN last week's Aug 28 replay.
+--   2. ADD this week's Sep 4 links (VYPE + YouTube), set to expire the same way.
+--
+-- ── 1. THE REPLAY COMES DOWN, AND THE POLICY CHANGES WITH IT ──
+-- 165 gave the YouTube row `keep_after_final = true` on the theory that it
+-- becomes a durable replay. **That theory is retired.** Merle Bertrand at VYPE,
+-- 2026-09-01: "Coach never responded about hiding the replays, but I had to hide
+-- last week's at the request of Bowie's coach." Jeremy's call the same day: the
+-- links should "only be good for about 24 hours after the game."
+--
+-- So a broadcast link is now a LIVE link with a short tail, not an archive. The
+-- Aug 28 YouTube row is deactivated rather than deleted, so the URL survives in
+-- the table if anyone ever needs it, and every new row goes in with
+-- `keep_after_final = false`.
+--
+-- ⚠️ **DO NOT SET keep_after_final = true AGAIN** on the strength of 165's
+-- comment, which still describes YouTube as "it persists as a replay". That is
+-- now wrong and this migration is the reason. Opposing coaches ask for film to
+-- come down, and the club is not the party that gets to refuse.
+--
+-- ⚠️ `keep_after_final` only fires once the game is marked `final`, so it is an
+-- approximation of "24 hours" and depends on somebody entering the result. If
+-- results stop being entered promptly the links overstay. That is the same
+-- dependency flagged in 174, and it is now load-bearing for something a coach
+-- has actually complained about, not just for a tidy schedule page.
+--
+-- ── 2. WEEK 5 LINKS ──
+-- Merle's mail to Carol, 2026-09-01. Both verified before insert: HTTP 200 under
+-- a normal desktop user agent, and BOTH page titles read
+-- "7PM - Football: McNeil vs. Lake Belton", which names THIS week's opponent.
+-- That title check is the standing procedure and it is what catches a link
+-- pasted from the wrong week.
+--
+--   VYPE     https://www.vype.com/7pm-football-mcneil-vs-lake-belton-2677796708
+--   YouTube  https://youtube.com/live/8vejbL5NTLY
+--
+-- Merle: "We simply embed the YouTube link on VYPE.com, so either will work."
+-- Both are published anyway because they fail differently: the VYPE page is a
+-- vendor page that rots, the YouTube link is the stream itself.
+--
+-- Sort order puts YouTube first, matching Aug 28.
+--
+-- ⚠️ Unrelated pre-existing row noticed while doing this and deliberately NOT
+-- touched: a `Watch` link on a **2025-11-07 varsity game vs Hutto** pointing at
+-- `youtube.com/@iHSFan`, a channel homepage rather than a game. It is LAST
+-- SEASON'S row (2025-26), not this one, which is why the guards below scope to
+-- year = '2026-27' rather than trying to except it by date. A first draft
+-- excepted "2026-11-07" and failed, which is how the year was noticed at all.
+-- Worth a look someday; not this migration's business.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/games/varsity reads at request time.
+--
+-- Rollback: 180_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity'
+     and g.game_date = timestamptz '2026-08-28 19:30 America/Chicago'
+     and b.label = 'YouTube' and b.active;
+  if n <> 1 then raise exception 'Aug 28 YouTube row not found active (found %)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-04 19:00 America/Chicago';
+  if n <> 1 then raise exception 'Sep 4 varsity game not found'; end if;
+
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-09-04 19:00 America/Chicago';
+  if n <> 0 then raise exception 'Sep 4 already has % broadcast rows', n; end if;
+end $$;
+
+-- 1. Last week's replay comes down. Deactivated, not deleted.
+-- Also clears keep_after_final so no 2026-27 row is left carrying the retired
+-- "it persists as a replay" policy, even a hidden one.
+update game_broadcasts b
+   set active = false, keep_after_final = false, updated_at = now()
+  from games g
+ where g.id = b.game_id
+   and g.year = '2026-27' and g.team_level = 'varsity'
+   and g.game_date = timestamptz '2026-08-28 19:30 America/Chicago';
+
+-- 2. This week, both with keep_after_final = false so they age out on their own.
+insert into game_broadcasts (game_id, label, url, sort_order, keep_after_final, active)
+select g.id, v.label, v.url, v.sort_order, false, true
+  from games g
+  cross join (values
+    ('YouTube', 'https://youtube.com/live/8vejbL5NTLY', 1),
+    ('VYPE',    'https://www.vype.com/7pm-football-mcneil-vs-lake-belton-2677796708', 2)
+  ) as v(label, url, sort_order)
+ where g.year = '2026-27' and g.team_level = 'varsity'
+   and g.game_date = timestamptz '2026-09-04 19:00 America/Chicago';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and b.active and b.keep_after_final = false;
+  if n <> 2 then raise exception 'expected 2 active Sep 4 rows with keep_after_final false, found %', n; end if;
+
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-08-28 19:30 America/Chicago' and b.active;
+  if n <> 0 then raise exception '% Aug 28 broadcast rows are still active', n; end if;
+
+  -- No 2026-27 row may still claim to survive a final. Scoped by YEAR: the only
+  -- other keep_after_final row in the table belongs to the 2025-26 season.
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.year = '2026-27' and b.keep_after_final;
+  if n <> 0 then raise exception '% 2026-27 rows still have keep_after_final = true', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/181_week6_practice_schedule.sql
+-- ===
+
+-- 181_week6_practice_schedule.sql
+--
+-- Week 6 (Sep 7 - Sep 13) practice times, from Coach's published MAV FOOTBALL
+-- WEEKLY SCHEDULE for September 7-13 2026 ("ONE MAV NATION"). Jeremy sent the
+-- doc 2026-09-06. Replaces the Week 5 (Aug 31 - Sep 6) block in all three
+-- bodies, and with it the "After Week 5" Labor Day placeholder that 175 filled.
+--
+-- Conventions from 153/172 kept without restating: P2/P6 stays Coach's notation
+-- and is glossed once at the top; freshmen get explicit "no scheduled
+-- activities" weekend rows rather than blanks; whole-body replacement guarded on
+-- the body still being Week 5 so a re-run is a no-op.
+--
+-- ── 🚨 THIS DOC SUPERSEDES 175's LABOR DAY TIMES, AND THEY ARE DIFFERENT ──
+-- 175 published Labor Day from Coach's relayed text: varsity/JV "no later than
+-- 6:30, practice begins 7:00"; freshmen "no later than 8:30, begins 9:00".
+-- Coach's own graphic now gives it in the standard form and it does NOT match:
+--
+--   varsity/JV   6:40 arrival | 7:00-7:20 meetings | 7:25 on the field | 10:20 ends
+--   freshmen     9:00 arrival | 9:25 on the field  | 11:20 ends
+--
+-- 175's closing note said exactly this: "If a later doc gives Labor Day in the
+-- usual two-line form, that supersedes this." It does, so it does.
+--
+-- ⚠️ THE FRESHMAN ARRIVAL MOVED THIRTY MINUTES LATER (8:30 -> 9:00) and the
+-- varsity arrival ten (6:30 -> 6:40). Neither strands anybody -- a family
+-- working from last week's page arrives early, not late -- but the page said one
+-- thing for six days and now says another, the day before the practice. Flagged
+-- to Jeremy 2026-09-06; if it goes anywhere else it is SportsYou, not a
+-- correction email.
+--
+-- ⚠️ Monday Sept 7 is now a real day INSIDE the week, so it moves out of the
+-- "After Week 5" block and becomes a day heading. The 🚨 callout at the top
+-- stays anyway -- 172 put it there twice on purpose because a school holiday
+-- reads as "no practice" by default, and that risk is highest on the eve of it.
+--
+-- ── WHAT ACTUALLY CHANGED FROM WEEK 5, so a reader can trust the diff ──
+-- 1. 🚨 P2/P6 STARTS AT 10:45, NOT 11:15 -- half an hour earlier, every day it
+--    runs. This is the biggest change on the doc.
+-- 2. Coach added a FLEX OUT line to every varsity/JV day that has P2/P6: "Be on
+--    the field by 10:45 a.m." Transcribed as he wrote it. ⚠️ IT IS NOT GLOSSED.
+--    P2/P6 gets a gloss because we know what it is; nobody here has confirmed
+--    what "flex out" releases them from, and a guessed gloss on a schedule is
+--    worse than Coach's own shorthand. If Coach explains it, gloss it then.
+-- 3. 🚨 "Lunch after -- all C lunch" IS GONE, because it is not on this week's
+--    doc. It rode on Mon/Tue/Wed in Weeks 4 and 5. It is NOT carried forward:
+--    the block it hung off just moved thirty minutes earlier, which is exactly
+--    the circumstance where a stale lunch assignment would be wrong. Absence of
+--    a line is not evidence it still holds. If C lunch is in fact permanent,
+--    Coach saying so puts it back.
+-- 4. Varsity/JV Tue and Wed early practice are UNCHANGED (5:45/6:00/8:10 and
+--    6:15/6:30/8:15). Thu and Fri are still "no early practice". Freshmen are
+--    unchanged all week. Transcribed in full anyway -- the body is replaced
+--    whole, and a reader comparing page to doc should find every day present.
+-- 5. Thursday gains "JV GAME - TBA" and "FRESHMAN GAME - TBA"; Friday gains
+--    "VARSITY GAME - 7:00 p.m. - Gupton Stadium vs. Rouse". Per the standing
+--    convention GAMES DO NOT GO IN THE PRACTICE BODY -- they live in `games` and
+--    are reached from the Games schedule, which the "After Week 6" block points
+--    at. Weeks 4 and 5 did the same.
+--
+-- ⚠️ COACH SAYS "TBA" FOR BOTH THURSDAY GAMES AND THE SITE DOES NOT. `games`
+-- carries JV Sep 10 at 6:00 p.m. and freshman Green at 6:30 p.m., both inherited
+-- from the school's April export. The last two freshman games came in at 5:00,
+-- so 6:30 is very likely the stale half of the school's two-team "Blue @ 5:00 /
+-- Green @ 6:30" footnote that 148/155 retired. NOTHING IS CHANGED HERE: 155's
+-- rule is that a freshman kickoff moves only on Coach's own graphic, and this
+-- week's graphic declines to state one. Raised with Jeremy 2026-09-06.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/practice/* reads at request time.
+--
+-- Rollback: 181_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 5 — August 31–September 6%';
+  if n <> 3 then
+    raise exception 'expected 3 bodies still on Week 5, found % (already updated?)', n;
+  end if;
+end $$;
+
+-- Varsity and JV practice together and share one set of times.
+update practice_schedules
+set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. Varsity and JV practice together. **Be on time to class.**
+
+🚨 **Labor Day, Monday Sept 7 — there IS practice.** Arrival **6:40 a.m.**, practice ends **10:20 a.m.** Full times under Monday below.
+
+## Week 6 — September 7–13
+
+Times below are Coach's published MAV Football Weekly Schedule for September 7–13.
+
+**P2/P6** is the daily athletics period. McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next — same time slot either way.
+
+⚠️ **P2/P6 starts at 10:45 a.m. this week — half an hour earlier than last week.** Coach added a "flex out" line to every day it runs.
+
+### Monday, Sep 7 — Labor Day practice
+- **6:40 a.m.** — Arrival
+- **7:00–7:20 a.m.** — Meetings
+- **7:25 a.m.** — On the field / stretch lines
+- **10:20 a.m.** — Practice ends
+
+### Tuesday, Sep 8
+- **5:45 a.m.** — Arrival
+- **6:00 a.m.** — On the field
+- **8:10 a.m.** — Practice ends
+- Shower / breakfast — do not be late to class
+- **Flex out** — be on the field by 10:45 a.m.
+- **10:45 a.m.–12:10 p.m.** — P2/P6, on the field
+
+### Wednesday, Sep 9
+- **6:15 a.m.** — Arrival
+- **6:30 a.m.** — On the field
+- **8:15 a.m.** — Practice ends
+- Shower / get ready — do not be late to 1st period
+- **Flex out** — be on the field by 10:45 a.m.
+- **10:45 a.m.–12:10 p.m.** — P2/P6, on the field
+
+### Thursday, Sep 10
+**No early practice.**
+- **Flex out** — be on the field by 10:45 a.m.
+- **10:45 a.m.–12:15 p.m.** — P2/P6, on the field
+- **Team dinner** — time to be announced
+
+### Friday, Sep 11
+**No early practice.**
+- **Flex out** — be on the field by 10:45 a.m.
+- **10:45 a.m.–12:00 p.m.** — P2/P6 — game day walkthrough / JV film
+
+### Saturday, Sep 12
+**Athletes: no scheduled activities.**
+- **11:00 a.m.** — Coaches: scout input complete
+- **4:00 p.m.** — Varsity grades sent to athletes
+
+### Sunday, Sep 13
+**Coaches workday.** Athletes: no scheduled activities.
+- **11:30 a.m.** — Coordinators meeting
+- **12:00 p.m.** — Special teams meeting
+- Game preparation until completion
+
+## After Week 6
+
+Week 7 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for Game 3 vs Rouse — freshmen and JV Thursday Sep 10, varsity Friday Sep 11 at 7:00 p.m. at Gupton Stadium.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level in ('varsity','jv');
+
+update practice_schedules
+set body = $body$Athletes must be dressed, prepared, and ready to begin at the listed on-field start time. **Be on time to class.**
+
+🚨 **Labor Day, Monday Sept 7 — there IS practice.** Arrival **9:00 a.m.**, practice ends **11:20 a.m.** Full times under Monday below.
+
+## Week 6 — September 7–13
+
+Times below are Coach's published MAV Football Weekly Schedule for September 7–13.
+
+After practice and breakfast, get to your **2nd/6th period** — McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next.
+
+### Monday, Sep 7 — Labor Day practice
+- **9:00 a.m.** — Arrival
+- **9:25 a.m.** — On the field / stretch lines
+- **11:20 a.m.** — Practice ends
+
+### Tuesday, Sep 8
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:45 a.m.** — Practice ends
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Wednesday, Sep 9
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:45 a.m.** — Practice ends
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Thursday, Sep 10
+- **8:30 a.m.** — Arrival
+- **8:45 a.m.** — On the field
+- **9:30 a.m.** — Practice ends
+- **9:45–10:05 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Friday, Sep 11
+- **8:45 a.m.** — Arrival
+- **9:00–10:00 a.m.** — Game film
+- **10:00–10:20 a.m.** — Breakfast
+- Shower — get to your 2nd/6th period
+
+### Saturday, Sep 12
+**Athletes: no scheduled activities.**
+
+### Sunday, Sep 13
+**Athletes: no scheduled activities.** Coaches workday.
+
+## After Week 6
+
+Week 7 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for Game 3 vs Rouse — freshmen and JV Thursday Sep 10, varsity Friday Sep 11 at 7:00 p.m. at Gupton Stadium.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 6 — September 7–13%';
+  if n <> 3 then raise exception 'expected 3 Week 6 bodies, found %', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%Week 5%';
+  if n <> 0 then raise exception '% bodies still mention Week 5', n; end if;
+
+  -- 172's rule: the Labor Day reminder must survive every rewrite while it is
+  -- still ahead of us. It is now a day heading AND the top callout.
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and body like '%Labor Day%Sept 7%'
+     and body like '%### Monday, Sep 7 — Labor Day practice%';
+  if n <> 3 then raise exception 'Labor Day missing from % bodies', 3 - n; end if;
+
+  -- Varsity/JV carry the graphic's Labor Day times, and NOT 175's superseded pair.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level in ('varsity','jv')
+     and body like '%**6:40 a.m.** — Arrival%'
+     and body like '%**7:25 a.m.** — On the field / stretch lines%'
+     and body like '%**10:20 a.m.** — Practice ends%';
+  if n <> 2 then raise exception 'varsity/jv Labor Day times not set on both rows (%)', n; end if;
+
+  -- Freshmen carry 9:00/9:25/11:20 and must NOT have picked up the varsity pair.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%**9:00 a.m.** — Arrival%'
+     and body like '%**11:20 a.m.** — Practice ends%';
+  if n <> 1 then raise exception 'freshman Labor Day times not set (%)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman' and body like '%6:40 a.m.%';
+  if n <> 0 then raise exception 'freshman body picked up the varsity Labor Day times'; end if;
+
+  -- 175's placeholders and times are gone everywhere.
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and (body like '%no later than%' or body like '%Practice begins%');
+  if n <> 0 then raise exception '% bodies still carry 175 Labor Day wording', n; end if;
+
+  -- P2/P6 moved to 10:45 on every varsity/JV day that has it; 11:15 is gone.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%11:15%';
+  if n <> 0 then raise exception '% bodies still say 11:15 for P2/P6', n; end if;
+
+  -- The C-lunch line is deliberately dropped, not accidentally retained.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%C lunch%';
+  if n <> 0 then raise exception '% bodies still carry the stale C lunch line', n; end if;
+
+  -- Games stay out of the practice bodies.
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%### %' and body like '%Rouse%'
+     and body not like '%See the Games schedule%';
+  if n <> 0 then raise exception 'a game leaked into a practice body'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/182_varsity_week5_result.sql
+-- ===
+
+-- 182_varsity_week5_result.sql
+--
+-- Game 2, Fri 4 Sep 2026 vs Lake Belton at Kelly Reeves (KRAC), the varsity home
+-- opener that 177 moved off Dragon Stadium three days out:
+--
+--   Varsity vs Lake Belton ....... LOST 24-30 (final)
+--
+-- Jeremy 2026-09-06: "McNeil varsity lost heartbreaker last week 30-24 (was a
+-- great hard fought game)".
+--
+-- ⚠️ SCORE ORDER: our_score FIRST, same as 170 and 174. Reported winner-first as
+-- 30-24; the columns are explicitly ours/theirs, so our_score = 24,
+-- their_score = 30, and `ResultCell` renders "L 24-30". Do not "fix" it.
+--
+-- ── THE BROADCAST ROWS NEED NO CHANGE, AND THAT IS 180 WORKING ──
+-- Both Sep 4 rows (YouTube + VYPE) were inserted with keep_after_final = false,
+-- because 180 retired 165's theory that a YouTube link survives as a replay --
+-- Bowie's coach had last week's pulled. Marking the game final is what drops
+-- them; no data change here. Verify on /schedule/games/varsity that neither link
+-- renders after this applies.
+--
+-- ⚠️ THE THURSDAY SEP 3 GAMES ARE STILL 'scheduled' AND THIS MIGRATION DOES NOT
+-- TOUCH THEM. JV vs Lake Belton and both freshman rows (Green and Blue) were
+-- played on Sep 3 and no result was supplied. Guessing one is worse than the
+-- 'scheduled' state, so the post-hoc guard 174 introduced is scoped past them
+-- rather than deleted. Asked of Jeremy 2026-09-06; they need their own
+-- migration, and per 170 the hidden Blue row gets the same treatment as Green.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/games/* reads at request time.
+--
+-- Rollback: 182_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and opponent = 'Lake Belton High School'
+     and result_status = 'scheduled';
+  if n <> 1 then
+    raise exception 'varsity Sep 4 vs Lake Belton not found as scheduled (found %)', n;
+  end if;
+end $$;
+
+update games
+   set result_status = 'final', our_score = 24, their_score = 30, updated_at = now()
+ where year = '2026-27' and team_level = 'varsity'
+   and game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+   and opponent = 'Lake Belton High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and result_status = 'final' and our_score = 24 and their_score = 30;
+  if n <> 1 then raise exception 'varsity result did not take'; end if;
+
+  -- Both Sep 4 broadcast rows must be keep_after_final = false, or the links
+  -- will persist on a concluded game -- the exact thing 180 was written to stop.
+  select count(*) into n from game_broadcasts b
+    join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-09-04 19:00 America/Chicago'
+     and b.keep_after_final;
+  if n <> 0 then raise exception '% Sep 4 broadcast row(s) would survive the final', n; end if;
+
+  -- No past varsity REGULAR-SEASON game may still read 'scheduled'.
+  --
+  -- ⚠️ TWO EXCLUSIONS, BOTH LOAD-BEARING, BOTH FOUND BY THIS GUARD FIRING.
+  --
+  -- SCOPED TO VARSITY because the three Sep 3 rows (JV + both freshman) were
+  -- played and no result was supplied, and guessing is worse than 'scheduled'.
+  --
+  -- SCRIMMAGES EXCLUDED because a first draft of this guard failed on the
+  -- varsity Aug 13 Hendrickson and Aug 20 Eastview rows -- exactly the eight
+  -- rows (four levels x two dates) that 174 documented as still 'scheduled'
+  -- weeks after being played and deliberately did not fix. 174 excluded them by
+  -- date; this uses `notes <> 'Scrimmage'`, which is the clean selector 176
+  -- found (`notes` carries exactly three values in 2026-27: 'Scrimmage',
+  -- 'Senior Night', 'Homecoming'). A date scope silently stops protecting
+  -- anything once the season moves past it; this one keeps working all year.
+  --
+  -- 🚫 Excluding them is NOT resolving them. All eight still show in /events,
+  -- the month view and the ICS feed as though they are upcoming, and still need
+  -- a decision on what a played scrimmage should read. See followups.md.
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and result_status = 'scheduled' and game_date < now()
+     and coalesce(notes, '') <> 'Scrimmage';
+  if n <> 0 then
+    raise exception '% past varsity regular-season game(s) still marked scheduled', n;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/183_varsity_roster_aiden_ross.sql
+-- ===
+
+-- 183_varsity_roster_aiden_ross.sql
+--
+-- Adds #67 Aiden Ross, junior, to the 2026-27 varsity roster. Jeremy 2026-09-06:
+-- "add #67 Aiden Ross - Junior (He is probably also on the JV roster, that is
+-- okay)". Varsity goes 45 -> 46 players.
+--
+-- ── HE IS ALREADY ON JV, AND THAT IS DELIBERATE, NOT A DUPLICATE ──
+-- `/roster/jv` carries him as **#66 Aiden Robert Ross, OL** (seeded by 166 from
+-- the coaching staff's JV file). Playing up is normal and Jeremy said so
+-- explicitly. Do NOT "deduplicate" these two rows -- they are two rosters, and
+-- deleting the JV one would silently drop him off the JV page.
+--
+-- ⚠️ THREE THINGS ABOUT HIM DIFFER BETWEEN THE TWO ROWS. Each is intentional:
+--
+-- 1. JERSEY 67 HERE, 66 ON JV. Varsity #66 is already Kaeden Frazier, so 67 is
+--    not a typo for 66 -- it cannot be 66 on this roster. A player carrying
+--    different numbers at two levels is ordinary. Jeremy gave 67 for varsity.
+--
+-- 2. "Aiden Ross" HERE, "Aiden Robert Ross" ON JV. That is a difference between
+--    the two source sheets, not a data error: in the coaches' workbook the JV
+--    sheet lists full legal names with middle names for EVERY player, and the
+--    varsity sheet lists none for ANY of its 45. Short form is what belongs in
+--    the varsity block. It is also how the 2025-26 JV roster listed him.
+--
+-- 3. POSITION IS NULL HERE, 'OL' ON JV. ⚠️ NOT AN OVERSIGHT AND NOT A GAP TO
+--    FILL BY INFERENCE. Jeremy supplied number, name and grade; he did not
+--    supply a position, and copying one across levels is a guess about where a
+--    coach plays him on a different team. It renders as an em-dash, which is the
+--    standing deliberate behaviour for missing roster data (Jeremy 2026-08-26:
+--    "maybe it will make the coaches want to step up their game on getting me
+--    data!"). Raised with Jeremy 2026-09-06, WHO CONFIRMED OL -- migration 184
+--    sets it. This comment stands as the record of why it was not assumed here.
+--    🚫 This is NOT the height/weight rule -- those are suppressed on Coach's
+--    instruction; Position and Grade point the opposite way and still render.
+--
+-- ── sort_order IS RECOMPUTED, NOT HAND-PATCHED ──
+-- 159's convention as 171 applied it: dense from 1, ordered by the LEADING
+-- number of `jersey_number`, so '5/2' sorts as 5 and '84/80' as 84. 67 lands
+-- between #66 Frazier and #71 Omagbon, shifting the six players above him by
+-- one. Seven rows differ afterwards: the insert plus those six.
+--
+-- The migration asserts the recomputation is a no-op for everyone else first --
+-- i.e. that the existing 45 were already in leading-number order -- so a silent
+-- reshuffle of the whole roster cannot hide inside this change.
+--
+-- ⚠️ THE PRINT-VIEW PDF IS A SECOND ARTEFACT AND IS **NOT** DONE BY THIS
+-- MIGRATION. `/roster/varsity` Print View serves
+-- `documents/rosters/varsity-2026-r3.pdf`, generated by
+-- `scripts/make-varsity-roster-pdf.py` from the coaches' workbook
+-- (`roster_pdf/source/Varsity McNeil Roster 2026.xlsx`, gitignored, only on
+-- Jeremy's disk). Migration 171 and the 176 postmortem both say it: a roster
+-- change is two artefacts. Migration 186 repoints the row at r4.
+--
+-- DB-ONLY, NO DEPLOY. /roster/* renders on demand.
+--
+-- Rollback: 183_rollback.sql
+
+begin;
+
+do $$
+declare n int; rid uuid;
+begin
+  select id into rid from rosters
+   where year = '2026-27' and team_level = 'varsity' and team_designation is null;
+  if rid is null then raise exception '2026-27 varsity roster not found'; end if;
+
+  select count(*) into n from players where roster_id = rid;
+  if n <> 45 then raise exception 'expected 45 varsity players, found %', n; end if;
+
+  select count(*) into n from players
+   where roster_id = rid and jersey_number = '67';
+  if n <> 0 then raise exception 'varsity #67 already exists (already applied?)'; end if;
+
+  -- 67 must not collide with the leading number of any existing jersey.
+  select count(*) into n from players
+   where roster_id = rid and split_part(jersey_number, '/', 1) = '67';
+  if n <> 0 then raise exception '% existing varsity player(s) already lead with 67', n; end if;
+
+  -- The 45 existing rows must already be in leading-number order, or the
+  -- recomputation below would quietly reorder the whole roster.
+  select count(*) into n from (
+    select p.sort_order,
+           row_number() over (order by split_part(p.jersey_number, '/', 1)::int) as rn
+      from players p where p.roster_id = rid
+  ) t where t.sort_order <> t.rn;
+  if n <> 0 then
+    raise exception '% varsity row(s) are not in leading-number sort order; stopping', n;
+  end if;
+end $$;
+
+insert into players (roster_id, jersey_number, first_name, last_name, position, grade, sort_order, active)
+select r.id, '67', 'Aiden', 'Ross', null, 'Jr.', 0, true
+  from rosters r
+ where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null;
+
+with ordered as (
+  select p.id,
+         row_number() over (order by split_part(p.jersey_number, '/', 1)::int) as rn
+    from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+)
+update players p
+   set sort_order = o.rn, updated_at = now()
+  from ordered o
+ where o.id = p.id and p.sort_order is distinct from o.rn;
+
+do $$
+declare n int; rid uuid;
+begin
+  select id into rid from rosters
+   where year = '2026-27' and team_level = 'varsity' and team_designation is null;
+
+  select count(*) into n from players where roster_id = rid;
+  if n <> 46 then raise exception 'expected 46 varsity players, found %', n; end if;
+
+  select count(*) into n from players
+   where roster_id = rid and jersey_number = '67'
+     and first_name = 'Aiden' and last_name = 'Ross'
+     and grade = 'Jr.' and position is null and active and sort_order = 40;
+  if n <> 1 then raise exception 'Aiden Ross row is not as intended'; end if;
+
+  -- sort_order is dense 1..46 with no gaps or duplicates.
+  select count(*) into n from (
+    select sort_order, row_number() over (order by split_part(jersey_number, '/', 1)::int) as rn
+      from players where roster_id = rid
+  ) t where t.sort_order <> t.rn;
+  if n <> 0 then raise exception '% varsity row(s) out of order after recompute', n; end if;
+
+  select count(distinct sort_order) into n from players where roster_id = rid;
+  if n <> 46 then raise exception 'duplicate sort_order values (% distinct)', n; end if;
+
+  -- 171's finding: the four slash jerseys are real home/away pairs and must
+  -- survive any roster edit untouched.
+  select count(*) into n from players
+   where roster_id = rid and jersey_number like '%/%';
+  if n <> 4 then raise exception 'expected 4 slash jerseys, found %', n; end if;
+
+  -- He must still be on JV as well. Removing him there is not part of this.
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'jv'
+     and p.first_name = 'Aiden' and p.last_name = 'Robert Ross' and p.jersey_number = '66';
+  if n <> 1 then raise exception 'the JV Aiden Robert Ross row was disturbed'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/184_aiden_ross_position.sql
+-- ===
+
+-- 184_aiden_ross_position.sql
+--
+-- Sets POSITION = 'OL' on varsity #67 Aiden Ross. 183 deliberately left it null
+-- because Jeremy supplied only number, name and grade, and copying a position
+-- across team levels is a guess. Asked and answered the same session, 2026-09-06:
+-- use the OL the coaching staff's own workbook carries for him.
+--
+-- ── THE SOURCE IS THE COACHES' WORKBOOK, NOT THE WEBSITE ──
+-- `roster_pdf/source/Varsity McNeil Roster 2026.xlsx` has a JV sheet as well as
+-- the varsity one, and its JV block reads `Aiden Robert Ross | OL | 11`. Class 11
+-- matches the junior Jeremy gave, so it is the same player, and `/roster/jv`
+-- already publishes OL for him (seeded by 166 from that file). This is the club
+-- republishing a position the staff supplied, not inventing one.
+--
+-- ⚠️ IT IS STILL A CROSS-LEVEL READ. If the varsity staff play him somewhere
+-- else, this is where that error entered. `183` records the alternative that was
+-- declined (leave it as an em-dash) so reverting is a decision, not a rediscovery.
+--
+-- 🚫 Do NOT let this become a precedent for backfilling the other empty Position
+-- and Grade cells. Those are empty because nobody supplied them; this one had a
+-- named source for this specific player. The em-dashes stay (Jeremy 2026-08-26).
+--
+-- The workbook's varsity sheet gains the same 'OL' in the same sitting, so the
+-- print PDF and the page cannot disagree -- see 186.
+--
+-- DB-ONLY, NO DEPLOY. /roster/* renders on demand.
+--
+-- Rollback: 184_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+     and p.jersey_number = '67' and p.first_name = 'Aiden' and p.last_name = 'Ross'
+     and p.position is null;
+  if n <> 1 then raise exception 'varsity #67 Aiden Ross not found with a null position (found %)', n; end if;
+
+  -- The JV row this position is taken from must actually still say OL.
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'jv'
+     and p.first_name = 'Aiden' and p.last_name = 'Robert Ross' and p.position = 'OL';
+  if n <> 1 then raise exception 'the JV source row no longer reads OL; do not copy it'; end if;
+end $$;
+
+update players p
+   set position = 'OL', updated_at = now()
+  from rosters r
+ where r.id = p.roster_id
+   and r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+   and p.jersey_number = '67' and p.first_name = 'Aiden' and p.last_name = 'Ross';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+     and p.jersey_number = '67' and p.position = 'OL';
+  if n <> 1 then raise exception 'position did not take'; end if;
+
+  -- Nothing else on the varsity roster gained a position. 45 of the 46 rows had
+  -- one before 183; the em-dash rule means that count must not creep.
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+     and p.position is not null;
+  if n <> 46 then raise exception 'expected 46 varsity rows with a position, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/185_game_photos_2026_bowie.sql
+-- ===
+
+-- 185_game_photos_2026_bowie.sql
+--
+-- Repoints the single "Game Photos" row on /resources from last season's index
+-- doc to this season's first album. Jeremy sent the link 2026-09-06 and chose
+-- "replace previous link" when given the alternatives.
+--
+--   was:  https://docs.google.com/document/d/1fh_49R9mn_8QXgjAAr1DmWlmnLHH3dVyjlPjLv1JaZ0/edit?tab=t.0#heading=h.gf4l39u0yuz6
+--   now:  https://photos.google.com/share/AF1QipPF3TczLboM6HbLAFW-cgJ2dISqbpe_3SMqE5ZgkMAADhMfb9ol8ZaEy4jQKVd1bQ?key=aHNnSG9pQnh6QzhOczJRZ05LZ1gtS1hlMXlwYWJ3
+--
+-- ── WHY THE OLD LINK HAD TO GO ──
+-- The doc is titled "2025-2026 McNeil Football Photos", is owned by
+-- djohnsonjr@gmail.com (a parent, not the club), was last modified 2026-01-20,
+-- and its newest entry is the January banquet. Nothing from 2026-27 is in it and
+-- nobody here can add anything to it. A row labelled "Game Photos" on the
+-- current season's site that leads only to last season's games is worse than a
+-- row that leads to one real album from this season.
+--
+-- 🚫 THE 2025-26 DOC IS NOT DELETED, IT IS RECORDED HERE AND IN THE ROLLBACK.
+-- It is still the only index of last season's albums, and it is somebody else's
+-- document. If an archive row is ever wanted, this comment holds the URL.
+--
+-- ── ⚠️ THIS MAKES THE ROW A WEEKLY TASK, WHICH IT WAS NOT BEFORE ──
+-- 114 established that /resources gets exactly ONE durable Game Photos row and
+-- explicitly rejected a row per album, because albums accrue forever and turn
+-- Forms & Links into a junk drawer. That rule is not broken here -- there is
+-- still exactly one row -- but its destination is now a single game rather than
+-- an index, so it goes stale the moment the next album exists. It joins the VYPE
+-- broadcast links as a standing week-by-week update; see followups.md.
+-- The permanent fix is an index doc for 2026-27 that the row can point at again.
+--
+-- ── ⚠️ TWO WARNINGS THAT CARRY FORWARD FROM 114 AND 131, UNCHANGED ──
+-- 1. A Google Photos share link is PUBLIC TO ANYONE HOLDING IT, and these are
+--    photos of minors. Jeremy's call, made for the pool party (114), again for
+--    Meet the Mavs (131), and again here.
+-- 2. ALBUM LINKS ROT SILENTLY. Nothing detects an unshared or deleted album; the
+--    site just shows a dead link. Only a human revisiting it will notice.
+--
+-- Link verified before writing, per the standing procedure that catches a URL
+-- pasted from the wrong week: HTTP 200 under a desktop UA, and og:title reads
+-- "20260828 MHS Varsity Football at Bowie" -- the right season, the right game,
+-- and the same YYYYMMDD naming the retired doc used for its own entries.
+--
+-- DB-ONLY, NO DEPLOY. /resources reads at request time.
+--
+-- Rollback: 185_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from resource_links
+   where section = 'communications' and label = 'Game Photos'
+     and url like 'https://docs.google.com/document/d/1fh_49R9mn_8QXgjAAr1DmWlmnLHH3dVyjlPjLv1JaZ0%';
+  if n <> 1 then raise exception 'Game Photos row not found on the 2025-26 doc (found %)', n; end if;
+end $$;
+
+update resource_links
+   set url = 'https://photos.google.com/share/AF1QipPF3TczLboM6HbLAFW-cgJ2dISqbpe_3SMqE5ZgkMAADhMfb9ol8ZaEy4jQKVd1bQ?key=aHNnSG9pQnh6QzhOczJRZ05LZ1gtS1hlMXlwYWJ3',
+       description = 'Photos from the 2026 season, shared by McNeil Mavericks families. Currently: Varsity at Austin Bowie, Aug 28.',
+       updated_at = now()
+ where section = 'communications' and label = 'Game Photos';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from resource_links
+   where section = 'communications' and label = 'Game Photos'
+     and url like 'https://photos.google.com/share/AF1QipPF3TczLboM6HbLAFW%'
+     and description like '%Varsity at Austin Bowie, Aug 28.'
+     and active;
+  if n <> 1 then raise exception 'Game Photos row did not update'; end if;
+
+  -- Still exactly one Game Photos row: 114's rule, restated as a guard.
+  select count(*) into n from resource_links where label like 'Game Photos%';
+  if n <> 1 then raise exception 'expected exactly 1 Game Photos row, found %', n; end if;
+
+  -- The retired doc must not be left behind on some other row.
+  select count(*) into n from resource_links
+   where url like '%1fh_49R9mn_8QXgjAAr1DmWlmnLHH3dVyjlPjLv1JaZ0%';
+  if n <> 0 then raise exception 'the 2025-26 photo doc is still linked from % row(s)', n; end if;
+
+  -- The sibling Event Photos row (114) is a different thing and is untouched.
+  select count(*) into n from resource_links
+   where label = 'Event Photos' and url = '/events?filter=past' and active;
+  if n <> 1 then raise exception 'the Event Photos row was disturbed'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/186_varsity_roster_pdf_r4.sql
+-- ===
+
+-- 186_varsity_roster_pdf_r4.sql
+--
+-- Repoints /roster/varsity Print View at varsity-2026-r4.pdf, the regenerated
+-- print roster carrying #67 Aiden Ross (OL, junior). Pairs with 183 + 184.
+--
+--   documents/rosters/varsity-2026-r3.pdf -> documents/rosters/varsity-2026-r4.pdf
+--
+-- ── THIS IS THE HALF OF A ROSTER CHANGE THAT KEEPS GETTING FORGOTTEN ──
+-- The PDF is generated from the coaching staff's workbook
+-- (`roster_pdf/source/Varsity McNeil Roster 2026.xlsx`, gitignored, only on
+-- Jeremy's disk) by `scripts/make-varsity-roster-pdf.py`. Editing `players`
+-- alone leaves the wall poster wrong. 171 hit this (Askins stayed 9/10 on the
+-- printed roster after the DB was fixed), and 176 hit the schedule-PDF version
+-- of it, where the site said Oct 9 and the downloadable PDF said Sep 4 for
+-- twelve days. 178 established the fix: DO BOTH IN THE SAME SITTING.
+--
+-- 🚫 NEW FILENAME, NOT AN OVERWRITE. Every Supabase Storage object serves
+-- `cache-control: no-cache` (a platform override), so Next's optimiser falls
+-- back to `minimumCacheTTL` = 31 days and a replaced object can serve the OLD
+-- bytes for a month with no way to invalidate. 158's rule; 169 and the roster
+-- PDFs have all followed it. r3 stays in the bucket, unreferenced, so the
+-- rollback has something to point back at.
+--
+-- ⚠️ The upload needs the key in the `apikey` HEADER as well as `Authorization`.
+-- Supabase Storage now uses the new-style `sb_secret_…` keys, and a plain
+-- Bearer-only upload fails with {"statusCode":"403","message":"Invalid Compact
+-- JWS"} -- which reads like a permissions problem and is not (2026-08-29).
+--
+-- ── WHAT CHANGED IN THE WORKBOOK, AND WHAT DELIBERATELY DID NOT ──
+-- One row inserted into the RIGHT block at sheet row 19, between #66 Frazier and
+-- #71 Omagbon; E19:H24 shifted down one. Columns A-D were not touched.
+--
+-- ⚠️ THE TWO-BLOCK LAYOUT IS PRESERVED AND THE BLOCKS ARE NOW 23/23. 171 left
+-- them 23/22 and said so; 46 players simply balances. 159 and 166 both say the
+-- printed two-block order must NOT be reflowed into one column -- it is what
+-- gets taped to a wall -- and equally the web page must not adopt the print
+-- order. They stay different on purpose.
+--
+-- Jersey stored as the integer 67, matching every other plain number in the
+-- sheet; only the four dual numbers are strings ('5/2', '84/80'). `cell_text`
+-- renders either identically, so this is for whoever opens the workbook next.
+--
+-- Verified before this migration was written: the regenerated PDF is one page,
+-- reads "46 players: 23 left block, 23 right block", extracts "67 Aiden Ross OL
+-- 11" between Frazier and Omagbon, keeps the staff credit block, and the object
+-- served from Storage is byte-identical (sha256) to the local file.
+--
+-- DB-ONLY, NO DEPLOY. The Print View link reads this column at request time.
+--
+-- ⚠️ Only the VARSITY roster row is repointed. The JV and freshman rows keep
+-- their own `pdf_storage_path`, and the shared `schedule_pdf_storage_path`
+-- (2026-27-r3.pdf) is a different artefact entirely -- it is the season schedule,
+-- not a roster, and nothing here touches it.
+--
+-- Rollback: 186_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and team_level = 'varsity' and team_designation is null
+     and pdf_storage_path = 'documents/rosters/varsity-2026-r3.pdf';
+  if n <> 1 then raise exception 'varsity roster is not on r3 (found %)', n; end if;
+
+  -- The PDF being pointed at claims 46 players. The DB had better agree, or the
+  -- wall poster and the page disagree the moment this commits.
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null;
+  if n <> 46 then raise exception 'varsity roster has % players, but r4 was built for 46', n; end if;
+
+  select count(*) into n from players p
+    join rosters r on r.id = p.roster_id
+   where r.year = '2026-27' and r.team_level = 'varsity' and r.team_designation is null
+     and p.jersey_number = '67' and p.first_name = 'Aiden' and p.last_name = 'Ross'
+     and p.position = 'OL' and p.grade = 'Jr.';
+  if n <> 1 then raise exception 'Aiden Ross is not in the DB as r4 prints him'; end if;
+end $$;
+
+update rosters
+   set pdf_storage_path = 'documents/rosters/varsity-2026-r4.pdf', updated_at = now()
+ where year = '2026-27' and team_level = 'varsity' and team_designation is null;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and team_level = 'varsity' and team_designation is null
+     and pdf_storage_path = 'documents/rosters/varsity-2026-r4.pdf';
+  if n <> 1 then raise exception 'repoint did not take'; end if;
+
+  -- Nothing else moved to r4, and no other roster row lost its own PDF.
+  select count(*) into n from rosters
+   where year = '2026-27' and pdf_storage_path = 'documents/rosters/varsity-2026-r4.pdf';
+  if n <> 1 then raise exception '% rows point at r4', n; end if;
+
+  select count(*) into n from rosters
+   where year = '2026-27' and coalesce(schedule_pdf_storage_path, '') <> 'documents/schedules/2026-27-r3.pdf';
+  if n <> 0 then raise exception 'the shared schedule PDF pointer was disturbed on % row(s)', n; end if;
+end $$;
+
+commit;
