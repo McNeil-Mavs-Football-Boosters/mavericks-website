@@ -10,7 +10,6 @@ import {
   Flag,
   HandCoins,
   HeartHandshake,
-  Pizza,
   Ruler,
   Store,
   Users,
@@ -108,12 +107,36 @@ const OPPORTUNITIES: Opportunity[] = [
       "On freshman and JV game nights, collect the food for those players and coaching staffs from Bush's Chicken and bring it to the school. We place and pay for the order, so it is about thirty minutes of driving. See which nights are open.",
     href: "/boosters/fresh-jv-meals",
   },
-  {
-    icon: Pizza,
-    title: "Picking Up Game-Day Meals",
-    description:
-      "Help feed the team before games with quick pickup and delivery shifts.",
-  },
+  // 🚫 "Picking Up Game-Day Meals" WAS REMOVED 2026-09-06 AND MUST NOT COME BACK
+  // AS A VOLUNTEER ROLE. Jeremy: "the school handles it currently." The club is
+  // not recruiting for it, so a card promising "quick pickup and delivery
+  // shifts" was advertising volunteer work that does not exist.
+  //
+  // ⚠️ It had no `href` and no `formUrl`, so it fell through to the generic
+  // volunteer-interest form -- which looked like a broken link sitting next to
+  // three sibling meal cards that each have a real page. It was never wired to
+  // anything; nothing broke and nothing "filled up".
+  //
+  // 🚫 DO NOT point a future version of this at the "Game-Day Meal Program
+  // (Parent Payment)" form on /resources. That form is where parents PAY for
+  // their athlete's meals. Sending volunteers to it is exactly the confusion the
+  // "Picking Up ..." titles exist to prevent (Jeremy 2026-08-26: "so people
+  // don't think they are buying").
+  //
+  // ── THREE DIFFERENT THINGS ARE ALL CALLED "GAME DAY MEALS". Jeremy untangled
+  // them 2026-09-06, and the confusion is very likely why this card existed:
+  //   1. Game-day meal PAYMENTS. Every parent pays in for their own athlete.
+  //      The club collects it, via the "Game-Day Meal Program (Parent Payment)"
+  //      form on /resources. NOT a volunteer role, so not a card here.
+  //   2. FRESHMAN/JV game-day meal pickups. Volunteers needed. That is the
+  //      "Picking Up Freshmen & JV Meals" card above, and it IS the freshman/JV
+  //      slice of game-day meals -- see the note at the top of lib/fresh-jv-meals.ts.
+  //   3. VARSITY game-day meal pickups. The school handles these. Nobody needed.
+  //      That is what this removed card was asking for.
+  // 🚫 Do not merge 1 and 2, and do not re-add a card for 3.
+  //
+  // The three sibling programmes the club DOES run are unaffected: team dinners,
+  // coaches meals, and freshman/JV meals.
   {
     icon: Ruler,
     title: "Freshman / JV Chain Gang",
