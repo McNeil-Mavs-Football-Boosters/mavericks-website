@@ -21,6 +21,40 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-09-08)
 
+**2026-09-08 (later) — spirit nights are on the site, and the Game-Day Meals volunteer card is gone (migrations 192, 193 + one deploy). Last migration applied: 193.**
+
+**192 + 193 — two September spirit nights**, published with venues, at stable URLs Jeremy hands to **John Mark Edwards (Mav Mail)** and **Debby Mata (social)** and links from the newsletter, instead of retyping details into three places:
+
+| | when | where | slug |
+|---|---|---|---|
+| The League Kitchen & Tavern | Mon Sep 14, 6-8 PM | Avery and Parmer | `spirit-night-the-league-2026-09-14` |
+| Mighty Fine Burgers | Wed Sep 30, 6-8 PM | Arbor Walk | `spirit-night-mighty-fine-2026-09-30` |
+
+Modelled on `community-night-phils-amys-2026`, the club's existing spirit-night precedent, which Jeremy confirmed.
+
+🚨 **"PLEASE MENTION McNEIL FOOTBALL AT THE REGISTER" IS THE WHOLE FUNDRAISER, AND 193 PROMOTED IT OUT OF MID-SENTENCE.** Without it the restaurant cannot attribute the sale, so the family spends the money and the club gets nothing — worse than not running the event, because it also spends goodwill. It is now its own imperative sentence with the reason attached. 🚫 Do not shorten it, move it down, or drop it when this copy is reused for the next one.
+
+⚠️ **"You can buy one there" IS AN OPERATIONAL PROMISE, NOT COPY.** 193 added *"Wear your Mav shirt. If you do not have one, you can buy one there."* at Jeremy's request. That tells families **merch will be on site** on a Monday and a Wednesday night at two restaurants. If nobody brings the table, the page has said something untrue. Raised with Jeremy 2026-09-08; still needs a person for each date. ⚠️ **There is no merch page or merch route anywhere on the site** (no `merch` reference in app/, lib/ or components/), which is why the sentence promises no online option.
+
+⚠️ **NO PERCENTAGE IS STATED**, matching the Phil's precedent. Jeremy did not supply one and "a portion" is the standard phrasing. Do not invent a number.
+
+⚠️ **THERE IS NO "SHOW ON HOMEPAGE" FLAG, AND `featured` IS NOT IT.** The homepage calls `getUpcomingEvents(3, {includeGames: true, gameLevels: ["varsity"]})`, merging published events with varsity games and taking the next three by date; it never reads `featured`, so setting that column does nothing. **Publishing is sufficient.** Consequence worth knowing: Sep 14 shows immediately (behind the Sep 11 game), but **Sep 30 does not surface until Sep 14 passes**, because three varsity games sit ahead of it. That is the design, not a bug; the only lever is showing more than three.
+
+⚠️ **A GUARD FIRED ON A FALSE ASSUMPTION OF MINE, TWICE THIS SESSION.** 192's first draft asserted two venues at 10526 W Parmer Ln, believing Tony C's had a row. It does not: **`venues` holds stadiums, plus Phil's Ice House**, and every other restaurant the club deals with lives only as a code constant in `lib/coach-meals.ts`. Verified against the rows, then corrected the expectation. Same shape as 191's stale "eight Green rows". **Both times the wrong number was in a comment or an assumption, never the data — check the rows before loosening a guard.**
+
+**Volunteer page: "Picking Up Game-Day Meals" removed** (deploy `2758169`). Jeremy: *"the school handles it currently."* It had no `href` and no `formUrl`, so it fell through to the generic volunteer-interest form and looked broken next to three sibling meal cards that each have a real page. Nothing had filled up; it was never wired to anything.
+
+🚨 **THREE DIFFERENT THINGS ARE ALL CALLED "GAME DAY MEALS", AND CONFLATING THEM IS WHAT CREATED THAT CARD.** Jeremy untangled them 2026-09-06:
+1. **Meal PAYMENTS** — every parent pays for their own athlete. The club collects it via the "Game-Day Meal Program (Parent Payment)" form on `/resources`. Not a volunteer role.
+2. **Freshman/JV meal PICKUPS** — volunteers needed. `/boosters/fresh-jv-meals`, and it **is** the freshman/JV slice of game-day meals.
+3. **VARSITY meal pickups** — the school handles these. Nobody needed.
+
+🚫 Do not merge 1 and 2, do not re-add a card for 3, and **do not point any future card at the parent-payment form** — that is where parents pay, and sending volunteers there is the exact confusion the "Picking Up …" titles exist to prevent. A swept check found nothing else needing a change: the `/resources` payment link and the `fresh-jv-meals` copy are both correct as written.
+
+**The 9/7 newsletter** (built in `~/Projects/BoosterClub/`, outside this repo) is covered in that project's `CLAUDE.md`. Two things from it bear on this repo: it went out saying **freshmen 6:30 when the answer is 6:00** (191), and no correction has been sent — SportsYou is not ours (*"someone else handles sportsyou"*), so email is the only channel this project controls.
+
+## Earlier on 2026-09-08
+
 🚨 **STANDING RULE, SET 2026-09-08: THERE IS NO FRESHMAN BLUE TEAM. STOP ASKING ABOUT IT.** Jeremy: *"there is no blue team this year. keep it hidden. whatever you need to do, but quit asking me about the blue team."* `freshman_has_blue = false` already makes every Blue row unreachable on every surface. **The Blue rows are inert: do not touch them, do not sync them to Green, do not raise them with Jeremy, and do not list them as an open judgment call in a summary.** 🚫 This SUPERSEDES 170's "a freshman change touches both rows" rule — that existed to keep a raw `games` query honest, and a hidden row for a team that does not exist is not worth a migration line or a sentence of anyone's attention. Scope freshman migrations to `team_designation = 'Green'` and say nothing more. Deleting the rows is unnecessary; the flag already does the job.
 
 ⚠️ **SportsYou is not ours to post to.** Jeremy 2026-09-08: *"someone else handles sportsyou."* Do not offer it as a fix for a correction, and do not draft posts for it. The newsletter and the site are the surfaces this project controls.

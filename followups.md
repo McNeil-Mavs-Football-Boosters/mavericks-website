@@ -2,7 +2,21 @@
 
 Items surfaced during the Phase 1 build that aren't blocking the current step but need attention before launch or in early Phase 2. Append-only. Mark items done when resolved.
 
-## 🔁 Standing weekly in-season tasks (updated 2026-09-06)
+## 🔁 Standing weekly in-season tasks (updated 2026-09-08)
+
+- [ ] 🚨 **The freshman Sep 3 result vs Lake Belton is STILL missing.** Jeremy has been chasing it since 2026-09-06. JV came in as 0-51 (migration 190); varsity was 24-30 (182). Until it lands, the Green row stays `scheduled` in the past, which keeps it in `/events`, the month view and the ICS as though it is upcoming, and 190's "no past game may read scheduled" guard is scoped to jv/varsity to work around it. **Widen that guard to all three levels the moment it is filled in.** If nobody kept the score, mark it `final` with no score rather than leaving it — see the em-dash note below.
+
+- [ ] **`ResultCell` cannot render a bare "L".** A game marked `final` with null scores renders an **em-dash**, indistinguishable from a game nobody entered. Jeremy asked for bare "L" results 2026-09-06 and it was done in the NEWSLETTER, which is free-form, but the site has no way to say "we lost, score unknown". Options if this recurs: accept the em-dash, or add a way to record an outcome without a score. Not designed; do not improvise one inside a result migration.
+
+- [ ] ⚠️ **Spirit nights promise merch on site and nobody is assigned.** 193's copy says *"If you do not have one, you can buy one there."* on both Sep 14 (The League) and Sep 30 (Mighty Fine). The club runs merch tables at games, but these are a Monday and a Wednesday at restaurants. **Needs a person per date, or that half-sentence comes out.** Raised with Jeremy 2026-09-08.
+
+- [ ] **Spirit night flyers: ask the restaurants before commissioning any.** Many spirit nights REQUIRE a flyer shown or mentioned for the giveback to count, and most chains supply their own artwork. If they supply it, it drops onto the event pages via `events.cover_image_url`, which already exists and is unused — a data change, no code. If they do not, a flyer is still worth it for Debby Mata's social posts, not for the website; the event pages read fine without an image.
+
+- [ ] **Add a spirit night block to the next newsletter**, above the sponsor grid, while both are still upcoming. Link the event pages rather than retyping details.
+
+- [ ] **No correction has gone out for the 9/7 newsletter's freshman kickoff.** It said 6:30; Coach's graphic says **6:00** (191), which is 30 minutes EARLIER — the direction that strands people. SportsYou is handled by someone else, so email is the only channel available here.
+
+## 🔁 Standing weekly in-season tasks (updated 2026-09-06, still current)
 
 Three things now need doing every week during the season. Two are new-ish; the third is the one that keeps biting.
 
