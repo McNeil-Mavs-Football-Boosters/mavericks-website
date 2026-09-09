@@ -19,7 +19,25 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-09-06)
+## Where things stand (read this first — updated 2026-09-08)
+
+🚨 **STANDING RULE, SET 2026-09-08: THERE IS NO FRESHMAN BLUE TEAM. STOP ASKING ABOUT IT.** Jeremy: *"there is no blue team this year. keep it hidden. whatever you need to do, but quit asking me about the blue team."* `freshman_has_blue = false` already makes every Blue row unreachable on every surface. **The Blue rows are inert: do not touch them, do not sync them to Green, do not raise them with Jeremy, and do not list them as an open judgment call in a summary.** 🚫 This SUPERSEDES 170's "a freshman change touches both rows" rule — that existed to keep a raw `games` query honest, and a hidden row for a team that does not exist is not worth a migration line or a sentence of anyone's attention. Scope freshman migrations to `team_designation = 'Green'` and say nothing more. Deleting the rows is unnecessary; the flag already does the job.
+
+⚠️ **SportsYou is not ours to post to.** Jeremy 2026-09-08: *"someone else handles sportsyou."* Do not offer it as a fix for a correction, and do not draft posts for it. The newsletter and the site are the surfaces this project controls.
+
+**2026-09-08 — Week 6 game times confirmed, JV result in (migrations 190, 191). Last migration applied: 191.**
+
+**190 — JV lost 0-51 at Lake Belton (Sep 3), four days late.** 🚨 **THE SEASON'S FIRST ZERO, AND A ZERO IS THE SCORE MOST LIKELY TO BE SILENTLY DROPPED.** `0` is falsy in JS, so any `if (our_score)` or `our_score ||` would render a shutout as an em-dash, indistinguishable from a game nobody entered. Checked before applying: `result-cell.tsx` is the ONLY reader of those columns and it tests `our_score == null`. **Keep it that way.** Same class as jersey number 0 (Tyson Cox) in `cell_text`.
+
+**191 — freshman kickoff Thu Sep 10 moved 6:30 → 6:00**, from Coach's "THIS WEEK'S GAMES" graphic. JV (6:00, McNeil) and varsity (7:00, Gupton) already matched and were left alone, recorded so their absence reads as a finding.
+
+🚨 **6:00 IS A THIRD DISTINCT FRESHMAN TIME AND MATCHES NEITHER HALF OF THE SCHOOL'S STAGGER** ("Blue @ 5:00 / Green @ 6:30"). After two weeks at 5:00 it looked like a season default. **It is not** — 5:00, 5:00, 6:00. This is Jeremy's August call demonstrated: one freshman team means they play early or late depending on the opponent. 🚫 The seven remaining Green rows stay at 6:30 until Coach publishes each week; 191 guards that nothing bulk-applied.
+
+⚠️ **A GUARD FIRED AND THE STALE NUMBER WAS IN A COMMENT, NOT THE DATA.** 191's first draft expected EIGHT later Green rows at 6:30, taken from 173's note. True when 173 was written, because Sep 10 was still in that set; moving it leaves seven. Verified against the rows and corrected the expectation. **Do not resolve a guard failure by loosening the guard.**
+
+🚨 **THE 9/7 NEWSLETTER WENT OUT SAYING FRESHMEN 6:30 AND IS NOW WRONG BY 30 MINUTES, EARLIER.** It hedged ("likely, not final") and pointed at the schedule page, but early is the direction that strands people. Same class as the Dragon Stadium / KRAC error in the 8/31 issue. SportsYou is not ours; a correction, if sent, is email.
+
+## Earlier entries (2026-09-06)
 
 **2026-09-06 (later) — the hero carousel gets four new photos and a per-image crop anchor (migrations 187, 188, 189 + a deploy). Last migration applied: 189.**
 

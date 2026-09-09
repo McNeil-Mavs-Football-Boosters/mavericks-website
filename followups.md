@@ -234,7 +234,14 @@ These are not blockers for Commit C or Phase 1 cutover. Capture so they don't ge
   `scripts/patch-schedule-pdf.py` from `5:00/6:30` to a single time.** That instruction assumed one
   season slot too. Patch a freshman row only when that week's graphic confirms it, and re-upload
   under a new filename. **The scrimmages are 5:30 and must not move** in any case.
-- [ ] **The 12 freshman Blue game rows were deliberately NOT deleted, and keeping them paid off.** `freshman_has_blue = false` already makes them unreachable on every surface (both Blue routes 404, and `getGamesAsEvents` filters them out of `/events`, the month view and the ICS feed), so deleting them buys nothing — and they are the on-file record of the 5:00 timing. Aug 27 was fixed by moving Green onto the Blue time, which is only *checkable* because the Blue row is still sitting there at 5:00. Delete them only once all ten regular-season times are settled and have held.
+- [x] ~~**What to do about the freshman Blue rows.**~~ ✅ **SETTLED 2026-09-08, AND THE ANSWER CLOSES THE QUESTION PERMANENTLY.** Jeremy: *"there is no blue team this year. keep it hidden. whatever you need to do, but quit asking me about the blue team."*
+
+  🚨 **THE BLUE ROWS ARE INERT. DO NOT TOUCH THEM, DO NOT SYNC THEM, DO NOT RAISE THEM.** `freshman_has_blue = false` in `site_settings` already makes every Blue row unreachable: both Blue routes 404 (`schedule/games/[level]/[designation]`, `roster/[level]/[designation]`), `getGamesAsEvents` filters them out of `/events`, the month view and the ICS, and `showDesignation` follows the flag so nothing reads "Green" either. There is one freshman team and the site says so.
+
+  🚫 **THIS SUPERSEDES 170's "TOUCH BOTH ROWS" RULE FOR BLUE.** 170 required a cancellation to hit the hidden row too, so a raw `games` query would not assert a game that never happened. That was a reasonable concern when it was unclear whether Blue might come back. It will not. A Blue row disagreeing with a Green row is now a difference nobody can see, in a row for a team that does not exist, and **it is not worth a line in a migration or a sentence in a summary.**
+
+  🚫 **DO NOT ASK JEREMY ABOUT THE BLUE ROWS AGAIN**, do not offer to move them, and do not list them under "judgment calls" in a report. Migrations touching freshman games should scope to `team_designation = 'Green'` and say nothing further. Deleting them is also unnecessary — the flag already does the job, and a delete is a migration with no visible effect.
+
 - [ ] **Nothing in the UI says "Green" any more, by design.** `showDesignation` follows the flag, so labels read plain "Freshmen" everywhere — which is exactly what Coach described. The `/schedule/games/freshman/green` and `/roster/freshman/green` URLs are unchanged; only the wording dropped. Do not "fix" the URLs to match the labels; the route requires a designation and a bare `/roster/freshman` 404s by design.
 
 ## Coaches meal pickup — LIVE (2026-08-17)
