@@ -21,13 +21,33 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 
 ## Where things stand (read this first — updated 2026-09-08)
 
+**2026-09-11 — Week 6 broadcast links on the varsity Rouse game (migration 195). Last migration applied: 195.** Jeremy sent both the morning of the game: VYPE `https://www.vype.com/7pm-football-mcneil-vs-rouse` and YouTube `https://youtube.com/live/NLfl3zeIPK4`. Both verified 200 before insert and both titled **"7PM - Football: McNeil vs. Rouse"** — the standing title check from 180, which is what catches a link pasted from the wrong week. Live on `/schedule/games/varsity`.
+
+🚨 **THE FIRST DRAFT OF 195 REINSTATED A RETIRED POLICY AND REACHED PROD WITH IT.** It set the YouTube row to `keep_after_final = true`, copying **165** — the migration that CREATED `game_broadcasts` and therefore reads like the canonical description of every column. **165's comment is stale.** 180 retired that policy on 2026-09-01 after Merle Bertrand had to hide the Aug 28 replay *"at the request of Bowie's coach"*, Jeremy said links should *"only be good for about 24 hours after the game,"* and 180 wrote **DO NOT SET keep_after_final = true AGAIN** in capitals. Caught by reading the resulting rows back, one minute after apply; corrected in the same file rather than in a follow-up, and the file now carries an idempotent `UPDATE` so it repairs both a fresh database and the one that briefly held the bad value.
+
+🚫 **THE GENERAL LESSON, AND IT IS NOT ABOUT THIS FLAG.** The oldest migration touching a column is the most authoritative-looking one and the most likely to be out of date, because it is the one nobody revises when the policy changes. **Read FORWARD to the newest migration that touches a column before copying the one that created it.** `grep -rn "<column>" db/migrations/*.sql` takes ten seconds and would have surfaced 180 immediately. 195's guard now asserts 180's invariant directly — zero 2026-27 rows with `keep_after_final` — so the next attempt fails loudly instead of publishing a replay somebody has to ask to have taken down.
+
+⚠️ **`keep_after_final` only fires once the game is marked `final`**, so the "24 hours" is an approximation that depends on somebody entering the result promptly. Flagged in 174 and 180, restated here because it is now load-bearing for something an opposing coach has actually complained about, not just for a tidy page.
+
+⚠️ **Sub-varsity got nothing, deliberately — VYPE carries varsity only.** The JV and freshman Rouse games (Sep 10) have no broadcast rows, and 195 asserts zero non-varsity rows exist. **Newsletter and ICS also unchanged**, both Jeremy's standing calls from 2026-08-26: a link in a sent email cannot be revoked and a per-game VYPE URL is exactly the kind that rots, and ICS descriptions are plain prose with no URLs by convention (156).
+
+**2026-09-09 — The League spirit night moved one day later, to Tue Sep 15 (migration 194). Last migration applied: 194.** Jeremy: *"move the league spirit night from the 14th to the 15th."* Time (6-8 PM), venue, status and slug unchanged; Mighty Fine (Sep 30) untouched and asserted. Verified live on the event page and in `/events.ics` (`DTSTART:20260915T230000Z`).
+
+🚫 **THE SLUG STILL SAYS `2026-09-14`, ON PURPOSE, AND MUST NOT BE "TIDIED".** `spirit-night-the-league-2026-09-14` is the stable URL 192 existed to create — the one Jeremy hands to **John Mark Edwards (Mav Mail)** and **Debby Mata (social)**. **This app has no redirect layer** (`next.config.ts` defines no `redirects()`), so renaming the slug 404s every copy of that link already in a mail queue or a social post, silently. A date in a slug is an **id, not a fact**; the page is the source of truth for when to show up.
+
+⚠️ **THE DAY NAME LIVES IN THE PROSE, SO THE TIMESTAMP ALONE IS NEVER THE WHOLE EDIT.** 193's copy hardcodes *"on Monday, September 14"*, while the rendered date on the card, the detail page and the ICS all come from `starts_at`. Move one and not the other and the body text contradicts the heading on the same page. 194 moves both and asserts no "September 14" or "Monday" survives in the description. **Sep 15 2026 is a Tuesday — verified with `date`, not assumed.** Any future date move on an `events` row has this same two-place shape.
+
+⚠️ **TWO THINGS THE MIGRATION CANNOT DO, AND THE SITE NOW ASSERTS BOTH ANYWAY:** The League has to have **agreed** to the 15th, and the 9/1 board direction was to **check other McNeil sports** before scheduling a spirit night so families are not split two ways — only football's calendar is in this DB. Both flagged to Jeremy 2026-09-09 and parked in `followups.md`. The page saying Sep 15 is not the same as Sep 15 being arranged.
+
+⚠️ **Homepage ordering is unchanged in effect.** Next-three today is Sep 11 game → spirit night → Sep 18 game, so it still shows in slot 2, and Sep 30 still surfaces only once this one passes (Sep 18 and Sep 24 games sit ahead of it). Nothing to do; noted so the 9/8 entry below is not read as stale.
+
 **2026-09-08 (later) — spirit nights are on the site, and the Game-Day Meals volunteer card is gone (migrations 192, 193 + one deploy). Last migration applied: 193.**
 
 **192 + 193 — two September spirit nights**, published with venues, at stable URLs Jeremy hands to **John Mark Edwards (Mav Mail)** and **Debby Mata (social)** and links from the newsletter, instead of retyping details into three places:
 
 | | when | where | slug |
 |---|---|---|---|
-| The League Kitchen & Tavern | Mon Sep 14, 6-8 PM | Avery and Parmer | `spirit-night-the-league-2026-09-14` |
+| The League Kitchen & Tavern | ~~Mon Sep 14~~ → **Tue Sep 15**, 6-8 PM (194) | Avery and Parmer | `spirit-night-the-league-2026-09-14` (slug keeps the old date on purpose) |
 | Mighty Fine Burgers | Wed Sep 30, 6-8 PM | Arbor Walk | `spirit-night-mighty-fine-2026-09-30` |
 
 Modelled on `community-night-phils-amys-2026`, the club's existing spirit-night precedent, which Jeremy confirmed.
@@ -38,7 +58,7 @@ Modelled on `community-night-phils-amys-2026`, the club's existing spirit-night 
 
 ⚠️ **NO PERCENTAGE IS STATED**, matching the Phil's precedent. Jeremy did not supply one and "a portion" is the standard phrasing. Do not invent a number.
 
-⚠️ **THERE IS NO "SHOW ON HOMEPAGE" FLAG, AND `featured` IS NOT IT.** The homepage calls `getUpcomingEvents(3, {includeGames: true, gameLevels: ["varsity"]})`, merging published events with varsity games and taking the next three by date; it never reads `featured`, so setting that column does nothing. **Publishing is sufficient.** Consequence worth knowing: Sep 14 shows immediately (behind the Sep 11 game), but **Sep 30 does not surface until Sep 14 passes**, because three varsity games sit ahead of it. That is the design, not a bug; the only lever is showing more than three.
+⚠️ **THERE IS NO "SHOW ON HOMEPAGE" FLAG, AND `featured` IS NOT IT.** The homepage calls `getUpcomingEvents(3, {includeGames: true, gameLevels: ["varsity"]})`, merging published events with varsity games and taking the next three by date; it never reads `featured`, so setting that column does nothing. **Publishing is sufficient.** Consequence worth knowing: The League night shows immediately (behind the Sep 11 game), but **Sep 30 does not surface until The League night passes**, because three varsity games sit ahead of it. That is the design, not a bug; the only lever is showing more than three.
 
 ⚠️ **A GUARD FIRED ON A FALSE ASSUMPTION OF MINE, TWICE THIS SESSION.** 192's first draft asserted two venues at 10526 W Parmer Ln, believing Tony C's had a row. It does not: **`venues` holds stadiums, plus Phil's Ice House**, and every other restaurant the club deals with lives only as a code constant in `lib/coach-meals.ts`. Verified against the rows, then corrected the expectation. Same shape as 191's stale "eight Green rows". **Both times the wrong number was in a comment or an assumption, never the data — check the rows before loosening a guard.**
 

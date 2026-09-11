@@ -14458,3 +14458,297 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/194_spirit_night_league_to_sep15.sql
+-- ===
+
+-- 194_spirit_night_league_to_sep15.sql
+--
+-- The League spirit night moves ONE DAY LATER, Jeremy 2026-09-09:
+-- "move the league spirit night from the 14th to the 15th."
+--
+--   was:  Mon Sep 14, 6:00-8:00 PM
+--   now:  Tue Sep 15, 6:00-8:00 PM
+--
+-- Time (6-8 PM), venue, status and slug are unchanged. Mighty Fine (Sep 30) is
+-- not touched and the migration asserts it.
+--
+-- ⚠️ THE SLUG STILL SAYS `2026-09-14` AND THAT IS DELIBERATE. 192 created this
+-- row precisely so there would be a STABLE URL Jeremy hands to John Mark Edwards
+-- (Mav Mail) and Debby Mata (social) instead of retyping details in three
+-- places. Renaming the slug to `-2026-09-15` would 404 every copy of that link
+-- already in someone's mail queue or social post, and there is no redirect layer
+-- in this app (`next.config.ts` defines no `redirects()`), so the break would be
+-- silent and total. A URL whose date reads one day early is a cosmetic wart; a
+-- dead link on the club's own fundraiser is a lost night. **Do not "tidy" the
+-- slug later either** — the date in it stopped being a fact the moment this
+-- migration ran, and the page itself is the source of truth for when to show up.
+--
+-- ── THE DAY NAME IS IN THE DESCRIPTION, SO PROSE AND TIMESTAMP MUST MOVE TOGETHER ──
+-- 193's copy hardcodes "on Monday, September 14, 6:00-8:00 PM". Only `starts_at`
+-- drives the rendered date on the card, the detail page and the ICS feed, so
+-- moving the timestamp alone would leave the body text contradicting the heading
+-- on the same page. Sep 15 2026 is a **Tuesday** (verified, not assumed). The
+-- guards below assert both the new timestamp and the new prose, and that no
+-- "September 14" or "Monday" survives anywhere in the description.
+--
+-- 🚨 THE TWO SENTENCES THAT DO THE WORK ARE PRESERVED VERBATIM AND ASSERTED.
+-- "Please mention McNeil Football at the register." is the whole fundraiser (see
+-- 193) and "you can buy one there" is an operational promise about merch. This
+-- migration is a date change and must not become a quiet re-edit of either.
+--
+-- ⚠️ TWO THINGS THIS MIGRATION CANNOT DO, BOTH FLAGGED TO JEREMY 2026-09-09:
+--   1. **The League has to agree to the new night.** The DB is not the agreement.
+--   2. **Other McNeil sports.** The 9/1 board direction was to check other McNeil
+--      sports before scheduling a spirit night so families are not split two
+--      ways. Sep 15 is a Tuesday and only football's calendar is in this DB.
+--
+-- Also still open from 193: nobody is assigned to bring the merch table to this
+-- event. See `followups.md`.
+--
+-- DB-ONLY, NO DEPLOY. /events, /events/[slug], the homepage and the ICS feed all
+-- read at request time. ⚠️ `/events.ics` is cached an hour — append `?cb=$(date
+-- +%s)` when verifying or you will read the pre-change feed.
+-- No static artefact carries this date: the schedule PDF and roster PDFs are
+-- games and rosters only, and the spirit night is in no Google Form or Apps
+-- Script. The one place outside the DB is the 9/8 docs entry, updated alongside.
+--
+-- Rollback: 194_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events
+   where slug = 'spirit-night-the-league-2026-09-14'
+     and status = 'published'
+     and starts_at = timestamptz '2026-09-14 18:00 America/Chicago'
+     and ends_at   = timestamptz '2026-09-14 20:00 America/Chicago'
+     and description like '%Monday, September 14%';
+  if n <> 1 then raise exception 'The League spirit night is not on Mon Sep 14 as 192/193 left it (found %)', n; end if;
+end $$;
+
+update events
+   set starts_at = timestamptz '2026-09-15 18:00 America/Chicago',
+       ends_at   = timestamptz '2026-09-15 20:00 America/Chicago',
+       description = 'Join the Mavs for a Spirit Night at The League Kitchen & Tavern (Avery and Parmer) on Tuesday, September 15, 6:00-8:00 PM. Please mention McNeil Football at the register. That is what tells them your purchase counts, and a portion of it comes back to the team. Wear your Mav shirt. If you do not have one, you can buy one there. Everyone in your party counts, so bring the whole family.',
+       updated_at = now()
+ where slug = 'spirit-night-the-league-2026-09-14';
+
+do $$
+declare n int;
+begin
+  -- Moved to Tue Sep 15, still 6-8 PM Central, still published, still at the venue.
+  select count(*) into n from events
+   where slug = 'spirit-night-the-league-2026-09-14'
+     and status = 'published'
+     and venue_id is not null
+     and starts_at = timestamptz '2026-09-15 18:00 America/Chicago'
+     and ends_at   = timestamptz '2026-09-15 20:00 America/Chicago';
+  if n <> 1 then raise exception 'The League spirit night did not land on Tue Sep 15 6-8 PM (%)', n; end if;
+
+  -- The prose moved with the timestamp, and nothing stale was left behind.
+  select count(*) into n from events
+   where slug = 'spirit-night-the-league-2026-09-14'
+     and description like '%Tuesday, September 15%'
+     and description not like '%September 14%'
+     and description not like '%Monday%';
+  if n <> 1 then raise exception 'the description still says the old day (%)', n; end if;
+
+  -- Date change only: the two sentences that make the event work are intact.
+  select count(*) into n from events
+   where slug like 'spirit-night-%'
+     and description like '%mention McNeil Football at the register%'
+     and description like '%tells them your purchase counts%'
+     and description like '%Wear your Mav shirt%'
+     and description like '%you can buy one there%';
+  if n <> 2 then raise exception 'the mention or shirt line was lost on % of the two', 2 - n; end if;
+
+  -- Mighty Fine is untouched.
+  select count(*) into n from events
+   where slug = 'spirit-night-mighty-fine-2026-09-30'
+     and status = 'published'
+     and starts_at = timestamptz '2026-09-30 18:00 America/Chicago'
+     and description like '%Wednesday, September 30%';
+  if n <> 1 then raise exception 'the Mighty Fine spirit night changed (%)', n; end if;
+
+  -- Nothing else claims Sep 15, so this did not land on top of another event.
+  select count(*) into n from events
+   where status = 'published'
+     and starts_at >= timestamptz '2026-09-15 00:00 America/Chicago'
+     and starts_at <  timestamptz '2026-09-16 00:00 America/Chicago';
+  if n <> 1 then raise exception 'expected exactly 1 published event on Sep 15, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/195_broadcasts_week6_rouse.sql
+-- ===
+
+-- 195_broadcasts_week6_rouse.sql
+--
+-- Week 6 broadcast links: varsity at Rouse, Fri Sep 11, 7:00 p.m. From Jeremy
+-- 2026-09-11, the day of the game:
+--
+--   VYPE     https://www.vype.com/7pm-football-mcneil-vs-rouse
+--   YouTube  https://youtube.com/live/NLfl3zeIPK4
+--
+-- ── BOTH VERIFIED BEFORE WRITING, NOT ASSUMED ──
+-- Each returned 200 and each is titled for THIS game: the VYPE page's og:title
+-- and the YouTube page's title both read "7PM - Football: McNeil vs. Rouse".
+-- That check is the standing procedure (180) and it is the whole defence
+-- against a link pasted from the wrong week -- a VYPE slug for another game is
+-- still a 200 page.
+--
+-- ── BOTH ROWS ARE keep_after_final = false. THIS IS NOT A JUDGMENT CALL. ──
+-- 🚨 THE FIRST DRAFT OF THIS MIGRATION SET THE YouTube ROW TO `true` AND WAS
+-- APPLIED THAT WAY FOR ABOUT A MINUTE BEFORE BEING CORRECTED. It copied 165's
+-- shape, whose comment still says a YouTube live URL "persists as a replay" and
+-- that Jeremy wants it kept up afterwards. **That comment is stale and 180
+-- retired the policy it describes**: Merle Bertrand at VYPE, 2026-09-01, "I had
+-- to hide last week's at the request of Bowie's coach," and Jeremy the same day
+-- said the links should "only be good for about 24 hours after the game." 180
+-- deactivated the Aug 28 replay and set the rule in capitals: **DO NOT SET
+-- keep_after_final = true AGAIN.** Opposing coaches ask for film to come down
+-- and the club is not the party that gets to refuse.
+--
+-- ⚠️ **THE LESSON IS ABOUT WHERE THE POLICY LIVES, NOT ABOUT THIS ONE FLAG.**
+-- 165 is the migration that CREATED the table, so it reads like the canonical
+-- description of every column, and its comment is wrong. Copying the oldest,
+-- most authoritative-looking migration is exactly how the retired policy came
+-- back. **Read forward to the newest migration that touches a column before
+-- copying the one that created it.** The final guard below now asserts 180's
+-- invariant directly -- zero 2026-27 rows with `keep_after_final` -- so the next
+-- attempt fails loudly instead of shipping a replay somebody has to ask to have
+-- taken down.
+--
+-- ── REMAINING SHAPE, COPIED FROM 180 ──
+-- YouTube is sort_order 1 (it is the thing that actually plays), VYPE is 2.
+-- Labels stay one word each so the schedule's action column does not widen.
+--
+-- The game is selected by its ACTUAL IDENTITY -- year + level + designation +
+-- a one-day date window + opponent -- and never by a pasted uuid, so this fails
+-- loudly if the row moved rather than silently attaching links to nothing.
+-- `on conflict (game_id, url) do nothing` makes a re-run inert, and the guards
+-- below count rows so an inert re-run cannot look like a successful insert.
+--
+-- ⚠️ `keep_after_final` only fires once the game is marked `final`, so "24
+-- hours" depends on somebody entering the result. Same dependency 174 and 180
+-- both flagged; it is load-bearing for something a coach has actually
+-- complained about.
+--
+-- ⚠️ VYPE IS VARSITY ONLY. The JV and freshman games against Rouse (Sep 10) get
+-- nothing here; that is not an omission.
+--
+-- ⚠️ NOT THE NEWSLETTER, NOT THE ICS -- both are Jeremy's standing calls from
+-- 2026-08-26 and neither has been revisited. A link in a sent email cannot be
+-- revoked and a per-game VYPE URL is exactly the kind that rots, so the durable
+-- thing to print is the "Broadcast Lineup" pointer. ICS descriptions are plain
+-- prose with no URLs by convention (migration 156), and broadcast links do not
+-- belong in someone's subscribed calendar.
+--
+-- DB-ONLY, NO DEPLOY. The render code shipped with 165; this is two rows.
+-- ⚠️ The schedule pages are ISR'd, so allow a minute before verifying.
+--
+-- Rollback: 195_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-09-11 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-09-12 00:00 America/Chicago'
+     and g.opponent = 'Rouse High School';
+  if n <> 1 then raise exception 'expected exactly 1 varsity Rouse game on Sep 11, found %', n; end if;
+end $$;
+
+insert into game_broadcasts (game_id, label, url, sort_order, keep_after_final, active)
+select g.id, v.label, v.url, v.sort_order, false, true
+from games g
+cross join (values
+    ('YouTube', 'https://youtube.com/live/NLfl3zeIPK4', 1),
+    ('VYPE',    'https://www.vype.com/7pm-football-mcneil-vs-rouse', 2)
+  ) as v(label, url, sort_order)
+where g.year = '2026-27'
+  and g.team_level = 'varsity'
+  and g.team_designation is null
+  and g.game_date >= timestamptz '2026-09-11 00:00 America/Chicago'
+  and g.game_date <  timestamptz '2026-09-12 00:00 America/Chicago'
+  and g.opponent = 'Rouse High School'
+on conflict (game_id, url) do nothing;
+
+-- Corrective, and deliberately NOT folded into the insert above: the first
+-- draft of this migration reached the live database with the YouTube row set to
+-- `keep_after_final = true`. `on conflict do nothing` will not repair a row that
+-- already exists, so re-running a fixed insert alone would leave prod wrong and
+-- the guard below would fail with no way forward. This makes the file
+-- self-healing and idempotent against both a fresh database and the one that
+-- briefly held the bad value.
+update game_broadcasts gb
+   set keep_after_final = false, updated_at = now()
+  from games g
+ where g.id = gb.game_id
+   and g.year = '2026-27'
+   and gb.keep_after_final;
+
+do $$
+declare n int; gid uuid;
+begin
+  select g.id into gid from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-09-11 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-09-12 00:00 America/Chicago'
+     and g.opponent = 'Rouse High School';
+
+  -- Exactly two active links on the right game.
+  select count(*) into n from game_broadcasts where game_id = gid and active;
+  if n <> 2 then raise exception 'expected 2 active broadcast rows on the Rouse game, found %', n; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'YouTube'
+     and url = 'https://youtube.com/live/NLfl3zeIPK4'
+     and sort_order = 1 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the YouTube row is wrong or missing'; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'VYPE'
+     and url = 'https://www.vype.com/7pm-football-mcneil-vs-rouse'
+     and sort_order = 2 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the VYPE row is wrong or missing'; end if;
+
+  -- 🚨 180's INVARIANT, RESTATED HERE BECAUSE THIS MIGRATION BROKE IT ONCE.
+  -- No 2026-27 broadcast link outlives the final whistle. The only
+  -- keep_after_final row in the table belongs to the 2025-26 season (the
+  -- iHSFan CHANNEL url from 052, which is not a per-game broadcast and does
+  -- not rot).
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and gb.keep_after_final;
+  if n <> 0 then raise exception '% 2026-27 row(s) still have keep_after_final = true', n; end if;
+
+  -- Nothing leaked onto the sub-varsity Rouse games, which VYPE does not carry.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level <> 'varsity';
+  if n <> 0 then raise exception 'broadcast links attached to % non-varsity game(s)', n; end if;
+
+  -- Three varsity weeks, two rows each. The Aug 28 pair is inactive (180 pulled
+  -- the replay) and still counted -- rows are deactivated, never deleted.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 6 then raise exception 'expected 6 broadcast rows across 2026-27 varsity, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity' and gb.active;
+  if n <> 4 then raise exception 'expected 4 ACTIVE varsity broadcast rows, found %', n; end if;
+end $$;
+
+commit;
