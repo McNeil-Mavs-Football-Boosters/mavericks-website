@@ -63,12 +63,33 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
 /**
  * ✅ CONFIRMED 2026-08-26 (Coach Hale, relayed by Jeremy). No longer null.
  *
- * ✅ FLIPPED TO THE SEASON TIMES 2026-08-29, week one (Thu 27 Aug) being past.
- * Week one was 2:00 p.m. / 2:30 p.m.; **every remaining night this season is
- * 2:30 p.m. / 3:00 p.m.** and these constants are now that. Do not put 2:00
- * back - it belongs to one night that has already happened. A single value
- * cannot say both, and Jeremy chose to point it at the imminent night rather
- * than special-case one slot.
+ * ✅ MOVED 15 MINUTES EARLIER 2026-09-13, to **2:15 p.m. / 2:45 p.m.** Coach,
+ * relayed to Jeremy: "Coach wants to make sure it is there on time and since
+ * traffic is always possibility (this happened last Thursday) he asked to have
+ * it picked up earlier." Lareina told Bush's so the order is ready earlier.
+ * The 30-minute window is unchanged; the whole window simply shifts earlier, so
+ * the drop-off deadline moves to 2:45 as well (Jeremy, same day).
+ *
+ * 🚨 THIS IS THE SEASON'S **THIRD** DISTINCT PICKUP TIME (2:00, then 2:30, now
+ * 2:15) AND THE STANDING RULE SAYS THAT IS ONE TOO MANY FOR A GLOBAL. Both this
+ * file and `fresh-jv-meals-automation.gs` carry the rule: two values in one
+ * season is a global plus a reminder; three means **the time belongs on the
+ * slot**, copying the per-slot `time` that `team-dinners-automation.gs` already
+ * has. That refactor was NOT done here, deliberately: it spans this file, the
+ * page, the Apps Script and `check-fresh-jv-meal-options.py`, and the next
+ * pickup is Thursday Sep 17. A wrong time this week is worse than an untidy
+ * constant. **The rule has fired and is now owed - see followups.md.**
+ *
+ * The reason a global still WORKS today is that 2:15 applies to every remaining
+ * night, so one value is enough to state the truth. It stops working the moment
+ * two upcoming nights need different times; that is the day the refactor is not
+ * optional.
+ *
+ * ⚠️ VOLUNTEERS ALREADY CONFIRMED FOR LATER NIGHTS HAVE 2:30 IN THEIR INBOX.
+ * Same trap as the 2:00 -> 2:30 flip: confirmation mail is already sent and
+ * cannot be rewritten. Their day-before and day-of reminders re-read this value
+ * at send time and will say 2:15, so the reminder does correct them - but only
+ * if they read it. The code cannot fix the mail already delivered.
  *
  * ⚠️ MIRRORED IN `MavericksWebsite/scripts/fresh-jv-meals-automation.gs` as
  * PICKUP_TIME / DROPOFF_TIME. The site and the confirmation emails must never
@@ -76,18 +97,28 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
  * 12:30/1:00 split. **Change both, and redeploy**: this is a code constant, so
  * unlike a DB edit it does not go live on its own.
  *
+ * 🚨 THE SCRIPT HAS A THIRD VALUE, `SEASON_PICKUP_TIME`, AND MISSING IT MAKES
+ * THE DAILY JOB NAG FOR THE WRONG ANSWER. `dailyFreshJvMealReminders` compares
+ * PICKUP_TIME against SEASON_PICKUP_TIME every morning and mails Jeremy when
+ * they differ. Change PICKUP_TIME alone and that guard fires daily telling him
+ * to set it BACK. All three move together, plus the hardcoded DROPOFF_TIME in
+ * the nag's own body.
+ *
  * The Apps Script side nagged Jeremy every morning from 28 Aug until the flip
  * was done, but that nag cannot see this file, so the email stopping was never
  * proof the website was updated too. Both sides were changed together.
  *
  * The live Google Form's description and help text must ALSO be hand-edited --
- * the generator only runs at form creation.
+ * the generator only runs at form creation. Jeremy did the form and the live
+ * script himself on 2026-09-13; this repo and the deployed site are the half he
+ * asked for.
  */
-export const FRESH_JV_MEAL_PICKUP_TIME: string | null = "2:30 p.m.";
+export const FRESH_JV_MEAL_PICKUP_TIME: string | null = "2:15 p.m.";
 
 /** Drop-off is immediately after pickup; stated so a volunteer can plan the
- *  end of the window, not just the start. Moved to 3:00 p.m. with the flip. */
-export const FRESH_JV_MEAL_DROPOFF_TIME: string | null = "3:00 p.m.";
+ *  end of the window, not just the start. 2:45 p.m. as of 2026-09-13, moved
+ *  with the pickup so the window stays 30 minutes rather than stretching. */
+export const FRESH_JV_MEAL_DROPOFF_TIME: string | null = "2:45 p.m.";
 
 /**
  * ⚠️ CONFIRMED 2026-08-26, AND IT IS NOT THE HORSESHOE. This used to hedge on
