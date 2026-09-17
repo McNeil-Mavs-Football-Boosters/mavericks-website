@@ -44,6 +44,7 @@ Three things now need doing every week during the season. Two are new-ish; the t
 
 - [ ] **"Flex out" is unglossed on the practice pages.** New on the Week 6 graphic: every varsity/JV day with P2/P6 now reads "FLEX OUT — Be on the field by 10:45 a.m." P2/P6 is glossed because we know what it is; nobody here has confirmed what Flex releases them from, so it is transcribed verbatim. **A guessed gloss on a schedule is worse than Coach's shorthand.** Ask Coach, then gloss it once at the top like P2/P6.
 
+- [ ] **Freshman roster r2 (migration 200, 2026-09-17) applied a Zayad/Fernandez jersey swap straight from the coaches' PDF.** Adam Zayad #74 → #56, Andy Fernandez #56 → #74, alongside #19 Khalil Miller and Spurlock #30 → #35. A clean two-player swap is the classic spreadsheet slip. **Confirm with the freshman staff**; if wrong, they reissue the PDF and it is one reverse-swap migration + an r3 upload. Do not fix the DB alone.
 - [ ] **Varsity #67 Aiden Ross carries a position copied from the JV sheet.** 184 set `OL` from the coaching staff's own workbook (JV block: `Aiden Robert Ross | OL | 11`), on Jeremy's say-so, after 183 deliberately left it null. **It is still a cross-level read** — if the varsity staff play him elsewhere, this is where that error entered. 🚫 Not a precedent for backfilling the other empty Position and Grade cells; those stay em-dashes (Jeremy 2026-08-26).
 
 ## Square donations — backend built + verified (2026-07-05)
