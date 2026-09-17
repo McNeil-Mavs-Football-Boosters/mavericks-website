@@ -19,7 +19,15 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-09-08)
+## Where things stand (read this first — updated 2026-09-17)
+
+**2026-09-17 — Week 7: Vista Ridge broadcast links (migration 198) and freshman kickoff to 6:00 (migration 199). Last migration applied: 199.** Jeremy sent both the day before the varsity game: VYPE `https://www.vype.com/7pm-football-mcneil-vs-vista-ridge-2677859018` and YouTube `https://youtube.com/live/bu2KuoBMs_0`. Both verified 200 before insert and both titled **"7PM - Football: McNeil vs. Vista Ridge"** (the 180 title check). Attached to the Fri Sep 18 varsity row at Gupton, `keep_after_final = false` on both, 198's guard asserts 180's invariant the same way 195 does. Live on `/schedule/games/varsity`, which now shows only the Vista Ridge pair — the Rouse rows dropped off once 196 marked that game final, exactly as designed. Committed `149bf7c`, pushed.
+
+⚠️ **THE FRESHMAN TIME CAME FROM JEREMY'S RELAY, NOT COACH'S GRAPHIC, AND 199 SAYS SO.** Jeremy, day of the game: *"Freshman and JV games will both be played at 6:00pm at the high schools."* 155's rule is that a freshman kickoff moves only on Coach's own weekly graphic; this was game day and Jeremy stated the time directly, so his word was taken as the source and the deviation is written into the migration header. If the Week 7 graphic later disagrees, the graphic wins and it is a one-row UPDATE. **Only the freshman Green row moved** (6:30 → 6:00). JV was already 6:00 at Maverick Stadium, and "at the high schools" matched the venues on file (Maverick Stadium is McNeil's address, the freshman row was already Vista Ridge Football Field), so no venue or home/away changed. Hidden Blue row left at 5:00, same call as 155/173/191. Guard counts **six** later Green rows still at 6:30 (191 counted seven; Sep 17 left the set).
+
+🚫 **FOURTH WEEK RUNNING THE FRESHMAN TIME DIFFERED FROM THE SCHOOL'S APRIL EXPORT** (5:00, 5:00, 6:00, 6:00). Still per-week, still per-game. Do not bulk-apply 6:00 to Sep 23 / Oct 1 / 8 / 15 / 22 / 29.
+
+⚠️ **ENTER THE VISTA RIDGE RESULT FRIDAY NIGHT OR SATURDAY.** Marking the game final is what takes the links down (196's lesson). If the score is not to hand, deactivate the two 198 rows explicitly. Also still outstanding: the sub-varsity results for Sep 3, Sep 10 and now Sep 17 (JV + freshman), none entered.
 
 **2026-09-15 — Mavs and Moms Senior Photo Day on the calendar (migration 197). Last migration applied: 197.** Sun Sep 20, 12:30 p.m., Varsity Locker Room, at the existing McNeil High School venue with the room in `location`. Live on `/events`, the detail page and the ICS feed.
 
