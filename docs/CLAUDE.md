@@ -19,7 +19,9 @@ Rule of thumb: if you're going to wait, use `jv-ask`. If you're moving on regard
 - **If you `jv-notify` "Part N done" and then immediately start Part N+1, you've removed Jeremy's ability to say "wait, hold on" from his phone.** Don't chain phases through notify if you wouldn't be comfortable with the next phase shipping without his review.
 - Phrases like "reply 'go' for next part" or "let me know if you want changes" in a `jv-notify` are a red flag — those are `jv-ask` situations.
 
-## Where things stand (read this first — updated 2026-09-18)
+## Where things stand (read this first — updated 2026-09-20)
+
+**2026-09-20 — Varsity Week 7 result: lost 28-56 at Vista Ridge (migration 204). Last migration applied: 204.** Jeremy: *"varsity lost on friday to vista ridge 28-56."* Reported ours-first this time; `our_score = 28`, `their_score = 56`, renders `L 28-56`. Marking it final is what took the two Vista Ridge broadcast rows (198, `keep_after_final = false`) off `/schedule/games/varsity` — 196's lesson, two days late again. ⚠️ **The Thursday Sep 17 JV and freshman results were not supplied and stay `scheduled`: three weeks of sub-varsity results outstanding (Sep 3, 10, 17).** Verified live: the Sep 18 row reads `L 28-56` with no VYPE/YouTube links. Season is 0-4. The 9/21 booster newsletter was drafted in the same sitting (`BoosterClub/newsletter_2026-09-21.html`, see `BoosterClub/CLAUDE.md`).
 
 **2026-09-18 (later) — Week 8 practice schedule (migration 202) and the Wednesday JV / freshman kickoffs set to TBD (migration 203). Last migration applied: 203.** Jeremy sent a photo of Coach's MAV FOOTBALL WEEKLY SCHEDULE for September 21–25 off Coach's screen: *"he sent next week schedule too. TBD on JV and freshman game times though. please update the website."* All three practice bodies replaced whole, Week 6 → Week 8. ⚠️ **Week 7 (Sep 14–20) was never posted** — no weekly doc reached this repo that week, so the practice pages showed Week 6 for twelve days. Nothing to fix now; 202's guard expected Week 6 and it was.
 
