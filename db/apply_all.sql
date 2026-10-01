@@ -17003,3 +17003,832 @@ begin
   if n <> 0 then raise exception 'a phone number appeared (%); none should have been touched', n; end if;
 end $$;
 commit;
+
+-- ===
+-- db/migrations/215_senior_night_locker_decorating.sql
+-- ===
+
+-- 215_senior_night_locker_decorating.sql
+--
+-- Senior Night locker decorating, as a volunteer event on /events. Jeremy
+-- 2026-09-23: "add this as an event for people to sign up for to help", with
+-- Shannon's SignUpGenius:
+--   https://www.signupgenius.com/go/60B084CA4AC2DA6FB6-66102591-senior#/
+-- (the 9/22 minutes: "locker decorating Thu Oct 8 via Shannon's SignUpGenius
+-- (Jeremy posts)"). This is that post.
+--
+-- ── FACTS, ALL FROM THE SIGNUPGENIUS PAGE (og:description read 9/23 10:30 AM) ──
+--   * Title "Senior Night - Decorate Locker Room", author McNeil Football Booster Club.
+--   * Thursday, October 8, 2026, 6:00 to 8:00 pm, "during and after the Freshman game".
+--     Checked against `games`: the freshman Green team hosts Stony Point at
+--     Maverick Stadium at 6:30 that night (JV is away at Stony Point), so the
+--     window and the venue agree with the schedule. No other `events` row on Oct 8.
+--   * McNeil High School Varsity Locker Room; enter near the locker rooms on the
+--     east side of the building, signs will direct.
+--   * Senior parents may bring personalised decorations (collages, notes).
+--   * "Please comment on your SignUp with your player's name and number."
+--   * Supplies or money donations also welcome (Venmo / PayPal handles on the page).
+--
+-- ── SHAPE ──
+-- Same columns as the other McNeil-campus events (parent-athlete-meeting-2026,
+-- mavs-and-moms-senior-photo-day-2026): venue_id = the existing "McNeil High
+-- School" venue row, `location` = the room. `signup_url` is the SignUpGenius
+-- link exactly as Jeremy pasted it; `signup_label` left null so the button
+-- reads the default "Sign Up ->", which is accurate here (unlike 211).
+--
+-- ⚠️ THE VENMO / PAYPAL HANDLES ARE NOT RESTATED IN THE DESCRIPTION, following
+-- 059 (pool party): payment handles live on the signup page, one place to fix.
+-- The description says donations are welcome and points at the signup.
+--
+-- ⚠️ QUESTIONS GO TO boosters@mcneilmavericks.org, the club address this site
+-- publishes everywhere, not the gmail the SignUpGenius names. Both reach the
+-- booster inbox; the site does not print the gmail anywhere and should not
+-- start here.
+--
+-- Slug carries the date and will not be renamed if the date moves (194's rule).
+-- DB-ONLY, NO DEPLOY. Rollback: 215_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events where slug = 'senior-night-locker-decorating-2026-10-08';
+  if n <> 0 then raise exception 'event already exists (found %)', n; end if;
+
+  select count(*) into n from events where starts_at::date = date '2026-10-08';
+  if n <> 0 then raise exception '% events already sit on Oct 8', n; end if;
+
+  select count(*) into n from venues where name = 'McNeil High School';
+  if n <> 1 then raise exception 'expected exactly one McNeil High School venue, found %', n; end if;
+
+  -- The freshman game the window is built around.
+  select count(*) into n from games
+   where team_level = 'freshman' and home_or_away = 'home'
+     and game_date = timestamptz '2026-10-08 18:30 America/Chicago';
+  if n < 1 then raise exception 'no 6:30 home freshman game on Oct 8 in games; check before publishing "during the freshman game"'; end if;
+end $$;
+
+insert into events (title, slug, description, starts_at, ends_at, location, venue_id, signup_url, status)
+select
+  'Senior Night: Decorate the Varsity Locker Room',
+  'senior-night-locker-decorating-2026-10-08',
+  'Help make Senior Night special. We will decorate the senior players'' lockers in the varsity locker room ahead of the Senior Night varsity game on Friday, October 9. Thursday, October 8, 6:00 to 8:00 PM, during and after the freshman game. McNeil High School varsity locker room: enter near the locker rooms on the east side of the building, and signs will direct you. Parents of seniors, feel free to bring personalized decorations for your player, like picture collages and handwritten notes. When you sign up, please add a comment with your player''s name and number so we know who is coming. Cannot make it? Supplies and donations toward decorations are welcome too, details on the signup page. Questions: boosters@mcneilmavericks.org.',
+  timestamptz '2026-10-08 18:00 America/Chicago',
+  timestamptz '2026-10-08 20:00 America/Chicago',
+  'McNeil High School Varsity Locker Room',
+  v.id,
+  'https://www.signupgenius.com/go/60B084CA4AC2DA6FB6-66102591-senior#/',
+  'published'
+from venues v where v.name = 'McNeil High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events e join venues v on v.id = e.venue_id
+   where e.slug = 'senior-night-locker-decorating-2026-10-08'
+     and e.status = 'published'
+     and v.name = 'McNeil High School'
+     and e.signup_url like 'https://www.signupgenius.com/go/60B084CA4AC2DA6FB6-66102591-senior%'
+     and e.signup_label is null
+     and extract(hour from e.starts_at at time zone 'America/Chicago') = 18
+     and extract(hour from e.ends_at   at time zone 'America/Chicago') = 20
+     and e.description like '%Thursday, October 8, 6:00 to 8:00 PM%'
+     and e.description like '%player''s name and number%'
+     and e.description not like '%Venmo%' and e.description not like '%gmail%'
+     and position(chr(8212) in e.description) = 0;
+  if n <> 1 then raise exception 'locker decorating event not as intended (found %)', n; end if;
+
+  select count(*) into n from events where starts_at::date = date '2026-10-08';
+  if n <> 1 then raise exception 'expected exactly 1 event on Oct 8, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/216_broadcasts_week8_lake_travis.sql
+-- ===
+
+-- 216_broadcasts_week8_lake_travis.sql
+--
+-- Week 8 broadcast links: varsity HOME vs Lake Travis at KRAC, Thu Sep 24,
+-- 7:00 p.m. From Jeremy 2026-09-23, the day before the game:
+--
+--   VYPE     https://www.vype.com/7pm-football-mcneil-vs-lake-travis
+--   YouTube  https://youtube.com/live/uMgcaGseSxU
+--
+-- ── BOTH VERIFIED BEFORE WRITING, NOT ASSUMED ──
+-- Each returned 200 under a desktop user agent and each is titled for THIS
+-- game: the VYPE page's og:title and the YouTube page's <title> both read
+-- "7PM - Football: McNeil vs. Lake Travis". Standing procedure since 180; it is
+-- the whole defence against a link pasted from the wrong week. (This VYPE URL
+-- has no numeric suffix, unlike Lake Belton and Vista Ridge; Rouse had none
+-- either. Taken as pasted.)
+--
+-- ── BOTH ROWS ARE keep_after_final = false. NOT A JUDGMENT CALL. ──
+-- 180 retired the "YouTube persists as a replay" policy (Bowie's coach asked
+-- for film to come down; Jeremy: links are "only good for about 24 hours after
+-- the game"). DO NOT SET keep_after_final = true. Asserted below.
+--
+-- ── SHAPE, COPIED FROM 195/198 ──
+-- YouTube is sort_order 1 (it is the thing that actually plays), VYPE is 2.
+-- One-word labels. The game is selected by identity (year + level +
+-- designation + one-day window + opponent), never by a pasted uuid.
+-- `on conflict (game_id, url) do nothing` makes a re-run inert, and the guards
+-- count rows so an inert re-run cannot pass as an insert.
+--
+-- ⚠️ `keep_after_final` only fires once the game is marked `final`. Enter the
+-- Lake Travis result Thursday night or Friday, or deactivate these rows by hand
+-- (the Rouse links stayed up three days because the result sat unentered, 196).
+--
+-- ⚠️ VYPE IS VARSITY ONLY. The JV and freshman Lake Travis games (Wed Sep 23)
+-- get nothing here.
+--
+-- ⚠️ NOT THE NEWSLETTER, NOT THE ICS (Jeremy 2026-08-26 and 2026-09-01). The
+-- 9/24 reminder issue drafted today does not carry these, on purpose.
+--
+-- Row counts: before this file, 2026-27 varsity carries 8 broadcast rows, 6
+-- active (Bowie pair inactive since 180; Vista Ridge pair still active in the
+-- table, hidden on the page because that game is final). After: 10 and 8.
+--
+-- DB-ONLY, NO DEPLOY. Schedule pages are ISR'd; allow a minute before verifying.
+--
+-- Rollback: 216_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-09-24 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-09-25 00:00 America/Chicago'
+     and g.opponent = 'Lake Travis High School';
+  if n <> 1 then raise exception 'expected exactly 1 varsity Lake Travis game on Sep 24, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 8 then raise exception 'expected 8 varsity broadcast rows before 216, found % (already applied?)', n; end if;
+end $$;
+
+insert into game_broadcasts (game_id, label, url, sort_order, keep_after_final, active)
+select g.id, v.label, v.url, v.sort_order, false, true
+from games g
+cross join (values
+    ('YouTube', 'https://youtube.com/live/uMgcaGseSxU', 1),
+    ('VYPE',    'https://www.vype.com/7pm-football-mcneil-vs-lake-travis', 2)
+  ) as v(label, url, sort_order)
+where g.year = '2026-27'
+  and g.team_level = 'varsity'
+  and g.team_designation is null
+  and g.game_date >= timestamptz '2026-09-24 00:00 America/Chicago'
+  and g.game_date <  timestamptz '2026-09-25 00:00 America/Chicago'
+  and g.opponent = 'Lake Travis High School'
+on conflict (game_id, url) do nothing;
+
+do $$
+declare n int; gid uuid;
+begin
+  select g.id into gid from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-09-24 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-09-25 00:00 America/Chicago'
+     and g.opponent = 'Lake Travis High School';
+
+  select count(*) into n from game_broadcasts where game_id = gid and active;
+  if n <> 2 then raise exception 'expected 2 active broadcast rows on the Lake Travis game, found %', n; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'YouTube'
+     and url = 'https://youtube.com/live/uMgcaGseSxU'
+     and sort_order = 1 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the YouTube row is wrong or missing'; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'VYPE'
+     and url = 'https://www.vype.com/7pm-football-mcneil-vs-lake-travis'
+     and sort_order = 2 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the VYPE row is wrong or missing'; end if;
+
+  -- 180's invariant: no 2026-27 broadcast link outlives the final whistle.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and gb.keep_after_final;
+  if n <> 0 then raise exception '% 2026-27 row(s) have keep_after_final = true', n; end if;
+
+  -- Nothing on sub-varsity games, which VYPE does not carry.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level <> 'varsity';
+  if n <> 0 then raise exception 'broadcast links attached to % non-varsity game(s)', n; end if;
+
+  -- Five varsity weeks, two rows each (Bowie pair inactive since 180, never deleted).
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 10 then raise exception 'expected 10 broadcast rows across 2026-27 varsity, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity' and gb.active;
+  if n <> 8 then raise exception 'expected 8 ACTIVE varsity broadcast rows, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/217_varsity_week8_result.sql
+-- ===
+
+-- 217_varsity_week8_result.sql
+--
+-- Game 5, Thu 24 Sep 2026, HOME vs Lake Travis (KRAC):
+--
+--   Varsity vs Lake Travis ....... LOST 6-59 (final)
+--
+-- Jeremy 2026-09-25: "mcneil lost last night 6-59 (varsity)".
+--
+-- ⚠️ SCORE ORDER: our_score FIRST, same as 170/174/182/196/204. Jeremy reported
+-- it ours-first (6-59), so our_score = 6, their_score = 59, and `ResultCell`
+-- renders "L 6-59".
+--
+-- ── THIS IS WHAT TAKES THE BROADCAST LINKS DOWN (196's lesson) ──
+-- 216 inserted the Lake Travis VYPE and YouTube rows with keep_after_final =
+-- false. Marking the game final IS the takedown. The verify block asserts
+-- neither row would survive.
+--
+-- ⚠️ THE WEDNESDAY SEP 23 JV AND FRESHMAN GAMES ARE STILL 'scheduled' AND THIS
+-- DOES NOT TOUCH THEM. No result was supplied. Four weeks of sub-varsity results
+-- now outstanding (Sep 3, 10, 17, 23). The post-hoc guard stays scoped to varsity.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/games/* reads at request time.
+--
+-- Rollback: 217_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-24 19:00 America/Chicago'
+     and opponent = 'Lake Travis High School'
+     and result_status = 'scheduled';
+  if n <> 1 then
+    raise exception 'varsity Sep 24 vs Lake Travis not found as scheduled (found %)', n;
+  end if;
+end $$;
+
+update games
+   set result_status = 'final', our_score = 6, their_score = 59, updated_at = now()
+ where year = '2026-27' and team_level = 'varsity'
+   and game_date = timestamptz '2026-09-24 19:00 America/Chicago'
+   and opponent = 'Lake Travis High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-09-24 19:00 America/Chicago'
+     and result_status = 'final' and our_score = 6 and their_score = 59;
+  if n <> 1 then raise exception 'varsity result did not take'; end if;
+
+  select count(*) into n from game_broadcasts b
+    join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-09-24 19:00 America/Chicago'
+     and b.keep_after_final;
+  if n <> 0 then raise exception '% Lake Travis broadcast row(s) would survive the final', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and result_status = 'scheduled' and game_date < now()
+     and coalesce(notes, '') <> 'Scrimmage';
+  if n <> 0 then
+    raise exception '% past varsity regular-season game(s) still marked scheduled', n;
+  end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/218_week9_practice_schedule.sql
+-- ===
+
+-- 218_week9_practice_schedule.sql
+--
+-- Week 9 (Sep 28 - Oct 2) practice times, from Coach's published MAV FOOTBALL
+-- WEEKLY SCHEDULE for September 28-October 2 2026 ("ONE MAV NATION"). Jeremy
+-- sent a photo of the doc on Coach's screen 2026-09-28. Replaces the Week 8
+-- block in all three bodies.
+--
+-- Conventions from 153/172/181/202 kept without restating: Period 2/6 glossed
+-- once at the top; whole body replaced, guarded on the body still being Week 8
+-- so a re-run is a no-op; games live in `games` and only the closing block
+-- points at them.
+--
+-- ── WHAT CHANGED FROM WEEK 8 ──
+-- 1. Normal game week again: JV and freshmen THURSDAY Oct 1, varsity FRIDAY
+--    Oct 2, so the "games are a day early" warning is gone.
+-- 2. 🚨 MONDAY IS THE LAST DAY BEFORE ELIGIBILITY REPORTS. Coach prints it in
+--    caps, with flex out for tutoring / grades and weights at 10:45 only for
+--    athletes not in tutoring. Carried as a callout at the top and on Monday.
+-- 3. Varsity/JV mornings: Mon 5:40 / 6:00 meetings / 6:00-8:00 JV on the field;
+--    Tue 5:40 / 6:00; Wed 6:15 / 6:30. No morning practice Thu or Fri.
+-- 4. Freshmen: 8:00 / 8:25 / 9:45 breakfast Mon-Thu, plus Monday 4:30-5:15 p.m.
+--    weight room after school; Friday 8:30 / 8:45 weights and film / 9:45.
+-- 5. Varsity team dinner Thu Oct 1 6:00-7:30 p.m. (lib/team-dinners.ts), one
+--    line on Thursday in the varsity/JV body, same as 202.
+-- 6. Closing pointer carries the kickoffs as they stand after 219 (JV 5:30 per
+--    Coach's doc, was 6:00 in `games`); 219 is applied with this one.
+-- 7. Coach writes "Kelley Reaves Athletic Complex"; the venue row's spelling
+--    (Kelly Reeves) is kept.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/practice/* reads at request time.
+--
+-- Rollback: 218_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 8 — September 21–25%';
+  if n <> 3 then
+    raise exception 'expected 3 bodies still on Week 8, found % (already updated?)', n;
+  end if;
+end $$;
+
+-- Varsity and JV practice together and share one set of times.
+update practice_schedules
+set body = $body$Athletes must arrive on time and be dressed, prepared, and ready to begin at the listed start time. Varsity and JV practice together. **Be on time to class.**
+
+🚨 **Monday Sep 28 is the last day before eligibility reports.** Flex out is for tutoring / grades that day.
+
+## Week 9 — September 28–October 2
+
+Times below are Coach's published MAV Football Weekly Schedule for September 28–October 2.
+
+**Period 2/6** is the daily athletics period. McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next — same time slot either way.
+
+**Flex out** — Coach's note: athletes assigned to flex must report at **10:45 a.m.**
+
+### Monday, Sep 28 — last day before eligibility reports
+- **5:40 a.m.** — Arrival
+- **6:00 a.m.** — Meetings
+- **6:00–8:00 a.m.** — JV on the field
+- Period 2/6
+- Flex out for tutoring / grades
+- **10:45 a.m.** — If not in tutoring: weights
+- Meetings after weights
+
+### Tuesday, Sep 29
+- **5:40 a.m.** — Arrival
+- **6:00 a.m.** — On the field
+- Film
+- Period 2/6
+- **10:45 a.m.** — Flex out
+- Stretch and film
+
+### Wednesday, Sep 30
+- **6:15 a.m.** — Arrival
+- **6:30 a.m.** — Varsity & JV on the field
+- Period 2/6
+- **10:45 a.m.** — Flex out and report to the weight room
+- Weights during the period
+
+### Thursday, Oct 1 — JV game day
+**No morning practice.**
+- Period 2/6
+- **10:45 a.m.** — Flex out
+- **Varsity team dinner** — 6:00–7:30 p.m. on campus, the night before the varsity game (see Team Dinners)
+
+### Friday, Oct 2 — varsity game day
+**No morning practice.**
+- Period 2/6
+- **10:45 a.m.** — Flex out
+
+### Saturday, Oct 3 – Sunday, Oct 4
+Not on Coach's schedule this week.
+
+## After Week 9
+
+Week 10 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for the Cedar Ridge game — JV Thursday Oct 1 at 5:30 p.m. at Maverick Stadium (home), freshmen Thursday Oct 1 at 6:30 p.m. at Cedar Ridge, varsity Friday Oct 2 at 7:00 p.m. at Kelly Reeves Athletic Complex.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level in ('varsity','jv');
+
+update practice_schedules
+set body = $body$Athletes must arrive on time and be dressed, prepared, and ready to begin at the listed start time. **Be on time to class.**
+
+⚠️ **Extra session Monday:** weight room after school, **4:30–5:15 p.m.**
+
+## Week 9 — September 28–October 2
+
+Times below are Coach's published MAV Football Weekly Schedule for September 28–October 2.
+
+After practice and breakfast, get to your **2nd/6th period** — McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next.
+
+### Monday, Sep 28
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field / practice
+- **9:45 a.m.** — Breakfast
+- **4:30–5:15 p.m.** — Weight room after school
+
+### Tuesday, Sep 29
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field / practice
+- **9:45 a.m.** — Breakfast
+
+### Wednesday, Sep 30
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field / practice
+- **9:45 a.m.** — Breakfast
+
+### Thursday, Oct 1 — game day
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field / practice
+- **9:45 a.m.** — Breakfast
+
+### Friday, Oct 2
+- **8:30 a.m.** — Arrival
+- **8:45 a.m.** — Weights and film
+- **9:45 a.m.** — Breakfast
+
+### Saturday, Oct 3 – Sunday, Oct 4
+Not on Coach's schedule this week.
+
+## After Week 9
+
+Week 10 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for the Cedar Ridge game — freshmen Thursday Oct 1 at 6:30 p.m. at Cedar Ridge, JV Thursday Oct 1 at 5:30 p.m. at Maverick Stadium (home), varsity Friday Oct 2 at 7:00 p.m. at Kelly Reeves Athletic Complex.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 9 — September 28–October 2%';
+  if n <> 3 then raise exception 'expected 3 Week 9 bodies, found %', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and (body like '%Week 8 —%' or body like '%Lake Travis%');
+  if n <> 0 then raise exception '% bodies still carry Week 8 text', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level in ('varsity','jv')
+     and body like '%eligibility reports%'
+     and body like '%**6:00–8:00 a.m.** — JV on the field%'
+     and body like '%**6:30 a.m.** — Varsity & JV on the field%'
+     and body like '%Varsity team dinner%'
+     and body not like '%4:30–5:15%';
+  if n <> 2 then raise exception 'varsity/jv Week 9 body not as intended on both rows (%)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%**4:30–5:15 p.m.** — Weight room after school%'
+     and body like '%**8:45 a.m.** — Weights and film%'
+     and body not like '%5:40 a.m.%'
+     and body not like '%team dinner%';
+  if n <> 1 then raise exception 'freshman Week 9 body not as intended (%)', n; end if;
+
+  -- Games stay out of the day sections.
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and regexp_replace(body, '## After Week 9.*$', '', 's') ~ '(5:30|7:00) p\.m\.';
+  if n <> 0 then raise exception 'a kickoff leaked into a day section'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/219_week9_jv_kickoff_530.sql
+-- ===
+
+-- 219_week9_jv_kickoff_530.sql
+--
+-- JV vs Cedar Ridge, Thu Oct 1, HOME at Maverick Stadium: kickoff 6:00 -> 5:30 p.m.
+--
+-- Source: Coach's MAV FOOTBALL WEEKLY SCHEDULE for Sep 28-Oct 2 (photo from
+-- Jeremy 2026-09-28): "JV GAME / 5:30 p.m. Kickoff / McNeil High School".
+-- `games` had 6:00 from the season seed. Coach's weekly doc outranks the seed
+-- (120's rule), and earlier is the direction that strands a family.
+--
+-- Checked against the same doc and left alone: freshman Green at Cedar Ridge
+-- 6:30 p.m. (matches), varsity at KRAC Fri Oct 2 7:00 p.m. (matches; Coach
+-- writes "Kelley Reaves", venue row spelling kept). Hidden Blue row untouched.
+-- /events and the ICS derive from `games`, so they follow.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 219_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv'
+     and game_date = timestamptz '2026-10-01 18:00 America/Chicago'
+     and opponent = 'Cedar Ridge High School' and result_status = 'scheduled';
+  if n <> 1 then raise exception 'JV Oct 1 not found at 6:00 (found %, already applied?)', n; end if;
+end $$;
+
+update games
+   set game_date = timestamptz '2026-10-01 17:30 America/Chicago', updated_at = now()
+ where year = '2026-27' and team_level = 'jv'
+   and game_date = timestamptz '2026-10-01 18:00 America/Chicago'
+   and opponent = 'Cedar Ridge High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'jv'
+     and g.game_date = timestamptz '2026-10-01 17:30 America/Chicago'
+     and g.opponent = 'Cedar Ridge High School' and v.name = 'Maverick Stadium'
+     and g.home_or_away = 'home';
+  if n <> 1 then raise exception 'JV Oct 1 not at 5:30 home at Maverick Stadium (%)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
+     and game_date = timestamptz '2026-10-01 18:30 America/Chicago';
+  if n <> 1 then raise exception 'freshman Green Oct 1 6:30 disturbed'; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-10-02 19:00 America/Chicago';
+  if n <> 1 then raise exception 'varsity Oct 2 7:00 disturbed'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/220_schedule_pdf_r4_oct1.sql
+-- ===
+
+-- 220_schedule_pdf_r4_oct1.sql
+--
+-- Print View schedule PDF r3 -> r4. r4 is patch-schedule-pdf.py re-run from the
+-- school's original with two more cells (21 total), matching 219 and Coach's
+-- Week 9 graphic: JV Oct. 1 6:00 -> 5:30, freshman Oct. 1 5:00/6:30 -> 6:30.
+-- New filename per 158's 31-day cache rule; r3 stays in the bucket for rollback.
+-- Guarded on `games` agreeing (178's pattern). Rollback: 220_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27-r3.pdf';
+  if n <> 4 then raise exception 'expected 4 roster rows on r3, found %', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv'
+     and game_date = timestamptz '2026-10-01 17:30 America/Chicago';
+  if n <> 1 then raise exception 'JV Oct 1 is not 5:30 in games; run 219 first'; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
+     and game_date = timestamptz '2026-10-01 18:30 America/Chicago';
+  if n <> 1 then raise exception 'freshman Green Oct 1 is not 6:30 in games'; end if;
+end $$;
+
+update rosters
+   set schedule_pdf_storage_path = 'documents/schedules/2026-27-r4.pdf', updated_at = now()
+ where year = '2026-27';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from rosters
+   where year = '2026-27' and schedule_pdf_storage_path = 'documents/schedules/2026-27-r4.pdf';
+  if n <> 4 then raise exception 'expected 4 rows on r4, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/221_whatakick_challenge_oct1.sql
+-- ===
+
+-- 221_whatakick_challenge_oct1.sql
+--
+-- Whataburger WhataKick Challenge at halftime of the JV game vs Cedar Ridge,
+-- Thu Oct 1, Maverick Stadium. From Kendra's 9/25 email (all approvals in).
+--
+-- ⚠️ KICKOFF IS 5:30, NOT KENDRA'S 6:00. Her email says 6:00; Coach's Week 9
+-- graphic says 5:30 (migration 219). Jeremy 2026-09-28: "go with 5:30 time."
+-- Her signup-table time (5:25) is kept as she wrote it; it is her fact, not
+-- derived from kickoff. Entries close at the end of the first quarter.
+--
+-- Games have no detail page, so Kendra's "add a note to the game event page"
+-- becomes (a) this events row, the one shareable URL for the announcement email,
+-- and (b) a short `notes` on the JV game row, which renders under the row on
+-- /schedule/games/jv and appends to the game's calendar title.
+-- starts_at = kickoff; ends_at NULL (no end supplied, 197 precedent).
+-- Description is plain prose: the /events list card and ICS render it raw.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 221_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events where slug = 'whatakick-challenge-2026-10-01';
+  if n <> 0 then raise exception 'event already exists'; end if;
+
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'jv' and g.home_or_away = 'home'
+     and g.game_date = timestamptz '2026-10-01 17:30 America/Chicago'
+     and g.opponent = 'Cedar Ridge High School' and v.name = 'Maverick Stadium'
+     and g.notes is null;
+  if n <> 1 then raise exception 'JV Oct 1 not found at 5:30 home, Maverick Stadium, notes empty (%)', n; end if;
+end $$;
+
+insert into events (title, slug, description, starts_at, ends_at, location, venue_id, status)
+select
+  'Whataburger WhataKick Challenge at the JV Game',
+  'whatakick-challenge-2026-10-01',
+  'Halftime of the JV game vs Cedar Ridge will feature the Whataburger WhataKick Challenge! One student or fan will be selected at random to attempt a 30-yard field goal for a chance to win a $20 Whataburger gift card. Kickoff is 5:30 PM. Visit the signup table near the home entrance beginning at 5:25 PM and enter before the end of the first quarter. The McNeil Majestics and cheer team will lead a rally-towel entrance and crowd towel wave right before the kick. Whataburger rally towels and free-burger coupons will be available while supplies last. Bring the family and fill the stands!',
+  timestamptz '2026-10-01 17:30 America/Chicago',
+  null,
+  'Maverick Stadium',
+  v.id,
+  'published'
+from venues v where v.name = 'Maverick Stadium';
+
+update games
+   set notes = 'WhataKick Challenge at halftime', updated_at = now()
+ where year = '2026-27' and team_level = 'jv'
+   and game_date = timestamptz '2026-10-01 17:30 America/Chicago'
+   and opponent = 'Cedar Ridge High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events e join venues v on v.id = e.venue_id
+   where e.slug = 'whatakick-challenge-2026-10-01' and e.status = 'published'
+     and v.name = 'Maverick Stadium'
+     and extract(hour from e.starts_at at time zone 'America/Chicago') = 17
+     and extract(minute from e.starts_at at time zone 'America/Chicago') = 30
+     and e.description like '%Kickoff is 5:30 PM%'
+     and e.description not like '%6:00%'
+     and position(chr(8212) in e.description) = 0
+     and e.description not like '%http%';
+  if n <> 1 then raise exception 'WhataKick event not as intended (%)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv' and notes = 'WhataKick Challenge at halftime';
+  if n <> 1 then raise exception 'JV note not set on exactly one row (%)', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/222_whatakick_signup_455.sql
+-- ===
+
+-- 222_whatakick_signup_455.sql
+-- WhataKick signup table 5:25 -> 4:55 PM. Jeremy 2026-09-28: "move all times by
+-- 1/2 hour just like the game." Kendra's 5:25 was built around her 6:00 kickoff;
+-- kickoff is 5:30 (219), so every clock time shifts 30 minutes earlier. The only
+-- other clock time in the copy is kickoff itself, already 5:30.
+-- Rollback: 222_rollback.sql
+begin;
+do $$
+declare n int;
+begin
+  select count(*) into n from events
+   where slug = 'whatakick-challenge-2026-10-01' and description like '%beginning at 5:25 PM%';
+  if n <> 1 then raise exception 'expected the 5:25 description (found %, already applied?)', n; end if;
+end $$;
+update events
+   set description = replace(description, 'beginning at 5:25 PM', 'beginning at 4:55 PM'), updated_at = now()
+ where slug = 'whatakick-challenge-2026-10-01';
+do $$
+declare n int;
+begin
+  select count(*) into n from events
+   where slug = 'whatakick-challenge-2026-10-01'
+     and description like '%beginning at 4:55 PM%' and description not like '%5:25%'
+     and description like '%Kickoff is 5:30 PM%';
+  if n <> 1 then raise exception 'description not as intended'; end if;
+end $$;
+commit;
+
+-- ===
+-- db/migrations/223_broadcasts_week9_cedar_ridge.sql
+-- ===
+
+-- 223_broadcasts_week9_cedar_ridge.sql
+--
+-- Week 9 broadcast links: varsity at Cedar Ridge (Cedar Ridge home) at KRAC,
+-- Fri Oct 2, 7:00 p.m. From Jeremy 2026-10-01, the day before the game:
+--
+--   VYPE     https://www.vype.com/7pm-football-cedar-ridge-vs-mcneil-2677949441
+--   YouTube  https://youtube.com/live/hQwJ091W1A0
+--
+-- Both verified before writing: 200 under a desktop UA. VYPE og:title
+-- "7PM - Football: Cedar Ridge vs. McNeil"; YouTube <title> "7PM - Football:
+-- McNeil vs. Cedar Ridge". VYPE also broadcasts this game for Cedar Ridge, so
+-- its page offers two streams; the McNeil one is the McNeil Broadcast option.
+-- The site label stays one word ("VYPE"); the note is not carried.
+--
+-- Same shape and rules as 216: YouTube sort 1, VYPE sort 2, keep_after_final
+-- = false on both (180), game selected by identity, re-run inert. Enter the
+-- result Friday night/Saturday so the links retire.
+--
+-- Row counts: before, 2026-27 varsity carries 10 broadcast rows, 8 active.
+-- After: 12 and 10.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 223_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-10-02 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-10-03 00:00 America/Chicago'
+     and g.opponent = 'Cedar Ridge High School';
+  if n <> 1 then raise exception 'expected exactly 1 varsity Cedar Ridge game on Oct 2, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 10 then raise exception 'expected 10 varsity broadcast rows before 223, found % (already applied?)', n; end if;
+end $$;
+
+insert into game_broadcasts (game_id, label, url, sort_order, keep_after_final, active)
+select g.id, v.label, v.url, v.sort_order, false, true
+from games g
+cross join (values
+    ('YouTube', 'https://youtube.com/live/hQwJ091W1A0', 1),
+    ('VYPE',    'https://www.vype.com/7pm-football-cedar-ridge-vs-mcneil-2677949441', 2)
+  ) as v(label, url, sort_order)
+where g.year = '2026-27'
+  and g.team_level = 'varsity'
+  and g.team_designation is null
+  and g.game_date >= timestamptz '2026-10-02 00:00 America/Chicago'
+  and g.game_date <  timestamptz '2026-10-03 00:00 America/Chicago'
+  and g.opponent = 'Cedar Ridge High School'
+on conflict (game_id, url) do nothing;
+
+do $$
+declare n int; gid uuid;
+begin
+  select g.id into gid from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-10-02 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-10-03 00:00 America/Chicago'
+     and g.opponent = 'Cedar Ridge High School';
+
+  select count(*) into n from game_broadcasts where game_id = gid and active;
+  if n <> 2 then raise exception 'expected 2 active broadcast rows on the Cedar Ridge game, found %', n; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'YouTube'
+     and url = 'https://youtube.com/live/hQwJ091W1A0'
+     and sort_order = 1 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the YouTube row is wrong or missing'; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'VYPE'
+     and url = 'https://www.vype.com/7pm-football-cedar-ridge-vs-mcneil-2677949441'
+     and sort_order = 2 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the VYPE row is wrong or missing'; end if;
+
+  -- 180's invariant: no 2026-27 broadcast link outlives the final whistle.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and gb.keep_after_final;
+  if n <> 0 then raise exception '% 2026-27 row(s) have keep_after_final = true', n; end if;
+
+  -- Nothing on sub-varsity games, which VYPE does not carry.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level <> 'varsity';
+  if n <> 0 then raise exception 'broadcast links attached to % non-varsity game(s)', n; end if;
+
+  -- Six varsity weeks, two rows each (Bowie pair inactive since 180, never deleted).
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 12 then raise exception 'expected 12 broadcast rows across 2026-27 varsity, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity' and gb.active;
+  if n <> 10 then raise exception 'expected 10 ACTIVE varsity broadcast rows, found %', n; end if;
+end $$;
+
+commit;
