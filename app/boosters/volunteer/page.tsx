@@ -50,13 +50,18 @@ export const metadata = {
  * "normalize" these offsets to match.
  *
  * Source: Marcus Horton, the club's Q2 volunteer contact, 2026-08-16.
+ * Oct 10 end time 10:00 -> 10:30 and its note: Jeremy, 2026-10-08.
  */
-const Q2_SHIFTS: { startsAt: string; endsAt: string }[] = [
+const Q2_SHIFTS: { startsAt: string; endsAt: string; note?: string }[] = [
   { startsAt: "2026-08-22T17:00:00-05:00", endsAt: "2026-08-22T22:00:00-05:00" },
   { startsAt: "2026-09-05T17:00:00-05:00", endsAt: "2026-09-05T22:00:00-05:00" },
   { startsAt: "2026-09-09T17:00:00-05:00", endsAt: "2026-09-09T22:00:00-05:00" },
   { startsAt: "2026-09-26T17:00:00-05:00", endsAt: "2026-09-26T22:00:00-05:00" },
-  { startsAt: "2026-10-10T17:00:00-05:00", endsAt: "2026-10-10T22:00:00-05:00" },
+  {
+    startsAt: "2026-10-10T17:00:00-05:00",
+    endsAt: "2026-10-10T22:30:00-05:00",
+    note: "The band is out this Saturday, so this date could be worth $1,000 or more to the football program. We need volunteers.",
+  },
   { startsAt: "2026-10-17T17:00:00-05:00", endsAt: "2026-10-17T22:00:00-05:00" },
   { startsAt: "2026-10-28T17:00:00-05:00", endsAt: "2026-10-28T22:00:00-05:00" },
   { startsAt: "2026-11-07T15:30:00-06:00", endsAt: "2026-11-07T20:30:00-06:00" },
@@ -378,6 +383,11 @@ export default async function BoostersVolunteerPage() {
                       "h:mm a",
                     )}
                   </span>
+                  {shift.note && (
+                    <span className="basis-full text-base font-normal text-gray-800">
+                      {shift.note}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
