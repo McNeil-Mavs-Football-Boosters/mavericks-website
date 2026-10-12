@@ -18742,3 +18742,369 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/235_week11_practice_schedule.sql
+-- ===
+
+-- 235_week11_practice_schedule.sql
+--
+-- Week 11 (Oct 12-16, Westlake week) practice times, from Coach's published
+-- MAV FOOTBALL WEEKLY SCHEDULE for October 12-16 2026 ("ONE MAV NATION").
+-- Jeremy sent a photo 2026-10-12: "update this week's schedule". Replaces the
+-- Week 10 block and 229's provisional Monday block in all three bodies.
+--
+-- Conventions from 153/172/181/202/218/226 kept: Period 2/6 glossed once at
+-- the top; whole body replaced, guarded on the body still being Week 10 so a
+-- re-run is a no-op; games live in `games` and only the closing block points
+-- at them.
+--
+-- ── WHAT CHANGED FROM WEEK 10 / 229 ──
+-- 1. Monday Oct 12 (no school, PD day) is now Coach's full sheet, not his
+--    10/6 post: varsity/JV 6:45 arrival, 7:00 varsity meetings + JV on the
+--    field, 7:25 varsity on the field, 8:45 practice complete, 8:55-10:00
+--    varsity weights. Freshmen done at 11:00 (229 had 10:50 from the post;
+--    the sheet outranks the post).
+-- 2. Varsity/JV: Tue 6:15 / 6:30-8:10, Wed 6:45 / 7:00-8:10, Thu and Fri no
+--    morning practice; Period 2/6 10:45 a.m.-12:10 p.m. Tue stretch and film,
+--    Wed weights and film, Thu and Fri practice.
+-- 3. Freshmen: Tue/Thu 8:00 / 8:25 / 9:35; NO practice Wed; Fri 8:30 arrival,
+--    8:45 film and weights (no end time on the sheet, none invented).
+-- 4. Varsity team dinner Thu Oct 15 6:00-7:30 p.m. (lib/team-dinners.ts), one
+--    line on Thursday, same as 202/218/226.
+-- 5. The sheet's footer REMINDER line is cut off in the photo; not carried.
+--
+-- DB-ONLY, NO DEPLOY. /schedule/practice/* reads at request time.
+-- Rollback: 235_rollback.sql (captured from the live rows before apply).
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 10 — October 5–9%'
+     and body like '%Monday, Oct 12: no school%';
+  if n <> 3 then
+    raise exception 'expected 3 bodies still on Week 10 + 229, found % (already updated?)', n;
+  end if;
+end $$;
+
+-- Varsity and JV practice together and share one set of times.
+update practice_schedules
+set body = $body$Athletes must arrive on time and be dressed, prepared, and ready to begin at the listed start time. Varsity and JV practice together. **Be on time to class.**
+
+⚠️ **No school Monday Oct 12** (teacher professional development day). Practice is still on. **No morning practice Thursday or Friday** this week.
+
+## Week 11 — October 12–16
+
+Times below are Coach's published MAV Football Weekly Schedule for October 12–16.
+
+**Period 2/6** is the daily athletics period. McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next — same time slot either way.
+
+### Monday, Oct 12 — no school
+- **6:45 a.m.** — Varsity and JV arrival
+- **7:00 a.m.** — Varsity meetings; JV on the field
+- **7:25 a.m.** — Varsity on the field
+- **8:45 a.m.** — Practice complete
+- **8:55–10:00 a.m.** — Varsity weights
+
+### Tuesday, Oct 13
+- **6:15 a.m.** — Arrival
+- **6:30–8:10 a.m.** — Practice
+- **10:45 a.m.–12:10 p.m.** — Period 2/6: stretch and film
+
+### Wednesday, Oct 14
+- **6:45 a.m.** — Arrival
+- **7:00–8:10 a.m.** — Practice
+- **10:45 a.m.–12:10 p.m.** — Period 2/6: weights and film
+
+### Thursday, Oct 15 — JV game day
+**No morning practice.**
+- **10:45 a.m.–12:10 p.m.** — Period 2/6: practice
+- **Varsity team dinner** — 6:00–7:30 p.m. on campus, the night before the varsity game (see Team Dinners)
+
+### Friday, Oct 16 — varsity game day
+**No morning practice.**
+- **10:45 a.m.–12:10 p.m.** — Period 2/6: practice
+
+### Saturday, Oct 17 – Sunday, Oct 18
+Not on Coach's schedule this week.
+
+## After Week 11
+
+Week 12 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for the Westlake game — JV Thursday Oct 15 at 6:00 p.m. at Maverick Stadium (home), freshmen Thursday Oct 15 at 5:00 and 6:30 p.m. at Chaparral Stadium, varsity Friday Oct 16 at 7:00 p.m. at Chaparral Stadium.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level in ('varsity','jv');
+
+update practice_schedules
+set body = $body$Athletes must arrive on time and be dressed, prepared, and ready to begin at the listed start time. **Be on time to class.**
+
+⚠️ **No school Monday Oct 12** (teacher professional development day). Practice is still on, starting later than usual. **No freshman practice Wednesday.**
+
+## Week 11 — October 12–16
+
+Times below are Coach's published MAV Football Weekly Schedule for October 12–16.
+
+After practice, get to your **2nd/6th period** — McNeil runs an every-other-day block, so the same class is called 2nd period on one day and 6th on the next.
+
+### Monday, Oct 12 — no school
+- **9:15 a.m.** — Arrival
+- **9:30 a.m.** — On the field
+- **11:00 a.m.** — Practice complete
+
+### Tuesday, Oct 13
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:35 a.m.** — Practice complete
+
+### Wednesday, Oct 14
+**No freshman practice.**
+
+### Thursday, Oct 15 — game day
+- **8:00 a.m.** — Arrival
+- **8:25 a.m.** — On the field
+- **9:35 a.m.** — Practice complete
+
+### Friday, Oct 16
+- **8:30 a.m.** — Arrival
+- **8:45 a.m.** — Film and weights
+
+### Saturday, Oct 17 – Sunday, Oct 18
+Not on Coach's schedule this week.
+
+## After Week 11
+
+Week 12 times will be posted when Coach publishes that schedule.
+
+See the Games schedule for the Westlake game — freshmen Thursday Oct 15 at 5:00 and 6:30 p.m. at Chaparral Stadium, JV Thursday Oct 15 at 6:00 p.m. at Maverick Stadium (home), varsity Friday Oct 16 at 7:00 p.m. at Chaparral Stadium.$body$,
+    updated_at = now()
+where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## Week 11 — October 12–16%';
+  if n <> 3 then raise exception 'expected 3 Week 11 bodies, found %', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and (body like '%Week 10 —%' or body like '%Stony Point%'
+     or body like '%Senior Night%' or body like '%10:50%');
+  if n <> 0 then raise exception '% bodies still carry Week 10 / 229 text', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level in ('varsity','jv')
+     and body like '%**7:25 a.m.** — Varsity on the field%'
+     and body like '%**8:55–10:00 a.m.** — Varsity weights%'
+     and body like '%**6:30–8:10 a.m.** — Practice%'
+     and body like '%**7:00–8:10 a.m.** — Practice%'
+     and body like '%Varsity team dinner%';
+  if n <> 2 then raise exception 'varsity/jv Week 11 body not as intended on both rows (%)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%**11:00 a.m.** — Practice complete%'
+     and body like '%**No freshman practice.**%'
+     and body like '%**8:45 a.m.** — Film and weights%'
+     and body not like '%team dinner%';
+  if n <> 1 then raise exception 'freshman Week 11 body not as intended (%)', n; end if;
+
+  -- Games in the closing block must agree with `games`.
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.opponent = 'Westlake High School'
+     and ((g.team_level = 'jv' and g.game_date = timestamptz '2026-10-15 18:00 America/Chicago' and v.name = 'Maverick Stadium')
+       or (g.team_level = 'freshman' and g.game_date in (timestamptz '2026-10-15 17:00 America/Chicago', timestamptz '2026-10-15 18:30 America/Chicago') and v.name = 'Chaparral Stadium')
+       or (g.team_level = 'varsity' and g.game_date = timestamptz '2026-10-16 19:00 America/Chicago' and v.name = 'Chaparral Stadium'));
+  if n <> 4 then raise exception 'Westlake games disagree with the closing block (%)', n; end if;
+
+  -- Games stay out of the day sections.
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and regexp_replace(body, '## After Week 11.*$', '', 's') ~ '(5:00|6:30|7:00) p\.m\.';
+  if n <> 0 then raise exception 'a kickoff leaked into a day section'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/236_homecoming_tunnel_stampede_2026.sql
+-- ===
+
+-- 236_homecoming_tunnel_stampede_2026.sql
+--
+-- 2026 McNeil Homecoming Tunnel Stampede, Fri Oct 23, KRAC, before the varsity
+-- Homecoming game vs Round Rock (7:00). Jeremy 2026-10-12: "add the Homecoming
+-- Tunnel Stampede to the events tab... The event is live on Eventbrite.
+-- Tinyurl.com/2026TunnelStampede".
+--
+-- Facts read from the Eventbrite page itself (organizer: McNeil Mavericks
+-- Football Booster Club), not retyped from a flyer:
+--   6:00-6:30 participant arrival + check-in at the HOME side ticket booth
+--     (t-shirt + wristband matched to a parent's band)
+--   6:30-6:40 JV players group participants by grade and line them up
+--   6:40      Tunnel Stampede
+--   6:45      trophy to the school with the most registered students; parents
+--             collect at the home ticket booth end of the field
+--   Eventbrite's own window is 6:00-7:30 PM, used for starts_at / ends_at.
+--   Registration includes the participant's t-shirt and game ticket, NOT
+--   parent tickets. A child who wants only the shirt still registers.
+--
+-- ⚠️ signup_url is the DIRECT Eventbrite URL, not the tinyurl. The tinyurl
+-- redirects through a viglink affiliate tracker before reaching Eventbrite;
+-- the site should not route parents through that hop. Share-tracking query
+-- params (aff/utm) dropped. The tinyurl stays fine for flyers and email.
+--
+-- No price stated: Eventbrite shows it at checkout and owns any change.
+-- Description is plain prose, no URL (list card + ICS render it raw, 150/221).
+-- games.notes on the varsity Oct 23 row already says 'Homecoming'; untouched.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 236_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events where slug = 'homecoming-tunnel-stampede-2026';
+  if n <> 0 then raise exception 'event already exists'; end if;
+
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'varsity' and g.home_or_away = 'home'
+     and g.game_date = timestamptz '2026-10-23 19:00 America/Chicago'
+     and g.opponent = 'Round Rock High School' and g.notes = 'Homecoming'
+     and v.name = 'Kelly Reeves Athletic Complex';
+  if n <> 1 then raise exception 'Homecoming game not found as expected (%)', n; end if;
+end $$;
+
+insert into events (title, slug, description, starts_at, ends_at, location, venue_id,
+                    signup_url, signup_label, status)
+select
+  'Homecoming Tunnel Stampede',
+  'homecoming-tunnel-stampede-2026',
+  'Calling all future Mavericks! Elementary and middle school students who will attend McNeil High School are invited to run out of the tunnel with the team to kick off the Homecoming game vs Round Rock. The school with the most students registered takes home the Homecoming Tunnel Stampede trophy and bragging rights for the year. Participants arrive at 6:00 PM at the HOME side ticket booth to check in and pick up their Tunnel Stampede t-shirt and a wristband. At 6:30 PM JV players group them by grade and walk them to the tunnel, and the Stampede runs at 6:40 PM. Parents drop off and sit in the Tunnel Stampede bleachers on the HOME side, then meet their student at the home ticket booth end of the field after the trophy presentation, where booster club members match wristbands. Registration includes the participant''s t-shirt and a game ticket. Parent game tickets are NOT included; buy them in advance from Round Rock ISD Athletics. Every child who wants a t-shirt needs to register, even if they do not plan to run.',
+  timestamptz '2026-10-23 18:00 America/Chicago',
+  timestamptz '2026-10-23 19:30 America/Chicago',
+  'Kelly Reeves Athletic Complex (home side)',
+  v.id,
+  'https://www.eventbrite.com/e/2026-mcneil-homecoming-tunnel-stampede-tickets-2003268329500',
+  'Register on Eventbrite',
+  'published'
+from venues v where v.name = 'Kelly Reeves Athletic Complex';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from events e join venues v on v.id = e.venue_id
+   where e.slug = 'homecoming-tunnel-stampede-2026' and e.status = 'published'
+     and v.name = 'Kelly Reeves Athletic Complex'
+     and e.starts_at = timestamptz '2026-10-23 18:00 America/Chicago'
+     and e.ends_at   = timestamptz '2026-10-23 19:30 America/Chicago'
+     and e.signup_url like 'https://www.eventbrite.com/e/%-2003268329500'
+     and e.signup_url not like '%?%'
+     and e.description like '%6:40 PM%'
+     and e.description like '%Parent game tickets are NOT included%'
+     and position(chr(8212) in e.description) = 0
+     and e.description not like '%http%';
+  if n <> 1 then raise exception 'Tunnel Stampede event not as intended (%)', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/237_week11_freshman_pointer_fix.sql
+-- ===
+
+-- 237_week11_freshman_pointer_fix.sql
+--
+-- 235's closing pointer said "freshmen Thursday Oct 15 at 5:00 and 6:30 p.m."
+-- That read BOTH freshman `games` rows, but there is no Blue team this season
+-- (freshman_has_blue = false; the 5:00 row is the hidden Blue row). Also, the
+-- photo of Coach's Week 11 sheet is cut off before any game times, so the
+-- freshman kickoff is NOT confirmed by his graphic (155's rule). The pointer now
+-- names the place only and defers the time to the Games schedule.
+-- JV 6:00 home and varsity 7:00 at Chaparral are unchanged (they match `games`
+-- and are not per-week freshman slots).
+-- DB-ONLY, NO DEPLOY. Rollback: 237_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%freshmen Thursday Oct 15 at 5:00 and 6:30 p.m. at Chaparral Stadium%';
+  if n <> 3 then raise exception 'expected 3 bodies with the bad pointer, found %', n; end if;
+end $$;
+
+update practice_schedules
+   set body = replace(body,
+     'freshmen Thursday Oct 15 at 5:00 and 6:30 p.m. at Chaparral Stadium',
+     'freshmen Thursday Oct 15 at Chaparral Stadium (kickoff time on the Games schedule)'),
+       updated_at = now()
+ where year = '2026-27';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and (body like '%5:00 and 6:30%' or body not like '%Oct 15 at Chaparral Stadium (kickoff time on the Games schedule)%');
+  if n <> 0 then raise exception '% bodies not fixed', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/238_varsity_senior_night_result.sql
+-- ===
+
+-- 238_varsity_senior_night_result.sql
+--
+-- Senior Night, Fri 9 Oct 2026, varsity HOME vs Stony Point at KRAC:
+--
+--   Varsity vs Stony Point ....... LOST 39-57 (final)
+--
+-- Jeremy 2026-10-12: "mcneil lost again. 57-39". Theirs-first as reported;
+-- our_score FIRST as always: our_score = 39, their_score = 57, renders L 39-57.
+--
+-- Marking it final retires the 234 Stony Point VYPE/YouTube rows
+-- (keep_after_final = false, asserted). Thu Oct 8 JV and freshman results not
+-- supplied and stay 'scheduled' (six weeks of sub-varsity results outstanding).
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 238_rollback.sql
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-10-09 19:00 America/Chicago'
+     and opponent = 'Stony Point High School' and result_status = 'scheduled';
+  if n <> 1 then raise exception 'varsity Oct 9 vs Stony Point not found as scheduled (%)', n; end if;
+end $$;
+
+update games
+   set result_status = 'final', our_score = 39, their_score = 57, updated_at = now()
+ where year = '2026-27' and team_level = 'varsity'
+   and game_date = timestamptz '2026-10-09 19:00 America/Chicago'
+   and opponent = 'Stony Point High School';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity'
+     and game_date = timestamptz '2026-10-09 19:00 America/Chicago'
+     and result_status = 'final' and our_score = 39 and their_score = 57;
+  if n <> 1 then raise exception 'varsity result did not take'; end if;
+
+  select count(*) into n from game_broadcasts b join games g on g.id = b.game_id
+   where g.game_date = timestamptz '2026-10-09 19:00 America/Chicago' and b.keep_after_final;
+  if n <> 0 then raise exception '% Stony Point broadcast row(s) would survive the final', n; end if;
+end $$;
+
+commit;
