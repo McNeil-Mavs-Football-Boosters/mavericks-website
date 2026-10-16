@@ -19423,3 +19423,335 @@ begin
 end $$;
 
 commit;
+
+-- ===
+-- db/migrations/246_westlake_week_freshman_6pm_jv_cancelled.sql
+-- ===
+
+-- 246_westlake_week_freshman_6pm_jv_cancelled.sql
+--
+-- Westlake week, Thu Oct 15. Jeremy 2026-10-14: "Freshman game is moved to
+-- 6pm and JV game is cancelled." Confirmed "for this week against Westlake".
+-- Source for both changes: Coach (Jeremy 2026-10-14, "Source is coach on both").
+--
+--   Freshman Green at Westlake, Chaparral Stadium ... 6:30 -> 6:00 p.m.
+--   JV vs Westlake, Maverick Stadium (home) ......... CANCELLED
+--
+-- Venue for the freshman game is unchanged (only the time was reported).
+-- Hidden Blue freshman row untouched, same as 225 (no Blue team this season).
+-- A cancelled game drops out of /events, the month view and the ICS feed via
+-- CALENDAR_STATUSES (see 170); /schedule/games still lists it as cancelled.
+--
+-- Practice schedule bodies (235/237): the Thursday heading on the varsity/JV
+-- bodies said "JV game day", and the closing pointer on all three bodies listed
+-- JV at 6:00 home and deferred the freshman time to the Games schedule. Both
+-- now reflect the change; the freshman time is stated because Jeremy gave it.
+--
+-- NOT TOUCHED HERE: lib/fresh-jv-meals.ts Oct 15 slot (Jeremy 2026-10-14:
+-- "Don't worry about meal pickups. Leave the same"), varsity team dinner
+-- Thu Oct 15 (unaffected), varsity Fri.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 246_rollback.sql
+
+begin;
+
+-- Guards: both games still as 235 left them.
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'freshman' and g.team_designation = 'Green'
+     and g.opponent = 'Westlake High School'
+     and g.game_date = timestamptz '2026-10-15 18:30 America/Chicago'
+     and v.name = 'Chaparral Stadium' and g.result_status = 'scheduled';
+  if n <> 1 then raise exception 'freshman Green Oct 15 not found at 6:30 Chaparral (found %, already applied?)', n; end if;
+
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'jv' and g.team_designation is null
+     and g.opponent = 'Westlake High School'
+     and g.game_date = timestamptz '2026-10-15 18:00 America/Chicago'
+     and v.name = 'Maverick Stadium' and g.result_status = 'scheduled';
+  if n <> 1 then raise exception 'JV Oct 15 not found scheduled at 6:00 Maverick Stadium (found %, already applied?)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and body like '%Oct 15 at Chaparral Stadium (kickoff time on the Games schedule)%'
+     and body like '%JV Thursday Oct 15 at 6:00 p.m. at Maverick Stadium (home)%';
+  if n <> 3 then raise exception 'expected 3 practice bodies with the 237 pointer, found %', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%### Thursday, Oct 15 — JV game day%';
+  if n <> 2 then raise exception 'expected 2 varsity/JV bodies with "JV game day", found %', n; end if;
+end $$;
+
+update games
+   set game_date = timestamptz '2026-10-15 18:00 America/Chicago', updated_at = now()
+ where year = '2026-27' and team_level = 'freshman' and team_designation = 'Green'
+   and opponent = 'Westlake High School'
+   and game_date = timestamptz '2026-10-15 18:30 America/Chicago';
+
+update games
+   set result_status = 'cancelled', updated_at = now()
+ where year = '2026-27' and team_level = 'jv' and team_designation is null
+   and opponent = 'Westlake High School'
+   and game_date = timestamptz '2026-10-15 18:00 America/Chicago';
+
+update practice_schedules
+   set body = replace(replace(replace(body,
+         'freshmen Thursday Oct 15 at Chaparral Stadium (kickoff time on the Games schedule)',
+         'freshmen Thursday Oct 15 at 6:00 p.m. at Chaparral Stadium'),
+         'JV Thursday Oct 15 at 6:00 p.m. at Maverick Stadium (home)',
+         'JV Thursday Oct 15 cancelled'),
+         '### Thursday, Oct 15 — JV game day',
+         '### Thursday, Oct 15 — JV game cancelled'),
+       updated_at = now()
+ where year = '2026-27';
+
+-- Verify.
+do $$
+declare n int;
+begin
+  select count(*) into n from games g join venues v on v.id = g.venue_id
+   where g.year = '2026-27' and g.team_level = 'freshman' and g.team_designation = 'Green'
+     and g.opponent = 'Westlake High School'
+     and g.game_date = timestamptz '2026-10-15 18:00 America/Chicago'
+     and v.name = 'Chaparral Stadium' and g.result_status = 'scheduled';
+  if n <> 1 then raise exception 'freshman Green not at 6:00 Chaparral (%)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'jv' and opponent = 'Westlake High School'
+     and game_date = timestamptz '2026-10-15 18:00 America/Chicago'
+     and result_status = 'cancelled' and our_score is null and their_score is null;
+  if n <> 1 then raise exception 'JV Oct 15 not cancelled cleanly (%)', n; end if;
+
+  select count(*) into n from games
+   where year = '2026-27' and team_level = 'varsity' and opponent = 'Westlake High School'
+     and game_date = timestamptz '2026-10-16 19:00 America/Chicago' and result_status = 'scheduled';
+  if n <> 1 then raise exception 'varsity Oct 16 disturbed'; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and (body like '%kickoff time on the Games schedule%'
+       or body like '%JV Thursday Oct 15 at 6:00%'
+       or body like '%JV game day%'
+       or body not like '%freshmen Thursday Oct 15 at 6:00 p.m. at Chaparral Stadium%'
+       or body not like '%JV Thursday Oct 15 cancelled%');
+  if n <> 0 then raise exception '% practice bodies not updated', n; end if;
+
+  -- 235's rule: no kickoff times in the day sections.
+  select count(*) into n from practice_schedules
+   where year = '2026-27'
+     and regexp_replace(body, '## After Week 11.*$', '', 's') ~ '(5:00|6:00|6:30|7:00) p\.m\.';
+  if n <> 0 then raise exception 'a kickoff leaked into a day section'; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/247_broadcasts_week11_westlake.sql
+-- ===
+
+-- 247_broadcasts_week11_westlake.sql
+--
+-- Week 11 broadcast links: varsity AT Westlake, Chaparral Stadium,
+-- Fri Oct 16, 7:00 p.m. From Jeremy 2026-10-16, game day, pasted as watch
+-- pages this time (no preview article):
+--
+--   VYPE     https://www.vype.com/7pm-football-mcneil-vs-westlake
+--   YouTube  https://youtube.com/live/VRAv0KCIkcQ
+--
+-- Both verified before writing: 200 under a desktop UA; VYPE og:title and
+-- YouTube <title> both "7PM - Football: McNeil vs. Westlake". VYPE URL has no
+-- numeric suffix (same as 216), taken as pasted.
+--
+-- Same shape and rules as 216/223/234: YouTube sort 1, VYPE sort 2,
+-- keep_after_final = false on both (180), game selected by identity, re-run
+-- inert. Enter the result tonight/Saturday so the links retire.
+--
+-- Row counts: before, 2026-27 varsity carries 14 broadcast rows, 12 active.
+-- After: 16 and 14.
+--
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-10-16 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-10-17 00:00 America/Chicago'
+     and g.opponent = 'Westlake High School';
+  if n <> 1 then raise exception 'expected exactly 1 varsity Westlake game on Oct 16, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 14 then raise exception 'expected 14 varsity broadcast rows before 247, found % (already applied?)', n; end if;
+end $$;
+
+insert into game_broadcasts (game_id, label, url, sort_order, keep_after_final, active)
+select g.id, v.label, v.url, v.sort_order, false, true
+from games g
+cross join (values
+    ('YouTube', 'https://youtube.com/live/VRAv0KCIkcQ', 1),
+    ('VYPE',    'https://www.vype.com/7pm-football-mcneil-vs-westlake', 2)
+  ) as v(label, url, sort_order)
+where g.year = '2026-27'
+  and g.team_level = 'varsity'
+  and g.team_designation is null
+  and g.game_date >= timestamptz '2026-10-16 00:00 America/Chicago'
+  and g.game_date <  timestamptz '2026-10-17 00:00 America/Chicago'
+  and g.opponent = 'Westlake High School'
+on conflict (game_id, url) do nothing;
+
+do $$
+declare n int; gid uuid;
+begin
+  select g.id into gid from games g
+   where g.year = '2026-27'
+     and g.team_level = 'varsity'
+     and g.team_designation is null
+     and g.game_date >= timestamptz '2026-10-16 00:00 America/Chicago'
+     and g.game_date <  timestamptz '2026-10-17 00:00 America/Chicago'
+     and g.opponent = 'Westlake High School';
+
+  select count(*) into n from game_broadcasts where game_id = gid and active;
+  if n <> 2 then raise exception 'expected 2 active broadcast rows on the Westlake game, found %', n; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'YouTube'
+     and url = 'https://youtube.com/live/VRAv0KCIkcQ'
+     and sort_order = 1 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the YouTube row is wrong or missing'; end if;
+
+  select count(*) into n from game_broadcasts
+   where game_id = gid and label = 'VYPE'
+     and url = 'https://www.vype.com/7pm-football-mcneil-vs-westlake'
+     and sort_order = 2 and active and not keep_after_final;
+  if n <> 1 then raise exception 'the VYPE row is wrong or missing'; end if;
+
+  -- 180's invariant: no 2026-27 broadcast link outlives the final whistle.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and gb.keep_after_final;
+  if n <> 0 then raise exception '% 2026-27 row(s) have keep_after_final = true', n; end if;
+
+  -- Nothing on sub-varsity games, which VYPE does not carry.
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level <> 'varsity';
+  if n <> 0 then raise exception 'broadcast links attached to % non-varsity game(s)', n; end if;
+
+  -- Seven varsity weeks, two rows each (Bowie pair inactive since 180, never deleted).
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity';
+  if n <> 16 then raise exception 'expected 16 broadcast rows across 2026-27 varsity, found %', n; end if;
+
+  select count(*) into n from game_broadcasts gb join games g on g.id = gb.game_id
+   where g.year = '2026-27' and g.team_level = 'varsity' and gb.active;
+  if n <> 14 then raise exception 'expected 14 ACTIVE varsity broadcast rows, found %', n; end if;
+end $$;
+
+commit;
+
+-- ===
+-- db/migrations/248_week12_monday_no_school.sql
+-- ===
+
+-- 248_week12_monday_no_school.sql
+--
+-- Monday Oct 19 is a no-school day. Jeremy 2026-10-16: "Monday practice
+-- schedule varsity and JV will arrive at 7:45 start time 8:00 to 11:00.
+-- Freshman 10:00 to 12:00." and "Monday is another day off so schedule is
+-- different for them".
+--
+-- Week 11 stays on the page (it is still Friday, varsity plays tonight). The
+-- "After Week 11" placeholder on all three bodies is replaced by a Week 12
+-- Monday block; the rest of Week 12 waits for Coach's sheet, which will
+-- replace the bodies whole as usual. Freshman has no separate arrival time
+-- (none was given), so it lists the practice window only.
+--
+-- DB-ONLY, NO DEPLOY. Rollback: 248_rollback.sql (old bodies captured live).
+
+begin;
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and body like '%## After Week 11%Week 12 times will be posted when Coach publishes that schedule.%';
+  if n <> 3 then raise exception 'expected 3 bodies with the After Week 11 placeholder, found % (already applied?)', n; end if;
+end $$;
+
+update practice_schedules
+   set body = replace(body, $body$## After Week 11
+
+Week 12 times will be posted when Coach publishes that schedule.
+$body$, $body$## Week 12 — Monday, October 19
+
+⚠️ **No school Monday Oct 19.** Practice is still on, later than a normal school day.
+
+### Monday, Oct 19 — no school
+- **7:45 a.m.** — Varsity and JV arrival
+- **8:00–11:00 a.m.** — Practice
+
+The rest of Week 12 will be posted when Coach publishes that schedule.
+$body$), updated_at = now()
+ where year = '2026-27' and team_level = 'varsity';
+
+update practice_schedules
+   set body = replace(body, $body$## After Week 11
+
+Week 12 times will be posted when Coach publishes that schedule.
+$body$, $body$## Week 12 — Monday, October 19
+
+⚠️ **No school Monday Oct 19.** Practice is still on, later than a normal school day.
+
+### Monday, Oct 19 — no school
+- **7:45 a.m.** — Varsity and JV arrival
+- **8:00–11:00 a.m.** — Practice
+
+The rest of Week 12 will be posted when Coach publishes that schedule.
+$body$), updated_at = now()
+ where year = '2026-27' and team_level = 'jv';
+
+update practice_schedules
+   set body = replace(body, $body$## After Week 11
+
+Week 12 times will be posted when Coach publishes that schedule.
+$body$, $body$## Week 12 — Monday, October 19
+
+⚠️ **No school Monday Oct 19.** Practice is still on, later than a normal school day.
+
+### Monday, Oct 19 — no school
+- **10:00 a.m.–12:00 p.m.** — Practice
+
+The rest of Week 12 will be posted when Coach publishes that schedule.
+$body$), updated_at = now()
+ where year = '2026-27' and team_level = 'freshman';
+
+do $$
+declare n int;
+begin
+  select count(*) into n from practice_schedules where year = '2026-27' and body like '%After Week 11%';
+  if n <> 0 then raise exception '% bodies still carry the After Week 11 placeholder', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level in ('varsity','jv')
+     and body like '%### Monday, Oct 19 — no school
+- **7:45 a.m.** — Varsity and JV arrival
+- **8:00–11:00 a.m.** — Practice%';
+  if n <> 2 then raise exception 'varsity/JV Monday Oct 19 block wrong (found %)', n; end if;
+
+  select count(*) into n from practice_schedules
+   where year = '2026-27' and team_level = 'freshman'
+     and body like '%### Monday, Oct 19 — no school
+- **10:00 a.m.–12:00 p.m.** — Practice%';
+  if n <> 1 then raise exception 'freshman Monday Oct 19 block wrong (found %)', n; end if;
+
+  -- Week 11 is still intact on all three.
+  select count(*) into n from practice_schedules where year = '2026-27' and body like '%## Week 11 — October 12–16%';
+  if n <> 3 then raise exception 'Week 11 section missing on % bodies', 3 - n; end if;
+end $$;
+
+commit;
