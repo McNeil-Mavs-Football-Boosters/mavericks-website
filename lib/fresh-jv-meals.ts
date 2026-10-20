@@ -61,6 +61,38 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
   "12336 Ranch to Market Rd 620, Austin, TX 78750";
 
 /**
+ * ONE-NIGHT VENDOR OVERRIDES, keyed by slot date. Mirrors SLOT_OVERRIDES in
+ * fresh-jv-meals-automation.gs; the two must agree. Any night not listed uses
+ * the Bush's place/address above. Delete an entry once its night is past.
+ *
+ * 2026-10-22 (Jeremy, 2026-10-20): Round Rock night moved to Whataburger.
+ */
+export const FRESH_JV_MEAL_PICKUP_OVERRIDES: Readonly<
+  Record<string, { place: string; address: string }>
+> = {
+  "2026-10-22": {
+    place: "Whataburger",
+    address: "6301 W Parmer Ln BLDG 3, Austin, TX 78729",
+  },
+};
+
+/** Pickup place/address for one night, honouring the overrides. */
+export function freshJvMealPickupFor(date: string): {
+  place: string;
+  address: string;
+  overridden: boolean;
+} {
+  const o = FRESH_JV_MEAL_PICKUP_OVERRIDES[date];
+  return o
+    ? { ...o, overridden: true }
+    : {
+        place: FRESH_JV_MEAL_PICKUP_PLACE,
+        address: FRESH_JV_MEAL_PICKUP_ADDRESS,
+        overridden: false,
+      };
+}
+
+/**
  * ✅ CONFIRMED 2026-08-26 (Coach Hale, relayed by Jeremy). No longer null.
  *
  * ✅ MOVED 15 MINUTES EARLIER 2026-09-13, to **2:15 p.m. / 2:45 p.m.** Coach,
@@ -186,8 +218,9 @@ export const FRESH_JV_MEAL_SLOTS: readonly FreshJvMealSlot[] = [
  * service staying up, and they cannot be checked by reading the code. The short
  * link was resolved once to the address above and the address is what is kept.
  */
-export function freshJvMealMapsUrl(): string {
+export function freshJvMealMapsUrl(date: string): string {
+  const { place, address } = freshJvMealPickupFor(date);
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${FRESH_JV_MEAL_PICKUP_PLACE} ${FRESH_JV_MEAL_PICKUP_ADDRESS}`,
+    `${place} ${address}`,
   )}`;
 }

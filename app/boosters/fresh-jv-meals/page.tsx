@@ -10,12 +10,12 @@ import {
   FRESH_JV_MEAL_CONTACT,
   FRESH_JV_MEAL_DROPOFF_CONFIRMED,
   FRESH_JV_MEAL_DROPOFF_PLACE,
-  FRESH_JV_MEAL_PICKUP_ADDRESS,
   FRESH_JV_MEAL_PICKUP_PLACE,
   FRESH_JV_MEAL_DROPOFF_TIME,
   FRESH_JV_MEAL_PICKUP_TIME,
   FRESH_JV_MEAL_SLOTS,
   freshJvMealMapsUrl,
+  freshJvMealPickupFor,
 } from "@/lib/fresh-jv-meals";
 import { CHICAGO_TZ } from "@/lib/events-format";
 import { getFreshJvMealSignups } from "@/lib/sheets/fresh-jv-meals";
@@ -193,6 +193,7 @@ export default async function FreshJvMealsPage() {
               {upcoming.map((slot) => {
                 const claim = signups.claimsByDate.get(slot.date);
                 const start = new Date(slot.startsAt);
+                const pickup = freshJvMealPickupFor(slot.date);
 
                 return (
                   <li
@@ -235,15 +236,21 @@ export default async function FreshJvMealsPage() {
                         <p className="text-sm text-gray-700 mt-2 flex items-start gap-1.5">
                           <MapPin size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
                           <a
-                            href={freshJvMealMapsUrl()}
+                            href={freshJvMealMapsUrl(slot.date)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-mavs-navy hover:underline"
                           >
-                            {FRESH_JV_MEAL_PICKUP_PLACE},{" "}
-                            {FRESH_JV_MEAL_PICKUP_ADDRESS}
+                            {pickup.place},{" "}
+                            {pickup.address}
                           </a>
                         </p>
+                        {pickup.overridden ? (
+                          <p className="text-sm font-bold text-mavs-navy mt-1">
+                            Different pickup this week: {pickup.place}, not{" "}
+                            {FRESH_JV_MEAL_PICKUP_PLACE}.
+                          </p>
+                        ) : null}
                         <p className="text-sm text-gray-700 mt-1 flex items-start gap-1.5">
                           <Utensils size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
                           Order is already placed and paid for. Collect and
