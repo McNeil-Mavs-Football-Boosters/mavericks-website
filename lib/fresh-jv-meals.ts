@@ -64,17 +64,11 @@ export const FRESH_JV_MEAL_PICKUP_ADDRESS =
  * ONE-NIGHT VENDOR OVERRIDES, keyed by slot date. Mirrors SLOT_OVERRIDES in
  * fresh-jv-meals-automation.gs; the two must agree. Any night not listed uses
  * the Bush's place/address above. Delete an entry once its night is past.
- *
- * 2026-10-22 (Jeremy, 2026-10-20): Round Rock night moved to Whataburger.
+ * (Oct 22 Whataburger entry removed 2026-10-23, its night being past.)
  */
 export const FRESH_JV_MEAL_PICKUP_OVERRIDES: Readonly<
   Record<string, { place: string; address: string }>
-> = {
-  "2026-10-22": {
-    place: "Whataburger",
-    address: "6301 W Parmer Ln BLDG 3, Austin, TX 78729",
-  },
-};
+> = {};
 
 /** Pickup place/address for one night, honouring the overrides. */
 export function freshJvMealPickupFor(date: string): {
