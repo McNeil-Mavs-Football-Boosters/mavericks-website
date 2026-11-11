@@ -4,6 +4,10 @@ Replacement website for `mcneilmavericks.org`. **The site is the McNeil Maverick
 
 Booster club running info (officer roster, meeting cadence, contact info) lives at `~/Projects/BoosterClub/`.
 
+## 🔴 Git push account (check FIRST)
+
+The website repo (`McNeil-Mavs-Football-Boosters/mavericks-website`) and the ops repo push as **`jeremyvest-ATXcoder`**, never `jvest-s3` (the default active gh account, which gets a 403). Before any push: `gh auth status`, then `gh auth switch -u jeremyvest-ATXcoder`, push, then `gh auth switch -u jvest-s3` to restore. Do this before the first push attempt, not after a 403 (Jeremy, 2026-11-10).
+
 ## Reaching Jeremy mid-task
 
 When you need Jeremy's input or sign-off to proceed, use **`jv-ask`** — not `jv-notify`. They look similar but behave very differently:
